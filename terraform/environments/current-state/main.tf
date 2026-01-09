@@ -6,8 +6,8 @@ terraform {
 
   required_providers {
     proxmox = {
-      source  = "telmate/proxmox"
-      version = "~> 3.0"
+      source  = "bpg/proxmox"
+      version = "0.91.0"
     }
   }
 
@@ -20,8 +20,18 @@ terraform {
   # }
 }
 
-# Provider configuration is inherited from root module
-# or specify here if running independently
+# Provider configuration for bpg/proxmox
+provider "proxmox" {
+  endpoint = var.proxmox_api_url
+  insecure = var.proxmox_tls_insecure
+
+  # API Token Authentication (format: "user@realm!token-id=secret")
+  api_token = var.proxmox_api_token_id != null && var.proxmox_api_token_secret != null ? "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}" : null
+
+  # Fallback: Username/Password (optional, only if api_token is null)
+  username = var.proxmox_user
+  password = var.proxmox_password
+}
 
 # === Production VMs (Current State) ===
 
@@ -31,7 +41,7 @@ module "truenas" {
   name        = "truenas-prod-cz-01"
   vmid        = 4000
   target_node = "pve-prod-cz-loki"
-  description = "TrueNAS CORE - NAS Storage (IST: Single NIC, no VLANs)"
+  description = "https://truenas-prod-cz-01.getinn.top/"
 
   # Resources
   cores     = 6
@@ -44,6 +54,11 @@ module "truenas" {
   storage_pool = "local-zfs"
   emulate_ssd  = true
 
+  # Hardware Emulation
+  bios       = "ovmf"
+  machine    = "q35"
+  protection = true
+
   # Network - IST: Single NIC on flat network (vmbr0, no VLAN)
   network_interfaces = [
     {
@@ -55,8 +70,8 @@ module "truenas" {
   ]
 
   # Current IP (before migration)
-  ip_address = "10.0.1.20/24"
-  gateway    = "10.0.1.1"
+  ip_address = null # Real IP: 10.0.1.20/24
+  gateway    = null # Real GW: 10.0.1.1
 
   # VM Settings
   clone_template      = null
@@ -78,7 +93,7 @@ module "pms" {
   description = "Plex Media Server (IST: Single NIC)"
 
   # Resources
-  cores     = 4
+  cores     = 10
   sockets   = 1
   cpu_type  = "host"
   memory    = 8192 # 8 GB
@@ -87,6 +102,11 @@ module "pms" {
   # Storage
   storage_pool = "local-zfs"
   emulate_ssd  = true
+
+  # Hardware Emulation
+  bios       = "ovmf"
+  machine    = "q35"
+  protection = true
 
   # Network - IST: Single NIC
   network_interfaces = [
@@ -99,8 +119,8 @@ module "pms" {
   ]
 
   # Current IP
-  ip_address = "10.0.1.30/24"
-  gateway    = "10.0.1.1"
+  ip_address = null # Real IP: 10.0.1.30/24
+  gateway    = null # Real GW: 10.0.1.1
 
   # VM Settings
   clone_template      = null
@@ -116,14 +136,14 @@ module "pms" {
 module "arr_stack" {
   source = "../../modules/proxmox-vm"
 
-  name        = "the-arr-stack"
+  name        = "the-arr-stack-prod-01"
   vmid        = 1100
   target_node = "pve-prod-cz-loki"
-  description = "Sonarr, Radarr, Lidarr, Prowlarr (IST: Single NIC)"
+  description = "https://the-arr-stack-prod-cz-01.getinn.top/"
 
   # Resources
   cores     = 4
-  sockets   = 1
+  sockets   = 2
   cpu_type  = "host"
   memory    = 8192 # 8 GB
   disk_size = "64G"
@@ -131,6 +151,11 @@ module "arr_stack" {
   # Storage
   storage_pool = "local-zfs"
   emulate_ssd  = true
+
+  # Hardware Emulation
+  bios       = "ovmf"
+  machine    = "q35"
+  protection = true
 
   # Network - IST: Single NIC
   network_interfaces = [
@@ -143,8 +168,8 @@ module "arr_stack" {
   ]
 
   # Current IP
-  ip_address = "10.0.1.90/24"
-  gateway    = "10.0.1.1"
+  ip_address = null # Real IP: 10.0.1.90/24
+  gateway    = null # Real GW: 10.0.1.1
 
   # VM Settings
   clone_template      = null
@@ -160,14 +185,14 @@ module "arr_stack" {
 module "docker_prod" {
   source = "../../modules/proxmox-vm"
 
-  name        = "docker-prod"
+  name        = "docker-prod-cz-01"
   vmid        = 2000
   target_node = "pve-prod-cz-loki"
-  description = "Docker Production Host (IST: Single NIC)"
+  description = "https://docker-prod-cz-01.getinn.top/"
 
   # Resources
-  cores     = 4
-  sockets   = 1
+  cores     = 6
+  sockets   = 2
   cpu_type  = "host"
   memory    = 16384 # 16 GB
   disk_size = "128G"
@@ -175,6 +200,11 @@ module "docker_prod" {
   # Storage
   storage_pool = "local-zfs"
   emulate_ssd  = true
+
+  # Hardware Emulation
+  bios       = "ovmf"
+  machine    = "q35"
+  protection = true
 
   # Network - IST: Single NIC
   network_interfaces = [
@@ -187,8 +217,8 @@ module "docker_prod" {
   ]
 
   # Current IP
-  ip_address = "10.0.1.50/24"
-  gateway    = "10.0.1.1"
+  ip_address = null # Real IP: 10.0.1.50/24
+  gateway    = null # Real GW: 10.0.1.1
 
   # VM Settings
   clone_template      = null
@@ -210,7 +240,7 @@ module "nextcloud" {
   description = "Nextcloud Instance (IST: Single NIC)"
 
   # Resources
-  cores     = 4
+  cores     = 12
   sockets   = 1
   cpu_type  = "host"
   memory    = 8192 # 8 GB
@@ -219,6 +249,11 @@ module "nextcloud" {
   # Storage
   storage_pool = "local-zfs"
   emulate_ssd  = true
+
+  # Hardware Emulation
+  bios       = "ovmf"
+  machine    = "q35"
+  protection = true
 
   # Network - IST: Single NIC
   network_interfaces = [
@@ -231,8 +266,8 @@ module "nextcloud" {
   ]
 
   # Current IP
-  ip_address = "10.0.1.100/24"
-  gateway    = "10.0.1.1"
+  ip_address = null # Real IP: 10.0.1.100/24
+  gateway    = null # Real GW: 10.0.1.1
 
   # VM Settings
   clone_template      = null

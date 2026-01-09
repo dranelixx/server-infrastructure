@@ -6,10 +6,23 @@ terraform {
 
   required_providers {
     proxmox = {
-      source  = "telmate/proxmox"
-      version = "~> 3.0"
+      source  = "bpg/proxmox"
+      version = "0.91.0"
     }
   }
+}
+
+# Provider configuration for bpg/proxmox
+provider "proxmox" {
+  endpoint = var.proxmox_api_url
+  insecure = var.proxmox_tls_insecure
+
+  # API Token Authentication (format: "user@realm!token-id=secret")
+  api_token = var.proxmox_api_token_id != null && var.proxmox_api_token_secret != null ? "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}" : null
+
+  # Fallback: Username/Password (optional, only if api_token is null)
+  username = var.proxmox_user
+  password = var.proxmox_password
 }
 
 # === TrueNAS VM - Multi-homed (VLAN 30 + vmbr_storage) ===

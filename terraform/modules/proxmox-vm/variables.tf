@@ -191,3 +191,34 @@ variable "tags" {
     error_message = "Tags must contain only alphanumeric characters, colons, underscores, and hyphens."
   }
 }
+
+# === Hardware Emulation ===
+
+variable "bios" {
+  description = "BIOS implementation (seabios = legacy BIOS, ovmf = UEFI)"
+  type        = string
+  default     = "seabios"
+
+  validation {
+    condition     = contains(["seabios", "ovmf"], var.bios)
+    error_message = "BIOS must be either 'seabios' or 'ovmf'."
+  }
+}
+
+variable "machine" {
+  description = "VM machine type (pc = i440FX, q35 = modern chipset with PCIe)"
+  type        = string
+  default     = null
+}
+
+variable "protection" {
+  description = "Enable VM protection (prevents deletion)"
+  type        = bool
+  default     = false
+}
+
+variable "keyboard_layout" {
+  description = "Keyboard layout for VM console (de, en-us, etc.)"
+  type        = string
+  default     = "de"
+}
