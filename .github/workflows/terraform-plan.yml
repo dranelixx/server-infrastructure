@@ -35,6 +35,20 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Import Secrets from Vault
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          tlsSkipVerify: true
+          secrets: |
+            secret/data/prod/infrastructure/proxmox api_endpoint | PROXMOX_API_ENDPOINT ;
+            secret/data/prod/infrastructure/proxmox api_token_id | PROXMOX_API_TOKEN_ID ;
+            secret/data/prod/infrastructure/proxmox api_token_secret | PROXMOX_API_TOKEN_SECRET ;
+            secret/data/shared/ssh public_keys | SSH_PUBLIC_KEYS
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -61,11 +75,11 @@ jobs:
         run: terraform plan -no-color -out=tfplan
         continue-on-error: true
         env:
-          TF_VAR_proxmox_api_url: ${{ secrets.PROXMOX_API_ENDPOINT }}
-          TF_VAR_proxmox_api_token_id: ${{ secrets.PROXMOX_API_TOKEN_ID }}
-          TF_VAR_proxmox_api_token_secret: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+          TF_VAR_proxmox_api_url: ${{ env.PROXMOX_API_ENDPOINT }}
+          TF_VAR_proxmox_api_token_id: ${{ env.PROXMOX_API_TOKEN_ID }}
+          TF_VAR_proxmox_api_token_secret: ${{ env.PROXMOX_API_TOKEN_SECRET }}
           TF_VAR_proxmox_tls_insecure: 'true'
-          TF_VAR_ssh_public_keys: ${{ secrets.SSH_PUBLIC_KEYS }}
+          TF_VAR_ssh_public_keys: ${{ env.SSH_PUBLIC_KEYS }}
 
       - name: Generate Plan Summary
         id: summary
