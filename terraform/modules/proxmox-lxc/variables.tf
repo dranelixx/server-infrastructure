@@ -218,11 +218,29 @@ variable "os_type" {
 }
 
 # ============================================================================
-# ADVANCED: Security
+# ADVANCED: Security & Access
 # ============================================================================
 
 variable "unprivileged" {
   description = "Run container as unprivileged (recommended for security)"
   type        = bool
   default     = true
+}
+
+variable "ssh_public_keys" {
+  description = "List of SSH public keys for root user access (recommended)"
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = alltrue([for key in var.ssh_public_keys : can(regex("^(ssh-rsa|ssh-ed25519|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ", key))])
+    error_message = "Invalid SSH public key format. Must start with ssh-rsa, ssh-ed25519, or ecdsa-sha2-nistp*."
+  }
+}
+
+variable "root_password" {
+  description = "Root password for container access (optional, use SSH keys instead)"
+  type        = string
+  default     = null
+  sensitive   = true
 }

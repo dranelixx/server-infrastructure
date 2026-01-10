@@ -404,6 +404,9 @@ module "vault" {
   started       = true
   protection    = true
 
+  # Access
+  ssh_public_keys = var.ssh_public_keys
+
   # Tags
   tags = ["production", "lxc", "security", "vault", "secrets"]
 }
