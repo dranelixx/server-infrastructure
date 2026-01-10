@@ -99,7 +99,7 @@ jobs:
       - name: Check for Changes
         id: check
         run: |
-          if grep -q "No changes" plan_output.txt;
+          if grep -q "No changes" plan_output.txt; then
             echo "changes=false" >> $GITHUB_OUTPUT
             echo "No changes to apply"
           else
