@@ -46,22 +46,24 @@ repos:
           - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
           - --hook-config=--delegate-chdir
 
-      - id: terraform_docs
-        name: Generate Terraform documentation
-        args:
-          - --hook-config=--path-to-file=README.md
-          - --hook-config=--add-to-existing-file=true
-          - --hook-config=--create-file-if-not-exist=true
-        files: ^terraform/modules/
+      # Disabled: Modifies READMEs automatically
+      # - id: terraform_docs
+      #   name: Generate Terraform documentation
+      #   files: ^terraform/modules/
+      #   exclude: ^README\.md$
+      #   args:
+      #     - --hook-config=--path-to-file=README.md
+      #     - --hook-config=--add-to-existing-file=true
+      #     - --hook-config=--create-file-if-not-exist=true
 
-  # Markdown formatting
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.39.0
-    hooks:
-      - id: markdownlint
-        name: Markdown linting
-        args: ['--fix']
-        exclude: ^\.github/
+  # Markdown formatting (disabled: auto-fixes can be intrusive)
+  # - repo: https://github.com/igorshubovych/markdownlint-cli
+  #   rev: v0.39.0
+  #   hooks:
+  #     - id: markdownlint
+  #       name: Markdown linting
+  #       args: ['--fix']
+  #       exclude: ^\.github/
 
   # YAML formatting (disabled on Windows due to path issues)
   # - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt

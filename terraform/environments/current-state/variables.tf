@@ -37,3 +37,10 @@ variable "proxmox_tls_insecure" {
   type        = bool
   default     = true
 }
+
+# LXC Container Access
+variable "ssh_public_keys" {
+  description = "List of SSH public keys for LXC container root access"
+  type        = list(string)
+  default     = []
+}

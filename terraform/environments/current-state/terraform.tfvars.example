@@ -19,3 +19,9 @@ proxmox_api_token_secret = "<YOUR_TOKEN_SECRET>"
 
 # TLS Verification (set to false for self-signed certificates)
 proxmox_tls_insecure = true
+
+# LXC Container SSH Access (Optional)
+# Add your SSH public keys for root access to new LXC containers
+# Leave empty ([]) if you don't want to deploy SSH keys via Terraform
+# Example: ssh_public_keys = ["ssh-ed25519 AAAA... user@host", "ssh-rsa AAAA... admin@laptop"]
+# ssh_public_keys = []
