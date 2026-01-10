@@ -25,10 +25,31 @@
   tags:
     - terraform
 
+- name: Check installed Terraform version
+  ansible.builtin.shell: terraform version -json 2>/dev/null | jq -r '.terraform_version' || echo "not_installed"
+  register: installed_terraform_version
+  changed_when: false
+  failed_when: false
+  tags:
+    - terraform
+
+- name: Remove old Terraform version if version mismatch
+  ansible.builtin.apt:
+    name: terraform
+    state: absent
+  become: yes
+  when:
+    - terraform_version != "latest"
+    - installed_terraform_version.stdout != terraform_version
+    - installed_terraform_version.stdout != "not_installed"
+  tags:
+    - terraform
+
 - name: Install Terraform
   ansible.builtin.apt:
     name: "terraform={{ terraform_version }}-*"
     state: present
+    update_cache: yes
   become: yes
   when: terraform_version != "latest"
   tags:
