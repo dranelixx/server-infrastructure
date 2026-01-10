@@ -1,29 +1,29 @@
 # Target State Environment
 
-**Post-Migration Architecture** mit HP 1910-24G Switch, VLAN-Segmentierung und LACP Bonding.
+**Post-Migration Architecture** with HP 1910-24G Switch, VLAN Segmentation and LACP Bonding.
 
-## Architektur
+## Architecture
 
-### Netzwerk-Design
+### Network Design
 
 - **VLAN 10** (Management): Proxmox Hosts, iLOs, Switch Management
-- **VLAN 20** (Production): Öffentlich erreichbare Services (Plex, Nextcloud)
-- **VLAN 30** (Compute): Interne Services (TrueNAS, Docker, arr-stack)
+- **VLAN 20** (Production): Publicly accessible services (Plex, Nextcloud)
+- **VLAN 30** (Compute): Internal services (TrueNAS, Docker, arr-stack)
 - **vmbr_storage**: Internal L2 Bridge (TrueNAS ↔ Plex ↔ arr-stack)
 
 ### Multi-homed VMs
 
-| VM | net0 (VLAN) | net1 (vmbr_storage) | Zweck |
-|----|-------------|---------------------|-------|
+| VM | net0 (VLAN) | net1 (vmbr_storage) | Purpose |
+|----|-------------|---------------------|---------|
 | **TrueNAS** | 10.0.30.20/24 (VLAN 30) | 10.10.10.1/24 | NFS/SMB Management + Storage Serving |
 | **Plex** | 10.0.20.30/24 (VLAN 20) | 10.10.10.2/24 | External Access + Media from TrueNAS |
 | **arr-stack** | 10.0.30.90/24 (VLAN 30) | 10.10.10.3/24 | Download Management + Move to TrueNAS |
 
-**Vorteil:** Storage Traffic (TrueNAS ↔ Plex) läuft über virtuellen Bridge → Multi-Gbps Bandwidth (kein physischer NIC-Limit).
+**Advantage:** Storage traffic (TrueNAS ↔ Plex) runs over virtual bridge → Multi-Gbps bandwidth (no physical NIC limit).
 
 ## Usage
 
-### 1. Variables konfigurieren
+### 1. Configure Variables
 
 ```bash
 # Copy example file
@@ -33,19 +33,19 @@ cp ../../terraform.tfvars.example terraform.tfvars
 vim terraform.tfvars
 ```
 
-### 2. Terraform initialisieren
+### 2. Initialize Terraform
 
 ```bash
 terraform init
 ```
 
-### 3. Plan anzeigen
+### 3. Show Plan
 
 ```bash
 terraform plan
 ```
 
-### 4. Apply (WARNUNG: Ändert echte Infrastruktur!)
+### 4. Apply (WARNING: Modifies real infrastructure!)
 
 ```bash
 terraform apply
@@ -88,12 +88,12 @@ terraform output infrastructure_summary
 
 **Total Resources:** 48 vCPUs, 84GB RAM
 
-## Migration von IST zu SOLL
+## Migration from Current to Target State
 
-Siehe [../../docs/architecture/03 - Migration Plan.md](../../../docs/architecture/03%20-%20Migration%20Plan.md) für detaillierte Migration Steps.
+See [../../docs/architecture/03 - Migration Plan.md](../../../docs/architecture/03%20-%20Migration%20Plan.md) for detailed migration steps.
 
-**Kritische Änderungen:**
-- ✅ VLANs 10/20/30 statt Flat Network 10.0.1.0/24
+**Critical Changes:**
+- ✅ VLANs 10/20/30 instead of flat network 10.0.1.0/24
 - ✅ Multi-homed VMs (2 NICs)
-- ✅ vmbr_storage für High-Throughput Storage Traffic
-- ✅ LACP Bond auf Loki (eno1-4)
+- ✅ vmbr_storage for high-throughput storage traffic
+- ✅ LACP bond on Loki (eno1-4)

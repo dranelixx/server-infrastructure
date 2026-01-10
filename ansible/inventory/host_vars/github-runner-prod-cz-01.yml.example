@@ -1,0 +1,7 @@
+---
+# Host-specific variables for github-runner-prod-cz-01
+# Copy this file to github-runner-prod-cz-01.yml and fill in the values
+# The .yml file is gitignored and contains sensitive information
+
+ansible_host: <RUNNER_IP>  # Example: 10.0.1.184
+proxmox_api_host: <PROXMOX_HOST>  # Example: 10.0.1.10

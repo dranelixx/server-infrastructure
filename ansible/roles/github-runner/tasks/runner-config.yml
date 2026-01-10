@@ -1,0 +1,94 @@
+---
+# Automatic GitHub Runner Configuration
+# This task automatically configures the runner using GitHub API
+
+- name: Check if runner is already configured
+  ansible.builtin.stat:
+    path: "{{ github_runner_home }}/.runner"
+  register: runner_configured
+  tags:
+    - runner-config
+
+- name: Check if GitHub token is provided
+  ansible.builtin.set_fact:
+    github_token_available: "{{ github_token is defined and github_token != '' }}"
+  tags:
+    - runner-config
+
+- name: Display auto-configuration status
+  ansible.builtin.debug:
+    msg:
+      - "Runner auto-configuration:"
+      - "  - Runner configured: {{ runner_configured.stat.exists }}"
+      - "  - GitHub token available: {{ github_token_available }}"
+      - ""
+      - "{% if not github_token_available %}To enable auto-configuration, provide GitHub token:{% endif %}"
+      - "{% if not github_token_available %}  ansible-playbook ... -e 'github_token=ghp_xxx'{% endif %}"
+  tags:
+    - runner-config
+
+- name: Get GitHub runner registration token
+  ansible.builtin.uri:
+    url: "https://api.github.com/repos/{{ github_repo_owner }}/{{ github_repo_name }}/actions/runners/registration-token"
+    method: POST
+    headers:
+      Authorization: "token {{ github_token }}"
+      Accept: "application/vnd.github+json"
+    status_code: 201
+  register: registration_token_response
+  when:
+    - not runner_configured.stat.exists
+    - github_token_available
+  tags:
+    - runner-config
+
+- name: Configure GitHub runner
+  ansible.builtin.command:
+    cmd: >
+      {{ github_runner_home }}/config.sh
+      --url {{ github_repo_url }}
+      --token {{ registration_token_response.json.token }}
+      --name {{ github_runner_name | default(inventory_hostname) }}
+      --labels {{ github_runner_labels | default('self-hosted') }}
+      --work {{ github_runner_work_dir }}
+      --unattended
+    creates: "{{ github_runner_home }}/.runner"
+  become: yes
+  become_user: "{{ github_runner_user }}"
+  when:
+    - not runner_configured.stat.exists
+    - github_token_available
+    - registration_token_response is defined
+  register: runner_config_result
+  tags:
+    - runner-config
+
+- name: Display configuration result
+  ansible.builtin.debug:
+    msg:
+      - "Runner configured successfully!"
+      - "  - Name: {{ github_runner_name | default(inventory_hostname) }}"
+      - "  - Labels: {{ github_runner_labels | default('self-hosted') }}"
+      - "  - Repo: {{ github_repo_url }}"
+  when:
+    - runner_config_result is defined
+    - runner_config_result.changed
+  tags:
+    - runner-config
+
+- name: Manual configuration notice
+  ansible.builtin.debug:
+    msg:
+      - "Runner not configured automatically."
+      - "{% if not github_token_available %}Reason: No GitHub token provided{% endif %}"
+      - ""
+      - "Manual configuration steps:"
+      - "  1. Get token from: https://github.com/{{ github_repo_owner }}/{{ github_repo_name }}/settings/actions/runners/new"
+      - "  2. SSH to {{ ansible_host }}"
+      - "  3. Run: cd {{ github_runner_home }}"
+      - "  4. Run: ./config.sh --url {{ github_repo_url }} --token <TOKEN> --unattended"
+  when:
+    - not runner_configured.stat.exists
+    - not github_token_available
+  tags:
+    - runner-config

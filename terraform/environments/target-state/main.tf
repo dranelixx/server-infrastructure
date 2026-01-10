@@ -6,10 +6,23 @@ terraform {
 
   required_providers {
     proxmox = {
-      source  = "telmate/proxmox"
-      version = "~> 3.0"
+      source  = "bpg/proxmox"
+      version = "0.91.0"
     }
   }
+}
+
+# Provider configuration for bpg/proxmox
+provider "proxmox" {
+  endpoint = var.proxmox_api_url
+  insecure = var.proxmox_tls_insecure
+
+  # API Token Authentication (format: "user@realm!token-id=secret")
+  api_token = var.proxmox_api_token_id != null && var.proxmox_api_token_secret != null ? "${var.proxmox_api_token_id}=${var.proxmox_api_token_secret}" : null
+
+  # Fallback: Username/Password (optional, only if api_token is null)
+  username = var.proxmox_user
+  password = var.proxmox_password
 }
 
 # === TrueNAS VM - Multi-homed (VLAN 30 + vmbr_storage) ===
@@ -26,7 +39,7 @@ module "truenas" {
   # Resources (from live API data)
   cores     = 6
   sockets   = 1
-  memory    = 32768  # 32GB
+  memory    = 32768 # 32GB
   disk_size = "100G"
 
   # Storage Pool
@@ -39,14 +52,14 @@ module "truenas" {
     {
       model            = "virtio"
       bridge           = "vmbr0"
-      vlan_tag         = 30  # VLAN 30: Compute
+      vlan_tag         = 30 # VLAN 30: Compute
       firewall_enabled = false
     },
     # net1: Internal storage network (TrueNAS ↔ Plex ↔ arr-stack)
     {
       model            = "virtio"
       bridge           = "vmbr_storage"
-      vlan_tag         = null  # No VLAN, internal L2 bridge
+      vlan_tag         = null # No VLAN, internal L2 bridge
       firewall_enabled = false
     }
   ]
@@ -84,7 +97,7 @@ module "plex" {
   # Resources
   cores     = 10
   sockets   = 1
-  memory    = 24576  # 24GB
+  memory    = 24576 # 24GB
   disk_size = "200G"
 
   storage_pool = "local-zfs"
@@ -95,7 +108,7 @@ module "plex" {
     {
       model    = "virtio"
       bridge   = "vmbr0"
-      vlan_tag = 20  # VLAN 20: Production
+      vlan_tag = 20 # VLAN 20: Production
     },
     # net1: Storage network (Media access from TrueNAS)
     {
@@ -185,13 +198,13 @@ module "nextcloud" {
   memory    = 8192
   disk_size = "130G"
 
-  storage_pool = "local-hdd01"  # Using HDD pool
+  storage_pool = "local-hdd01" # Using HDD pool
 
   network_interfaces = [
     {
       model    = "virtio"
       bridge   = "vmbr0"
-      vlan_tag = 20  # Production VLAN
+      vlan_tag = 20 # Production VLAN
     }
   ]
 
@@ -231,7 +244,7 @@ module "docker_prod" {
     {
       model    = "virtio"
       bridge   = "vmbr0"
-      vlan_tag = 30  # Compute VLAN
+      vlan_tag = 30 # Compute VLAN
     }
   ]
 

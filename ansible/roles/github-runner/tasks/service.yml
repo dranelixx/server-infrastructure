@@ -1,0 +1,80 @@
+---
+# Systemd service setup tasks
+# Note: The runner must be configured before this task runs
+
+- name: Check if runner is configured
+  ansible.builtin.stat:
+    path: "{{ github_runner_home }}/.runner"
+  register: runner_configured
+  tags:
+    - service
+
+- name: Display configuration notice
+  ansible.builtin.debug:
+    msg:
+      - "Runner is not yet configured."
+      - "Service installation will be skipped."
+      - ""
+      - "Run playbook with github_token to auto-configure:"
+      - "  ansible-playbook ... -e 'github_token=ghp_xxx'"
+  when: not runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Check if service is already installed
+  ansible.builtin.shell: "systemctl list-units --full --all | grep -q 'actions.runner.*.service'"
+  register: service_exists
+  changed_when: false
+  failed_when: false
+  become: yes
+  when: runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Install runner service using svc.sh
+  ansible.builtin.command:
+    cmd: "{{ github_runner_home }}/svc.sh install {{ github_runner_user }}"
+  become: yes
+  when:
+    - runner_configured.stat.exists
+    - service_exists.rc != 0
+  register: service_installed
+  tags:
+    - service
+
+- name: Start runner service
+  ansible.builtin.command:
+    cmd: "{{ github_runner_home }}/svc.sh start"
+  become: yes
+  when:
+    - runner_configured.stat.exists
+    - service_installed is defined and service_installed.changed
+  tags:
+    - service
+
+- name: Wait for service to start
+  ansible.builtin.wait_for:
+    timeout: 5
+  when:
+    - runner_configured.stat.exists
+    - service_installed is defined and service_installed.changed
+  tags:
+    - service
+
+- name: Get service status
+  ansible.builtin.shell: "systemctl status actions.runner.*.service | head -15"
+  register: service_status
+  changed_when: false
+  become: yes
+  when: runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Display service status
+  ansible.builtin.debug:
+    msg: "{{ service_status.stdout_lines }}"
+  when:
+    - runner_configured.stat.exists
+    - service_status is defined
+  tags:
+    - service

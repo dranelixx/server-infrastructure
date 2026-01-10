@@ -1,8 +1,8 @@
-# Proxmox Provider Variables
+# Proxmox Provider Variables (bpg/proxmox)
 # IMPORTANT: Never commit terraform.tfvars with real credentials!
 
 variable "proxmox_api_url" {
-  description = "Proxmox API URL (e.g., https://<PROXMOX_HOST>:8006/api2/json)"
+  description = "Proxmox API endpoint (e.g., https://10.0.30.10:8006/ - NO /api2/json suffix!)"
   type        = string
 }
 
@@ -20,13 +20,13 @@ variable "proxmox_password" {
 }
 
 variable "proxmox_api_token_id" {
-  description = "Proxmox API Token ID (e.g., root@pam!claude)"
+  description = "Proxmox API Token ID (e.g., terraform@pam!github-actions)"
   type        = string
   default     = null
 }
 
 variable "proxmox_api_token_secret" {
-  description = "Proxmox API Token Secret"
+  description = "Proxmox API Token Secret (combined with token_id as 'ID=SECRET')"
   type        = string
   sensitive   = true
   default     = null

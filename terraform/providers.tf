@@ -3,9 +3,9 @@ provider "proxmox" {
   pm_api_url = var.proxmox_api_url
 
   # Authentication
-  pm_user         = var.proxmox_user
-  pm_password     = var.proxmox_password
-  pm_api_token_id = var.proxmox_api_token_id
+  pm_user             = var.proxmox_user
+  pm_password         = var.proxmox_password
+  pm_api_token_id     = var.proxmox_api_token_id
   pm_api_token_secret = var.proxmox_api_token_secret
 
   # TLS Settings

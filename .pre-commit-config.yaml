@@ -1,0 +1,80 @@
+# Pre-commit hooks for Infrastructure-as-Code quality
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # General file quality checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Remove trailing whitespace
+      - id: end-of-file-fixer
+        name: Ensure files end with newline
+      - id: check-yaml
+        name: Validate YAML syntax
+        exclude: ^\.github/workflows/
+      - id: check-added-large-files
+        name: Prevent large files (>500KB)
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+        name: Check for merge conflict markers
+      - id: mixed-line-ending
+        name: Fix mixed line endings
+        args: ['--fix=lf']
+
+  # Terraform formatting and validation
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.88.4
+    hooks:
+      - id: terraform_fmt
+        name: Terraform format check
+        args:
+          - --args=-recursive
+          - --args=-diff
+
+      - id: terraform_validate
+        name: Terraform validate
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+          - --tf-init-args=-upgrade
+
+      - id: terraform_tflint
+        name: TFLint - Terraform linter
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+          - --hook-config=--delegate-chdir
+
+      - id: terraform_docs
+        name: Generate Terraform documentation
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+        files: ^terraform/modules/
+
+  # Markdown formatting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint
+        name: Markdown linting
+        args: ['--fix']
+        exclude: ^\.github/
+
+  # YAML formatting (disabled on Windows due to path issues)
+  # - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt
+  #   rev: 0.2.3
+  #   hooks:
+  #     - id: yamlfmt
+  #       name: Format YAML files
+  #       args: [--mapping, '2', --sequence, '2', --offset, '0', --width, '120']
+  #       exclude: ^\.github/workflows/
+
+  # Secrets detection
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.2
+    hooks:
+      - id: gitleaks
+        name: Detect hardcoded secrets
