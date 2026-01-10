@@ -11,13 +11,12 @@ terraform {
     }
   }
 
-  # Uncomment after Terraform Cloud setup
-  # cloud {
-  #   organization = "YOUR-ORG-NAME"
-  #   workspaces {
-  #     name = "current-state"
-  #   }
-  # }
+  cloud {
+    organization = "dranelixx"
+    workspaces {
+      name = "server-infrastructure"
+    }
+  }
 }
 
 # Provider configuration for bpg/proxmox

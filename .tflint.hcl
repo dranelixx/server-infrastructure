@@ -2,8 +2,8 @@
 # https://github.com/terraform-linters/tflint
 
 config {
-  # Enable module inspection
-  module = true
+  # Enable module inspection (all modules including external)
+  call_module_type = "all"
 
   # Disable colored output for CI/CD
   force = false
