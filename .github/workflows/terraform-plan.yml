@@ -29,7 +29,7 @@ jobs:
         working-directory: terraform/environments/current-state
 
     env:
-      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+      TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
     steps:
       - name: Checkout Code
@@ -175,4 +175,3 @@ jobs:
       - name: Check Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
-
