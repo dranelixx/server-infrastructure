@@ -128,6 +128,19 @@
   tags:
     - runner
 
+- name: Create symlinks for node binaries
+  ansible.builtin.file:
+    src: "{{ github_runner_home }}/externals/node20/bin/{{ item }}"
+    dest: "/usr/local/bin/{{ item }}"
+    state: link
+    force: yes
+  become: yes
+  loop:
+    - node
+    - npm
+  tags:
+    - runner
+
 - name: Check runner version
   ansible.builtin.command: "{{ github_runner_home }}/bin/Runner.Listener --version"
   become: yes
