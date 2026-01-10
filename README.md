@@ -1,6 +1,6 @@
 # Server Infrastructure - Multi-Location IaC
 
-[![Terraform](https://img.shields.io/badge/Terraform-1.7+-623CE4?logo=terraform&logoColor=white)](https://www.terraform.io/)
+[![Terraform](https://img.shields.io/badge/Terraform-1.14.3+-623CE4?logo=terraform&logoColor=white)](https://www.terraform.io/)
 [![Ansible](https://img.shields.io/badge/Ansible-2.16+-EE0000?logo=ansible&logoColor=white)](https://www.ansible.com/)
 [![Proxmox](https://img.shields.io/badge/Proxmox-8.4-E57000?logo=proxmox&logoColor=white)](https://www.proxmox.com/)
 [![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)

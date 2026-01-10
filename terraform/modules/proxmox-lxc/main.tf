@@ -28,9 +28,19 @@ resource "proxmox_virtual_environment_container" "container" {
     }
   }
 
-  # Hostname Configuration
+  # Hostname and User Configuration
   initialization {
     hostname = var.name
+
+    # SSH Public Keys for root user (recommended for security)
+    dynamic "user_account" {
+      for_each = length(var.ssh_public_keys) > 0 || var.root_password != null ? [1] : []
+
+      content {
+        keys     = length(var.ssh_public_keys) > 0 ? var.ssh_public_keys : null
+        password = var.root_password
+      }
+    }
   }
 
   # CPU Configuration

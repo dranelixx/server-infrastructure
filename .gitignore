@@ -1,6 +1,9 @@
 # Local .terraform directories
 .terraform/
 
+# Module lockfiles (root config lockfiles should be committed)
+terraform/modules/**/.terraform.lock.hcl
+
 # .tfstate files
 *.tfstate
 *.tfstate.*
