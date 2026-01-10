@@ -31,9 +31,9 @@ resource "proxmox_virtual_environment_vm" "vm" {
     for_each = var.bios == "ovmf" ? [1] : []
 
     content {
-      datastore_id      = var.storage_pool
-      file_format       = "raw"
-      type              = "4m"
+      datastore_id = length(var.disks) > 0 ? var.disks[0].datastore_id : var.storage_pool
+      file_format  = "raw"
+      type         = "4m"
       pre_enrolled_keys = true
     }
   }
@@ -53,6 +53,9 @@ resource "proxmox_virtual_environment_vm" "vm" {
     cores   = var.cores
     sockets = var.sockets
     type    = var.cpu_type
+    limit   = var.cpu_limit > 0 ? var.cpu_limit : null
+    units   = var.cpu_units
+    numa    = var.numa_enabled
   }
 
   # Memory Configuration (in MB)
@@ -61,27 +64,60 @@ resource "proxmox_virtual_environment_vm" "vm" {
     floating  = var.balloon_memory > 0 ? var.balloon_memory : var.memory
   }
 
-  # Disk Configuration
-  disk {
-    datastore_id = var.storage_pool
-    interface    = "scsi0"
-    size         = parseint(replace(var.disk_size, "/[GMK]/", ""), 10)
-    file_format  = "raw"
-    iothread     = true
-    discard      = "on"
-    ssd          = var.emulate_ssd
+  # Disk Configuration (Multi-Disk Support)
+  dynamic "disk" {
+    for_each = length(var.disks) > 0 ? var.disks : (var.disk_size != null ? [{
+      datastore_id = var.storage_pool
+      interface    = "scsi0"
+      size         = parseint(replace(var.disk_size, "/[GMK]/", ""), 10)
+      file_format  = "raw"
+      cache        = "none"
+      iothread     = true
+      ssd          = var.emulate_ssd
+      discard      = true
+      backup       = true
+    }] : [])
+
+    content {
+      datastore_id = disk.value.datastore_id
+      interface    = disk.value.interface
+      size         = disk.value.size
+      file_format  = try(disk.value.file_format, "raw")
+      cache        = try(disk.value.cache, "none")
+      iothread     = try(disk.value.iothread, true)
+      ssd          = try(disk.value.ssd, false)
+      discard      = coalesce(disk.value.discard, false) ? "on" : "ignore"
+      backup       = try(disk.value.backup, true)
+    }
   }
+
+  # SCSI Controller Configuration
+  scsi_hardware = var.scsi_hardware
 
   # Network Interfaces (supports multiple NICs)
   dynamic "network_device" {
     for_each = var.network_interfaces
 
     content {
-      model    = network_device.value.model
-      bridge   = network_device.value.bridge
-      vlan_id  = network_device.value.vlan_tag
-      firewall = try(network_device.value.firewall_enabled, false)
+      model       = network_device.value.model
+      bridge      = network_device.value.bridge
+      vlan_id     = network_device.value.vlan_tag
+      firewall    = try(network_device.value.firewall_enabled, false)
       mac_address = try(network_device.value.mac_address, null)
+      mtu         = try(network_device.value.mtu, null)
+      rate_limit  = try(network_device.value.rate_limit, null)
+    }
+  }
+
+  # PCI Passthrough (GPU, HBA, NIC, etc.)
+  dynamic "hostpci" {
+    for_each = var.hostpci_devices
+
+    content {
+      device = hostpci.value.device
+      pcie   = try(hostpci.value.pcie, true)
+      rombar = try(hostpci.value.rombar, true)
+      xvga   = try(hostpci.value.xvga, false)
     }
   }
 
@@ -101,13 +137,26 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   # Boot Configuration
   on_boot = var.start_on_boot
+
+  # Startup Order Configuration (optional)
+  dynamic "startup" {
+    for_each = var.startup_order != null ? [1] : []
+
+    content {
+      order      = var.startup_order
+      up_delay   = var.startup_delay
+      down_delay = var.shutdown_timeout
+    }
+  }
+
+  # QEMU Guest Agent
   agent {
     enabled = var.qemu_agent_enabled
   }
 
-  # Operating System Type (Linux 2.6+ Kernel)
+  # Operating System Type
   operating_system {
-    type = "l26"
+    type = var.os_type
   }
 
   # Tags for organization and Ansible dynamic inventory
@@ -121,10 +170,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
       initialization,  # Cloud-init changes ignored (VMs may not use cloud-init)
       efi_disk,        # EFI disk location may vary
       boot_order,      # Boot order can change
-      ipv4_addresses,  # Runtime IP addresses
-      ipv6_addresses,  # Runtime IPv6 addresses
-      mac_addresses,   # MAC addresses
-      network_interface_names, # Runtime interface names
+      hostpci,         # PCI passthrough can be modified manually
     ]
   }
 }

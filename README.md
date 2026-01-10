@@ -29,7 +29,7 @@ Dieses Repository demonstriert **Enterprise-Level DevOps Skills** durch:
 
 **Colo Prague:**
 - **Thor** (HP DL320e Gen8 v2): Proxmox Host + pfSense VM
-- **Loki** (HP DL380 Gen9): Proxmox Compute (7 VMs + 13 LXCs)
+- **Loki** (HP DL380 Gen9): Proxmox Compute (5 VMs + 13 LXCs)
 - **HP 1910-24G Switch**: LACP-fähig, VLANs 10/20/30
 
 **Externe Services:**
@@ -200,7 +200,7 @@ ansible-playbook playbooks/monitoring_stack.yml
 
 | Kategorie | Technologie | Zweck |
 |-----------|-------------|-------|
-| **IaC** | Terraform (telmate/proxmox) | VM/LXC Provisioning |
+| **IaC** | Terraform (bpg/proxmox) | VM/LXC Provisioning |
 | **Config Management** | Ansible | Server-Konfiguration, API Calls |
 | **Virtualisierung** | Proxmox VE 8.4 | Hypervisor (KVM + LXC) |
 | **Networking** | pfSense 2.8, HP 1910-24G | Firewall, VLAN Routing, LACP |
@@ -241,5 +241,5 @@ Dieses Repository ist ein **Portfolio-Projekt** und dient zu Demonstrationszweck
 
 ## 📧 Kontakt
 
-**DevOps Portfolio Projekt** von Adrik
-GitHub: [@adrik](https://github.com/adrik) | [LinkedIn](https://linkedin.com/in/adrik)
+**DevOps Portfolio Projekt** von Adrian Konopczynski
+GitHub: [@dranelixx](https://github.com/dranelixx) | [LinkedIn](https://www.linkedin.com/in/adrian-konopczynski-5432b5166/)

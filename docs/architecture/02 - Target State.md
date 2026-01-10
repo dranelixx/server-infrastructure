@@ -908,59 +908,59 @@ iLOs (10.0.10.3-4)
 
 * * *
 
-## IST vs. SOLL Comparison
+## Current vs. Target Comparison
 
 ### Before & After - Key Differences
 
 ```mermaid
 flowchart LR
-    %% IST (Current State) - Left side
-    IST_Thor["Thor<br/>Bare Metal<br/>pfSense"]
-    IST_Dell["Dell PowerConnect<br/>2824<br/>No LACP"]
-    IST_Loki["Loki Proxmox<br/>Single Link"]
-    IST_Net["Single Network<br/>10.0.1.0/24<br/>Flat"]
-    IST_BW["1 Gbps<br/>Bandwidth"]
+    %% Current (Current State) - Left side
+    Current_Thor["Thor<br/>Bare Metal<br/>pfSense"]
+    Current_Dell["Dell PowerConnect 2824<br/>No LACP"]
+    Current_Loki["Loki Proxmox<br/>Single Link"]
+    Current_Net["Single Network<br/>10.0.1.0/24<br/>Flat"]
+    Current_BW["1 Gbps<br/>Bandwidth"]
 
-    %% SOLL (Target State) - Right side
-    SOLL_Thor["Thor Proxmox<br/>pfSense VM<br/>3x NIC Passthrough"]
-    SOLL_HP["HP 1910-24G<br/>LACP Support<br/>VLANs 10/20/30"]
-    SOLL_Loki["Loki Proxmox<br/>LACP Bond<br/>eno1-4"]
-    SOLL_Net["4 Networks<br/>VLAN 10: Mgmt<br/>VLAN 20: Prod<br/>VLAN 30: Compute<br/>vmbr_storage: L2"]
-    SOLL_BW["4 Gbps LACP<br/>+ Unlimited Internal<br/>Storage Network"]
+    %% Target (Target State) - Right side
+    Target_Thor["Thor Proxmox<br/>pfSense VM<br/>3x NIC Passthrough"]
+    Target_HP["HP 1910-24G<br/>LACP Support<br/>VLANs 10/20/30"]
+    Target_Loki["Loki Proxmox<br/>LACP Bond<br/>eno1-4"]
+    Target_Net["4 Networks<br/>VLAN 10: Mgmt<br/>VLAN 20: Prod<br/>VLAN 30: Compute<br/>vmbr_storage: L2"]
+    Target_BW["4 Gbps LACP<br/>+ Unlimited Internal<br/>Storage Network"]
 
-    %% IST connections
-    IST_Thor -->|Single<br/>1 GbE| IST_Dell
-    IST_Dell -->|Single<br/>1 GbE| IST_Loki
-    IST_Loki --> IST_Net
-    IST_Net --> IST_BW
+    %% Current connections
+    Current_Thor -->|Single<br/>1 GbE| Current_Dell
+    Current_Dell -->|Single<br/>1 GbE| Current_Loki
+    Current_Loki --> Current_Net
+    Current_Net --> Current_BW
 
-    %% SOLL connections
-    SOLL_Thor -->|LACP<br/>Ports 1-2<br/>LAG1| SOLL_HP
-    SOLL_HP -->|LACP<br/>Ports 9-12<br/>LAG2| SOLL_Loki
-    SOLL_Loki --> SOLL_Net
-    SOLL_Net --> SOLL_BW
+    %% Target connections
+    Target_Thor -->|LACP<br/>Ports 1-2<br/>LAG1| Target_HP
+    Target_HP -->|LACP<br/>Ports 9-12<br/>LAG2| Target_Loki
+    Target_Loki --> Target_Net
+    Target_Net --> Target_BW
 
     %% Migration arrow
-    IST_Net -.->|Migration Window<br/>31 Jan - 1 Feb 2026| SOLL_Net
+    Current_Net -.->|Migration Window<br/>31 Jan - 1 Feb 2026| Target_Net
 
-    %% IST Styling (Red/Orange)
-    style IST_Thor fill:#faa,stroke:#333,stroke-width:2px,color:#000
-    style IST_Dell fill:#faa,stroke:#333,stroke-width:2px,color:#000
-    style IST_Loki fill:#faa,stroke:#333,stroke-width:2px,color:#000
-    style IST_Net fill:#faa,stroke:#333,stroke-width:2px,color:#000
-    style IST_BW fill:#faa,stroke:#333,stroke-width:2px,color:#000
+    %% Current Styling (Red/Orange)
+    style Current_Thor fill:#faa,stroke:#333,stroke-width:2px,color:#000
+    style Current_Dell fill:#faa,stroke:#333,stroke-width:2px,color:#000
+    style Current_Loki fill:#faa,stroke:#333,stroke-width:2px,color:#000
+    style Current_Net fill:#faa,stroke:#333,stroke-width:2px,color:#000
+    style Current_BW fill:#faa,stroke:#333,stroke-width:2px,color:#000
 
-    %% SOLL Styling (Green)
-    style SOLL_Thor fill:#afa,stroke:#333,stroke-width:2px,color:#000
-    style SOLL_HP fill:#afa,stroke:#333,stroke-width:2px,color:#000
-    style SOLL_Loki fill:#afa,stroke:#333,stroke-width:2px,color:#000
-    style SOLL_Net fill:#afa,stroke:#333,stroke-width:2px,color:#000
-    style SOLL_BW fill:#afa,stroke:#333,stroke-width:2px,color:#000
+    %% Target Styling (Green)
+    style Target_Thor fill:#afa,stroke:#333,stroke-width:2px,color:#000
+    style Target_HP fill:#afa,stroke:#333,stroke-width:2px,color:#000
+    style Target_Loki fill:#afa,stroke:#333,stroke-width:2px,color:#000
+    style Target_Net fill:#afa,stroke:#333,stroke-width:2px,color:#000
+    style Target_BW fill:#afa,stroke:#333,stroke-width:2px,color:#000
 ```
 
 ### Feature Comparison Table
 
-| Feature                  | IST (Current)             | SOLL (Target)                     | Improvement       |
+| Feature                  | Current State             | Target State                      | Improvement       |
 | ------------------------ | ------------------------- | --------------------------------- | ----------------- |
 | **Switch**               | Dell PowerConnect 2824    | HP 1910-24G                       | LACP Support ✅    |
 | **Thor Role**            | Bare Metal pfSense        | Proxmox + pfSense VM              | Virtualization ✅  |
