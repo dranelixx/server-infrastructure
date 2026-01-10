@@ -26,7 +26,7 @@
   register: service_exists
   changed_when: false
   failed_when: false
-  become: yes
+  become: true
   when: runner_configured.stat.exists
   tags:
     - service
@@ -34,7 +34,7 @@
 - name: Install runner service using svc.sh
   ansible.builtin.command:
     cmd: "{{ github_runner_home }}/svc.sh install {{ github_runner_user }}"
-  become: yes
+  become: true
   when:
     - runner_configured.stat.exists
     - service_exists.rc != 0
@@ -45,7 +45,7 @@
 - name: Start runner service
   ansible.builtin.command:
     cmd: "{{ github_runner_home }}/svc.sh start"
-  become: yes
+  become: true
   when:
     - runner_configured.stat.exists
     - service_installed is defined and service_installed.changed
@@ -65,7 +65,7 @@
   ansible.builtin.shell: "systemctl status actions.runner.*.service | head -15"
   register: service_status
   changed_when: false
-  become: yes
+  become: true
   when: runner_configured.stat.exists
   tags:
     - service

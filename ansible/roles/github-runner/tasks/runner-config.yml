@@ -53,7 +53,7 @@
       --work {{ github_runner_work_dir }}
       --unattended
     creates: "{{ github_runner_home }}/.runner"
-  become: yes
+  become: true
   become_user: "{{ github_runner_user }}"
   when:
     - not runner_configured.stat.exists
