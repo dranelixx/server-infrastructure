@@ -10,7 +10,6 @@ on:
       - main
     paths:
       - 'terraform/**'
-      - '.github/workflows/terraform-drift.yml'
 
 # Prevents parallel drift checks
 concurrency:
