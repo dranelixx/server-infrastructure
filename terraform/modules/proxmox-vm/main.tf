@@ -31,9 +31,9 @@ resource "proxmox_virtual_environment_vm" "vm" {
     for_each = var.bios == "ovmf" ? [1] : []
 
     content {
-      datastore_id = length(var.disks) > 0 ? var.disks[0].datastore_id : var.storage_pool
-      file_format  = "raw"
-      type         = "4m"
+      datastore_id      = length(var.disks) > 0 ? var.disks[0].datastore_id : var.storage_pool
+      file_format       = "raw"
+      type              = "4m"
       pre_enrolled_keys = true
     }
   }
@@ -165,12 +165,12 @@ resource "proxmox_virtual_environment_vm" "vm" {
   # Lifecycle Management
   lifecycle {
     ignore_changes = [
-      network_device,  # NICs can be modified manually in Proxmox
-      disk,            # Disk size growth is ignored
-      initialization,  # Cloud-init changes ignored (VMs may not use cloud-init)
-      efi_disk,        # EFI disk location may vary
-      boot_order,      # Boot order can change
-      hostpci,         # PCI passthrough can be modified manually
+      network_device, # NICs can be modified manually in Proxmox
+      disk,           # Disk size growth is ignored
+      initialization, # Cloud-init changes ignored (VMs may not use cloud-init)
+      efi_disk,       # EFI disk location may vary
+      boot_order,     # Boot order can change
+      hostpci,        # PCI passthrough can be modified manually
     ]
   }
 }

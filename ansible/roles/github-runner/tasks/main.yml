@@ -1,0 +1,69 @@
+---
+# Main tasks for GitHub Actions Runner role
+
+- name: Include pre-flight checks
+  ansible.builtin.import_tasks: preflight.yml
+  tags:
+    - github-runner
+    - preflight
+
+- name: Include system setup tasks
+  ansible.builtin.import_tasks: system.yml
+  tags:
+    - github-runner
+    - system
+
+- name: Include Terraform installation tasks
+  ansible.builtin.import_tasks: terraform.yml
+  tags:
+    - github-runner
+    - terraform
+
+- name: Include TFLint installation tasks
+  ansible.builtin.import_tasks: tflint.yml
+  when: tflint_enabled | bool
+  tags:
+    - github-runner
+    - tflint
+
+- name: Include GitHub runner installation tasks
+  ansible.builtin.import_tasks: runner.yml
+  tags:
+    - github-runner
+    - runner
+
+- name: Include systemd service setup tasks
+  ansible.builtin.import_tasks: service.yml
+  tags:
+    - github-runner
+    - service
+
+- name: Display post-installation instructions
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "GitHub Actions Runner Installation Complete!"
+      - "=========================================="
+      - ""
+      - "MANUAL STEPS REQUIRED:"
+      - ""
+      - "1. Get runner token from GitHub:"
+      - "   Navigate to: {{ github_repo_url }}/settings/actions/runners/new"
+      - ""
+      - "2. SSH to the container:"
+      - "   ssh {{ github_runner_user }}@{{ ansible_host | default(inventory_hostname) }}"
+      - ""
+      - "3. Configure the runner:"
+      - "   cd {{ github_runner_home }}"
+      - "   ./config.sh --url {{ github_repo_url }} --token <YOUR_TOKEN>"
+      - ""
+      - "4. Start the runner service:"
+      - "   sudo systemctl start {{ github_runner_service_name }}"
+      - "   sudo systemctl status {{ github_runner_service_name }}"
+      - ""
+      - "5. Verify runner is online:"
+      - "   Check {{ github_repo_url }}/settings/actions/runners"
+      - ""
+      - "=========================================="
+  tags:
+    - github-runner

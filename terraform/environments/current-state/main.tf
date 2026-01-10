@@ -158,11 +158,11 @@ module "pms" {
   ]
 
   # VM Settings
-  clone_template      = null
-  full_clone          = true
-  start_on_boot       = true
-  qemu_agent_enabled  = true
-  balloon_memory      = 0
+  clone_template     = null
+  full_clone         = true
+  start_on_boot      = true
+  qemu_agent_enabled = true
+  balloon_memory     = 0
 
   # Tags
   tags = ["production", "media", "plex", "ansible-plex"]
@@ -203,11 +203,11 @@ module "arr_stack" {
   ]
 
   # VM Settings
-  clone_template      = null
-  full_clone          = true
-  start_on_boot       = true
-  qemu_agent_enabled  = true
-  balloon_memory      = 0
+  clone_template     = null
+  full_clone         = true
+  start_on_boot      = true
+  qemu_agent_enabled = true
+  balloon_memory     = 0
 
   # Tags
   tags = ["production", "media", "arr-stack", "ansible-arr_stack"]
@@ -248,11 +248,11 @@ module "docker_prod" {
   ]
 
   # VM Settings
-  clone_template      = null
-  full_clone          = true
-  start_on_boot       = true
-  qemu_agent_enabled  = true
-  balloon_memory      = 0
+  clone_template     = null
+  full_clone         = true
+  start_on_boot      = true
+  qemu_agent_enabled = true
+  balloon_memory     = 0
 
   # Tags
   tags = ["production", "docker", "ansible-docker"]
@@ -293,11 +293,11 @@ module "nextcloud" {
   ]
 
   # VM Settings
-  clone_template      = null
-  full_clone          = true
-  start_on_boot       = true
-  qemu_agent_enabled  = true
-  balloon_memory      = 0
+  clone_template     = null
+  full_clone         = true
+  start_on_boot      = true
+  qemu_agent_enabled = true
+  balloon_memory     = 0
 
   # Tags
   tags = ["production", "nextcloud", "ansible-nextcloud"]
@@ -750,4 +750,40 @@ module "graylog" {
 
   # Tags
   tags = ["production", "lxc", "logging", "ansible-graylog", "community-script"]
+}
+
+# === CI/CD Infrastructure ===
+
+module "github_runner" {
+  source = "../../modules/proxmox-lxc"
+
+  name        = "github-runner-prod-cz-01"
+  vmid        = 6200
+  target_node = "pve-prod-cz-loki"
+  description = "GitHub Actions Self-Hosted Runner for Terraform Workflows"
+
+  # Resources
+  cores  = 2
+  memory = 2048
+  swap   = 512
+
+  # Storage
+  disk_size    = 20
+  storage_pool = "local-zfs"
+
+  # Network
+  bridge           = "vmbr0"
+  vlan_tag         = null
+  firewall_enabled = false
+
+  # Template
+
+  # Container Settings
+  unprivileged  = true
+  start_on_boot = true
+  started       = true
+  protection    = false
+
+  # Tags
+  tags = ["production", "lxc", "cicd", "github-runner", "ansible-github-runner"]
 }

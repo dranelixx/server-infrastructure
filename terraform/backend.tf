@@ -3,7 +3,7 @@
 
 terraform {
   cloud {
-    organization = "YOUR-ORG-NAME"  # Replace with your Terraform Cloud org
+    organization = "YOUR-ORG-NAME" # Replace with your Terraform Cloud org
 
     workspaces {
       tags = ["server-infrastructure", "proxmox"]

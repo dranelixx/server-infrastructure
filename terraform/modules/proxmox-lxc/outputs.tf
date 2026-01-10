@@ -28,10 +28,10 @@ output "target_node" {
 output "resource_specs" {
   description = "Container resource specifications"
   value = {
-    cores      = var.cores
-    memory     = var.memory
-    swap       = var.swap
-    disk_size  = var.disk_size
+    cores     = var.cores
+    memory    = var.memory
+    swap      = var.swap
+    disk_size = var.disk_size
   }
 }
 

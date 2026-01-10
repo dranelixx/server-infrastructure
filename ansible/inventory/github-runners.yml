@@ -1,0 +1,44 @@
+---
+# GitHub Actions Self-Hosted Runners Inventory
+# This inventory file defines all GitHub runner hosts
+
+all:
+  children:
+    github_runners:
+      hosts:
+        github-runner-prod-cz-01:
+          # Connection settings are in host_vars/github-runner-prod-cz-01.yml (gitignored)
+          ansible_user: root
+          ansible_python_interpreter: /usr/bin/python3
+
+          # Runner-specific configuration
+          github_runner_labels: "self-hosted,Linux,X64,terraform,proxmox"
+          github_runner_name: "github-runner-prod-cz-01"
+
+          # Environment classification
+          environment: production
+          location: cz  # Czech datacenter
+
+      vars:
+        # Common variables for all GitHub runners
+        github_repo_url: "https://github.com/dranelixx/server-infrastructure"
+        github_repo_owner: "dranelixx"
+        github_repo_name: "server-infrastructure"
+
+        # Terraform configuration
+        terraform_version: "1.7.5"
+        tflint_enabled: true
+
+        # Network configuration (proxmox_api_host is in host_vars)
+        proxmox_api_port: 8006
+
+        # Runner configuration
+        github_runner_version: "latest"
+        github_runner_home: "/opt/actions-runner"
+
+# Example: Add more runners
+#     github-runner-dev-cz-01:
+#       ansible_host: 10.0.1.101
+#       ansible_user: root
+#       environment: development
+#       location: cz

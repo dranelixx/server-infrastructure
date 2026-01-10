@@ -58,6 +58,12 @@ resource "proxmox_virtual_environment_container" "container" {
     firewall = var.firewall_enabled
   }
 
+  # Operating System Configuration
+  operating_system {
+    template_file_id = var.template_file_id
+    type             = var.os_type
+  }
+
   # Container Features
   unprivileged = var.unprivileged
 

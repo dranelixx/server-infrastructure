@@ -1,0 +1,370 @@
+name: Terraform Apply
+
+# Applies Terraform changes after manual approval
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to apply'
+        required: true
+        type: choice
+        options:
+          - current-state
+          - target-state
+          - both
+
+# Only one apply at a time
+concurrency:
+  group: terraform-apply
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  detect-changes:
+    name: Detect Changed Environments
+    runs-on: self-hosted
+    outputs:
+      current-state: ${{ steps.changes.outputs.current-state }}
+      target-state: ${{ steps.changes.outputs.target-state }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect Changes
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            # Manual trigger - use input
+            if [ "${{ inputs.environment }}" == "current-state" ] || [ "${{ inputs.environment }}" == "both" ]; then
+              echo "current-state=true" >> $GITHUB_OUTPUT
+            else
+              echo "current-state=false" >> $GITHUB_OUTPUT
+            fi
+
+            if [ "${{ inputs.environment }}" == "target-state" ] || [ "${{ inputs.environment }}" == "both" ]; then
+              echo "target-state=true" >> $GITHUB_OUTPUT
+            else
+              echo "target-state=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            # Automatic trigger - check changed files
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+
+            if echo "$CHANGED_FILES" | grep -q "terraform/environments/current-state/"; then
+              echo "current-state=true" >> $GITHUB_OUTPUT
+            else
+              echo "current-state=false" >> $GITHUB_OUTPUT
+            fi
+
+            if echo "$CHANGED_FILES" | grep -q "terraform/environments/target-state/"; then
+              echo "target-state=true" >> $GITHUB_OUTPUT
+            else
+              echo "target-state=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  apply-current-state:
+    name: Apply - Current State
+    needs: detect-changes
+    if: needs.detect-changes.outputs.current-state == 'true'
+    runs-on: self-hosted
+    environment:
+      name: production
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    defaults:
+      run:
+        working-directory: terraform/environments/current-state
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~> 1.7.0'
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan -no-color | tee plan_output.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        env:
+          TF_VAR_proxmox_api_url: ${{ secrets.PROXMOX_API_ENDPOINT }}
+          TF_VAR_proxmox_api_token_id: ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          TF_VAR_proxmox_api_token_secret: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+          TF_VAR_proxmox_tls_insecure: 'true'
+
+      - name: Check for Changes
+        id: check
+        run: |
+          if grep -q "No changes" plan_output.txt;
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to apply"
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Changes found, executing apply"
+          fi
+
+      - name: Terraform Apply
+        id: apply
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          terraform apply -auto-approve tfplan | tee apply_output.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        env:
+          TF_VAR_proxmox_api_url: ${{ secrets.PROXMOX_API_ENDPOINT }}
+          TF_VAR_proxmox_api_token_id: ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          TF_VAR_proxmox_api_token_secret: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+          TF_VAR_proxmox_tls_insecure: 'true'
+
+      - name: Create Apply Summary
+        if: always()
+        run: |
+          echo "### Terraform Apply - Current State" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** current-state" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.apply.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Changes:** ${{ steps.check.outputs.changes }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f apply_output.txt ]; then
+            echo "<details><summary>Apply Output</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat apply_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Apply Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-state-apply-${{ github.run_number }}
+          path: |
+            terraform/environments/current-state/plan_output.txt
+            terraform/environments/current-state/apply_output.txt
+          retention-days: 90
+
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let applyOutput = 'Apply output not available';
+            try {
+              applyOutput = fs.readFileSync('terraform/environments/current-state/apply_output.txt', 'utf8');
+            } catch (error) {
+              console.log('Apply output could not be read');
+            }
+
+            const body = `## Terraform Apply Failed - Current State
+
+            **Environment:** current-state
+
+            **Workflow:** [Run #${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            **Commit:** ${context.sha.substring(0, 7)}
+            **Triggered by:** @${context.actor}
+
+            ### Error Output
+
+            \`\`\`
+            ${applyOutput.length > 60000 ? applyOutput.substring(0, 60000) + '\n\n... (Output truncated)' : applyOutput}
+            \`\`\`
+
+            ### Action Required
+
+            Terraform Apply failed. Please check:
+            1. Logs in the Workflow Run
+            2. Terraform State Status
+            3. Proxmox API Accessibility
+            4. Resource Configuration
+
+            **IMPORTANT:** Manual intervention required!`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Terraform Apply failed - current-state',
+              body: body,
+              labels: ['terraform', 'apply-failure', 'current-state', 'urgent']
+            });
+
+      - name: Fail Job if Apply Failed
+        if: steps.apply.outcome == 'failure'
+        run: exit 1
+
+  apply-target-state:
+    name: Apply - Target State
+    needs: detect-changes
+    if: needs.detect-changes.outputs.target-state == 'true'
+    runs-on: self-hosted
+    environment:
+      name: production
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    defaults:
+      run:
+        working-directory: terraform/environments/target-state
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~> 1.7.0'
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan -no-color | tee plan_output.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        env:
+          TF_VAR_proxmox_api_url: ${{ secrets.PROXMOX_API_ENDPOINT }}
+          TF_VAR_proxmox_api_token_id: ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          TF_VAR_proxmox_api_token_secret: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+          TF_VAR_proxmox_tls_insecure: 'true'
+
+      - name: Check for Changes
+        id: check
+        run: |
+          if grep -q "No changes" plan_output.txt;
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to apply"
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Changes found, executing apply"
+          fi
+
+      - name: Terraform Apply
+        id: apply
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          terraform apply -auto-approve tfplan | tee apply_output.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        env:
+          TF_VAR_proxmox_api_url: ${{ secrets.PROXMOX_API_ENDPOINT }}
+          TF_VAR_proxmox_api_token_id: ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          TF_VAR_proxmox_api_token_secret: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+          TF_VAR_proxmox_tls_insecure: 'true'
+
+      - name: Create Apply Summary
+        if: always()
+        run: |
+          echo "### Terraform Apply - Target State" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** target-state" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.apply.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Changes:** ${{ steps.check.outputs.changes }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f apply_output.txt ]; then
+            echo "<details><summary>Apply Output</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat apply_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Apply Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: target-state-apply-${{ github.run_number }}
+          path: |
+            terraform/environments/target-state/plan_output.txt
+            terraform/environments/target-state/apply_output.txt
+          retention-days: 90
+
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let applyOutput = 'Apply output not available';
+            try {
+              applyOutput = fs.readFileSync('terraform/environments/target-state/apply_output.txt', 'utf8');
+            } catch (error) {
+              console.log('Apply output could not be read');
+            }
+
+            const body = `## Terraform Apply Failed - Target State
+
+            **Environment:** target-state
+
+            **Workflow:** [Run #${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            **Commit:** ${context.sha.substring(0, 7)}
+            **Triggered by:** @${context.actor}
+
+            ### Error Output
+
+            \`\`\`
+            ${applyOutput.length > 60000 ? applyOutput.substring(0, 60000) + '\n\n... (Output truncated)' : applyOutput}
+            \`\`\`
+
+            ### Action Required
+
+            Terraform Apply failed. Please check:
+            1. Logs in the Workflow Run
+            2. Terraform State Status
+            3. Proxmox API Accessibility
+            4. Resource Configuration
+
+            **IMPORTANT:** Manual intervention required!`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Terraform Apply failed - target-state',
+              body: body,
+              labels: ['terraform', 'apply-failure', 'target-state', 'urgent']
+            });
+
+      - name: Fail Job if Apply Failed
+        if: steps.apply.outcome == 'failure'
+        run: exit 1
+
+  notify-completion:
+    name: Notify Completion
+    needs: [apply-current-state, apply-target-state]
+    if: always()
+    runs-on: self-hosted
+    steps:
+      - name: Check Results
+        run: |
+          echo "Apply workflow completed"
+          echo "Current State: ${{ needs.apply-current-state.result }}"
+          echo "Target State: ${{ needs.apply-target-state.result }}"
+
+          if [ "${{ needs.apply-current-state.result }}" == "failure" ] || [ "${{ needs.apply-target-state.result }}" == "failure" ]; then
+            echo "At least one apply failed"
+            exit 1
+          fi

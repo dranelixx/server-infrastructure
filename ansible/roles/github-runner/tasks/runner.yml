@@ -1,0 +1,144 @@
+---
+# GitHub Actions Runner installation tasks
+
+- name: Check if runner is already installed
+  ansible.builtin.stat:
+    path: "{{ github_runner_home }}/bin/Runner.Listener"
+  register: runner_installed
+  tags:
+    - runner
+
+- name: Get latest GitHub Actions runner version
+  ansible.builtin.uri:
+    url: "https://api.github.com/repos/actions/runner/releases/latest"
+    return_content: yes
+    timeout: 30
+  register: runner_latest_release
+  retries: 3
+  delay: 10
+  until: runner_latest_release.status == 200
+  when: github_runner_version == "latest" and not runner_installed.stat.exists
+  failed_when: false
+  tags:
+    - runner
+
+- name: Use fallback runner version if API failed
+  ansible.builtin.set_fact:
+    runner_api_failed: "{{ runner_latest_release.status is not defined or runner_latest_release.status != 200 }}"
+  when: github_runner_version == "latest" and not runner_installed.stat.exists
+  tags:
+    - runner
+
+- name: Warn if using fallback version
+  ansible.builtin.debug:
+    msg: "WARNING: GitHub API unreachable. Using fallback runner version 2.331.0"
+  when: github_runner_version == "latest" and not runner_installed.stat.exists and runner_api_failed
+  tags:
+    - runner
+
+- name: Set runner version variable
+  ansible.builtin.set_fact:
+    runner_install_version: "{{ runner_latest_release.json.tag_name | regex_replace('^v', '') if (github_runner_version == 'latest' and not runner_api_failed) else ('2.331.0' if github_runner_version == 'latest' else github_runner_version) }}"
+  when: not runner_installed.stat.exists
+  tags:
+    - runner
+
+- name: Display runner installation status
+  ansible.builtin.debug:
+    msg: "GitHub Actions Runner is already installed at {{ github_runner_home }}"
+  when: runner_installed.stat.exists
+  tags:
+    - runner
+
+- name: Install GitHub Actions Runner
+  when: not runner_installed.stat.exists
+  block:
+    - name: Create temporary directory for runner download
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: runner
+      register: runner_temp_dir
+      tags:
+        - runner
+
+    - name: Download GitHub Actions Runner
+      ansible.builtin.get_url:
+        url: "https://github.com/actions/runner/releases/download/v{{ runner_install_version }}/actions-runner-linux-x64-{{ runner_install_version }}.tar.gz"
+        dest: "{{ runner_temp_dir.path }}/actions-runner.tar.gz"
+        mode: '0644'
+        timeout: 300
+      retries: 3
+      delay: 10
+      register: runner_download
+      until: runner_download is succeeded
+      tags:
+        - runner
+
+    - name: Extract GitHub Actions Runner
+      ansible.builtin.unarchive:
+        src: "{{ runner_temp_dir.path }}/actions-runner.tar.gz"
+        dest: "{{ github_runner_home }}"
+        remote_src: yes
+        owner: "{{ github_runner_user }}"
+        group: "{{ github_runner_group }}"
+      become: yes
+      tags:
+        - runner
+
+    - name: Remove temporary directory
+      ansible.builtin.file:
+        path: "{{ runner_temp_dir.path }}"
+        state: absent
+      tags:
+        - runner
+
+    - name: Set correct permissions on runner directory
+      ansible.builtin.file:
+        path: "{{ github_runner_home }}"
+        state: directory
+        owner: "{{ github_runner_user }}"
+        group: "{{ github_runner_group }}"
+        recurse: yes
+      become: yes
+      tags:
+        - runner
+
+    - name: Make runner scripts executable
+      ansible.builtin.file:
+        path: "{{ github_runner_home }}/{{ item }}"
+        mode: '0755'
+      become: yes
+      loop:
+        - config.sh
+        - run.sh
+        - bin/Runner.Listener
+        - bin/Runner.Worker
+        - bin/Runner.PluginHost
+      tags:
+        - runner
+
+- name: Create work directory
+  ansible.builtin.file:
+    path: "{{ github_runner_work_dir }}"
+    state: directory
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_group }}"
+    mode: '0755'
+  become: yes
+  tags:
+    - runner
+
+- name: Check runner version
+  ansible.builtin.command: "{{ github_runner_home }}/bin/Runner.Listener --version"
+  become: yes
+  become_user: "{{ github_runner_user }}"
+  register: runner_version_output
+  changed_when: false
+  tags:
+    - runner
+
+- name: Display runner version
+  ansible.builtin.debug:
+    msg: "GitHub Actions Runner version: {{ runner_version_output.stdout }}"
+  tags:
+    - runner

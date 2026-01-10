@@ -342,10 +342,10 @@ variable "network_interfaces" {
 variable "hostpci_devices" {
   description = "PCI devices to pass through to VM (GPU, HBA, NIC, etc.)"
   type = list(object({
-    device = string           # PCI address (e.g. "0000:08:00", "0000:88:00")
-    pcie   = optional(bool)   # PCIe instead of PCI (default: true)
-    rombar = optional(bool)   # Enable option ROM (default: true)
-    xvga   = optional(bool)   # Primary GPU (default: false)
+    device = string         # PCI address (e.g. "0000:08:00", "0000:88:00")
+    pcie   = optional(bool) # PCIe instead of PCI (default: true)
+    rombar = optional(bool) # Enable option ROM (default: true)
+    xvga   = optional(bool) # Primary GPU (default: false)
   }))
   default = []
 
@@ -368,7 +368,7 @@ variable "ip_address" {
   default     = null
 
   validation {
-    condition = var.ip_address == null || can(regex("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d+$", var.ip_address))
+    condition     = var.ip_address == null || can(regex("^\\d+\\.\\d+\\.\\d+\\.\\d+/\\d+$", var.ip_address))
     error_message = "IP address must have CIDR format (e.g. '10.0.30.20/24')."
   }
 }
@@ -379,7 +379,7 @@ variable "gateway" {
   default     = null
 
   validation {
-    condition = var.gateway == null || can(regex("^\\d+\\.\\d+\\.\\d+\\.\\d+$", var.gateway))
+    condition     = var.gateway == null || can(regex("^\\d+\\.\\d+\\.\\d+\\.\\d+$", var.gateway))
     error_message = "Gateway must be a valid IP address (e.g. '10.0.30.1')."
   }
 }

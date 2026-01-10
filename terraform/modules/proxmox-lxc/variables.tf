@@ -186,7 +186,7 @@ variable "firewall_enabled" {
 }
 
 # ============================================================================
-# TAB: Template
+# TAB: Template & Operating System
 # ============================================================================
 
 variable "template_vmid" {
@@ -197,6 +197,23 @@ variable "template_vmid" {
   validation {
     condition     = var.template_vmid == null || (var.template_vmid >= 100 && var.template_vmid <= 999999999)
     error_message = "Template VM ID must be null or between 100 and 999999999."
+  }
+}
+
+variable "template_file_id" {
+  description = "OS template file ID from Proxmox storage (e.g., 'local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst')"
+  type        = string
+  default     = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+}
+
+variable "os_type" {
+  description = "Operating system type (unmanaged, debian, ubuntu, centos, fedora, opensuse, archlinux, alpine, gentoo)"
+  type        = string
+  default     = "ubuntu"
+
+  validation {
+    condition     = contains(["unmanaged", "debian", "ubuntu", "centos", "fedora", "opensuse", "archlinux", "alpine", "gentoo"], var.os_type)
+    error_message = "Invalid OS type. Valid values: unmanaged, debian, ubuntu, centos, fedora, opensuse, archlinux, alpine, gentoo."
   }
 }
 

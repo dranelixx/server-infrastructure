@@ -1,0 +1,45 @@
+---
+# Default variables for GitHub Actions Runner role
+
+# GitHub Runner configuration
+github_runner_version: "latest"
+github_runner_user: "github-runner"
+github_runner_group: "github-runner"
+github_runner_home: "/opt/actions-runner"
+github_runner_work_dir: "{{ github_runner_home }}/_work"
+
+# GitHub repository (can be overridden)
+github_repo_url: "https://github.com/dranelixx/server-infrastructure"
+github_repo_owner: "dranelixx"
+github_repo_name: "server-infrastructure"
+
+# Terraform configuration
+terraform_version: "1.7.5"
+terraform_gpg_key_url: "https://apt.releases.hashicorp.com/gpg"
+terraform_repo_url: "https://apt.releases.hashicorp.com"
+
+# TFLint configuration
+tflint_enabled: true
+tflint_version: "latest"
+
+# System packages
+required_packages:
+  - curl
+  - git
+  - wget
+  - unzip
+  - jq
+  - tar
+  - libicu-dev
+  - libssl-dev
+  - gnupg
+  - software-properties-common
+
+# Runner service configuration
+github_runner_service_name: "github-runner"
+github_runner_service_enabled: true
+github_runner_service_state: "stopped"  # Don't start until configured
+
+# Network connectivity check
+proxmox_api_host: "<PROXMOX_HOST>"  # Example: 10.0.1.10
+proxmox_api_port: 8006
