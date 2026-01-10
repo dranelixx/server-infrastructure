@@ -5,6 +5,7 @@ Ansible role to install and configure a GitHub Actions self-hosted runner on Ubu
 ## Purpose
 
 This role sets up a production-ready GitHub Actions self-hosted runner with:
+
 - GitHub Actions Runner (latest version)
 - Terraform (for IaC workflows)
 - TFLint (for Terraform linting)
@@ -24,9 +25,9 @@ This role sets up a production-ready GitHub Actions self-hosted runner with:
 ### GitHub Runner Configuration
 
 ```yaml
-github_runner_version: "latest"          # GitHub runner version (or specific like "2.311.0")
-github_runner_user: "github-runner"      # System user for runner
-github_runner_group: "github-runner"     # System group for runner
+github_runner_version: "latest" # GitHub runner version (or specific like "2.311.0")
+github_runner_user: "github-runner" # System user for runner
+github_runner_group: "github-runner" # System group for runner
 github_runner_home: "/opt/actions-runner" # Runner installation directory
 github_runner_work_dir: "{{ github_runner_home }}/_work" # Work directory for jobs
 
@@ -38,7 +39,7 @@ github_repo_name: "server-infrastructure"
 ### Terraform Configuration
 
 ```yaml
-terraform_version: "1.7.5"  # Specific version or "latest"
+terraform_version: "1.7.5" # Specific version or "latest"
 terraform_gpg_key_url: "https://apt.releases.hashicorp.com/gpg"
 terraform_repo_url: "https://apt.releases.hashicorp.com"
 ```
@@ -46,8 +47,8 @@ terraform_repo_url: "https://apt.releases.hashicorp.com"
 ### TFLint Configuration
 
 ```yaml
-tflint_enabled: true        # Enable/disable TFLint installation
-tflint_version: "latest"    # TFLint version (or specific)
+tflint_enabled: true # Enable/disable TFLint installation
+tflint_version: "latest" # TFLint version (or specific)
 ```
 
 ### Service Configuration
@@ -55,7 +56,7 @@ tflint_version: "latest"    # TFLint version (or specific)
 ```yaml
 github_runner_service_name: "github-runner"
 github_runner_service_enabled: true
-github_runner_service_state: "stopped"  # Don't start until configured
+github_runner_service_state: "stopped" # Don't start until configured
 ```
 
 ### Network Configuration
@@ -133,7 +134,7 @@ cd /opt/actions-runner
 
 ## Directory Structure
 
-```
+```text
 github-runner/
 ├── defaults/
 │   └── main.yml           # Default variables
@@ -238,6 +239,7 @@ sudo chown -R github-runner:github-runner /opt/actions-runner
 ## Idempotency
 
 This role is fully idempotent:
+
 - Packages are only installed if missing or outdated
 - User and group creation is skipped if already exist
 - Runner download is skipped if already installed

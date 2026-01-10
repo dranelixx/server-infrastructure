@@ -1,6 +1,7 @@
 # GitHub Actions Self-Hosted Runner - Maintenance Guide
 
-This guide covers common maintenance tasks for the GitHub Actions self-hosted runner running on LXC container `github-runner-prod-cz-01` (VMID 6200).
+This guide covers common maintenance tasks for the GitHub Actions self-hosted runner running on LXC container
+`github-runner-prod-cz-01` (VMID 6200).
 
 ## Runner Information
 
@@ -67,7 +68,7 @@ Runner tokens expire and need to be renewed periodically. Here's how:
 
 #### 1. Get Removal Token
 
-Go to: https://github.com/dranelixx/server-infrastructure/settings/actions/runners
+Go to: <https://github.com/dranelixx/server-infrastructure/settings/actions/runners>
 
 Click on your runner and get a removal token.
 
@@ -93,7 +94,7 @@ exit
 
 #### 3. Get New Registration Token
 
-Go to: https://github.com/dranelixx/server-infrastructure/settings/actions/runners/new
+Go to: <https://github.com/dranelixx/server-infrastructure/settings/actions/runners/new>
 
 Copy the new registration token.
 
@@ -229,6 +230,7 @@ ls -la /opt/actions-runner
 ### Runner Shows as Offline in GitHub
 
 1. Check if the service is running:
+
    ```bash
    systemctl status actions.runner.dranelixx-server-infrastructure.github-runner-prod-cz-01.service
    ```
@@ -312,10 +314,12 @@ If the runner container is lost:
 
 1. Recreate the container using Terraform
 2. Run the Ansible playbook:
+
    ```bash
    cd /opt/server-infrastructure/ansible
    ansible-playbook -i inventory/ playbooks/github_runner_setup.yml --limit github-runner-prod-cz-01
    ```
+
 3. Register the runner with a new token
 4. Restore any custom configurations if needed
 
@@ -337,6 +341,7 @@ If the runner container is lost:
 ## Support
 
 For issues or questions:
-- Check GitHub Actions logs: https://github.com/dranelixx/server-infrastructure/actions
+
+- Check GitHub Actions logs: <https://github.com/dranelixx/server-infrastructure/actions>
 - Review runner logs: `journalctl -u actions.runner.dranelixx-server-infrastructure.github-runner-prod-cz-01.service`
 - Test runner: Run the "Self-Hosted Runner Test" workflow in GitHub Actions

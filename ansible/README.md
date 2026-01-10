@@ -4,7 +4,7 @@ Ansible playbooks and roles for managing the server infrastructure.
 
 ## Directory Structure
 
-```
+```text
 ansible/
 ├── ansible.cfg              # Ansible configuration
 ├── inventory/               # Inventory files
@@ -35,18 +35,21 @@ ssh root@<RUNNER_IP>
 ### GitHub Runner Setup
 
 1. **Adjust inventory**:
+
    ```bash
    vim inventory/github-runners.yml
    # Adjust the container IP address
    ```
 
 2. **Run playbook**:
+
    ```bash
    cd ansible
    ansible-playbook playbooks/github_runner_setup.yml
    ```
 
 3. **Configure runner** (manual steps):
+
    ```bash
    # SSH to container
    ssh github-runner@<RUNNER_IP>
@@ -91,6 +94,7 @@ ansible-playbook playbooks/github_runner_setup.yml -vvv
 Installation and configuration of a GitHub Actions self-hosted runner.
 
 **Features**:
+
 - GitHub Actions Runner (latest)
 - Terraform (configurable version)
 - TFLint (optional)
@@ -105,6 +109,7 @@ Installation and configuration of a GitHub Actions self-hosted runner.
 ### ansible.cfg
 
 The Ansible configuration is pre-configured with:
+
 - YAML output for better readability
 - Fact caching for performance
 - SSH optimizations (pipelining, ControlMaster)
@@ -113,6 +118,7 @@ The Ansible configuration is pre-configured with:
 ### Inventory
 
 Inventory files are located in `inventory/`:
+
 - `github-runners.yml`: GitHub Runner hosts
 
 **Format**: YAML (recommended) or INI
@@ -224,18 +230,18 @@ tail -f ansible.log
 
 All playbooks support tags for selective execution:
 
-| Tag | Description |
-|-----|-------------|
-| `github-runner` | All GitHub Runner tasks |
-| `preflight` | Pre-flight checks |
-| `system` | System setup (user, packages) |
-| `packages` | Package installation |
-| `user` | User creation |
-| `terraform` | Terraform installation |
-| `tflint` | TFLint installation |
-| `runner` | GitHub Runner installation |
-| `service` | Systemd service setup |
-| `network` | Network checks |
+| Tag             | Description                   |
+| --------------- | ----------------------------- |
+| `github-runner` | All GitHub Runner tasks       |
+| `preflight`     | Pre-flight checks             |
+| `system`        | System setup (user, packages) |
+| `packages`      | Package installation          |
+| `user`          | User creation                 |
+| `terraform`     | Terraform installation        |
+| `tflint`        | TFLint installation           |
+| `runner`        | GitHub Runner installation    |
+| `service`       | Systemd service setup         |
+| `network`       | Network checks                |
 
 ## Extending
 
@@ -299,6 +305,7 @@ jobs:
 ## Support
 
 For issues:
+
 1. Run pre-flight checks
 2. Check logs (`ansible.log`, `journalctl`)
 3. Enable verbose mode (`-vvv`)
