@@ -1,138 +1,138 @@
 # Ansible Automation
 
-Ansible playbooks und roles für die Verwaltung der Server-Infrastruktur.
+Ansible playbooks and roles for managing the server infrastructure.
 
-## Verzeichnisstruktur
+## Directory Structure
 
 ```
 ansible/
-├── ansible.cfg              # Ansible-Konfiguration
-├── inventory/               # Inventory-Dateien
-│   └── github-runners.yml   # GitHub Runner Hosts
+├── ansible.cfg              # Ansible configuration
+├── inventory/               # Inventory files
+│   └── github-runners.yml   # GitHub Runner hosts
 ├── playbooks/               # Playbooks
-│   └── github_runner_setup.yml  # GitHub Runner Setup
-└── roles/                   # Rollen
-    └── github-runner/       # GitHub Runner Rolle
-        ├── defaults/        # Standard-Variablen
-        ├── handlers/        # Handler
-        ├── tasks/           # Aufgaben
+│   └── github_runner_setup.yml  # GitHub Runner setup
+└── roles/                   # Roles
+    └── github-runner/       # GitHub Runner role
+        ├── defaults/        # Default variables
+        ├── handlers/        # Handlers
+        ├── tasks/           # Tasks
         ├── templates/       # Templates
-        └── README.md        # Rollen-Dokumentation
+        └── README.md        # Role documentation
 ```
 
 ## Quick Start
 
-### Voraussetzungen
+### Prerequisites
 
 ```bash
-# Ansible installieren
+# Install Ansible
 pip install ansible
 
-# SSH-Zugriff auf Ziel-Hosts sicherstellen
+# Ensure SSH access to target hosts
 ssh root@<RUNNER_IP>
 ```
 
 ### GitHub Runner Setup
 
-1. **Inventory anpassen**:
+1. **Adjust inventory**:
    ```bash
    vim inventory/github-runners.yml
-   # IP-Adresse des Containers anpassen
+   # Adjust the container IP address
    ```
 
-2. **Playbook ausführen**:
+2. **Run playbook**:
    ```bash
    cd ansible
    ansible-playbook playbooks/github_runner_setup.yml
    ```
 
-3. **Runner konfigurieren** (manuelle Schritte):
+3. **Configure runner** (manual steps):
    ```bash
-   # SSH zum Container
+   # SSH to container
    ssh github-runner@<RUNNER_IP>
 
-   # Runner konfigurieren
+   # Configure runner
    cd /opt/actions-runner
    ./config.sh --url https://github.com/dranelixx/server-infrastructure --token <TOKEN>
 
-   # Service starten
+   # Start service
    sudo systemctl start github-runner
    sudo systemctl status github-runner
    ```
 
-## Verfügbare Playbooks
+## Available Playbooks
 
 ### GitHub Runner Setup
 
 ```bash
-# Vollständige Installation
+# Full installation
 ansible-playbook playbooks/github_runner_setup.yml
 
-# Nur Pre-Flight Checks
+# Pre-flight checks only
 ansible-playbook playbooks/github_runner_setup.yml --tags preflight
 
-# Nur Terraform installieren
+# Install Terraform only
 ansible-playbook playbooks/github_runner_setup.yml --tags terraform
 
-# TFLint überspringen
+# Skip TFLint
 ansible-playbook playbooks/github_runner_setup.yml --skip-tags tflint
 
-# Dry-Run (Test)
+# Dry-run (test)
 ansible-playbook playbooks/github_runner_setup.yml --check
 
-# Verbose-Modus
+# Verbose mode
 ansible-playbook playbooks/github_runner_setup.yml -vvv
 ```
 
-## Verfügbare Rollen
+## Available Roles
 
 ### github-runner
 
-Installation und Konfiguration eines GitHub Actions Self-Hosted Runners.
+Installation and configuration of a GitHub Actions self-hosted runner.
 
 **Features**:
 - GitHub Actions Runner (latest)
-- Terraform (konfigurierbare Version)
+- Terraform (configurable version)
 - TFLint (optional)
-- Systemd-Service mit Auto-Start
-- Security Hardening
-- Pre-Flight Checks (Ubuntu-Version, Netzwerk)
+- Systemd service with auto-start
+- Security hardening
+- Pre-flight checks (Ubuntu version, network)
 
-**Dokumentation**: [roles/github-runner/README.md](roles/github-runner/README.md)
+**Documentation**: [roles/github-runner/README.md](roles/github-runner/README.md)
 
-## Konfiguration
+## Configuration
 
 ### ansible.cfg
 
-Die Ansible-Konfiguration ist bereits vorkonfiguriert mit:
-- YAML-Output für bessere Lesbarkeit
-- Fact-Caching für Performance
-- SSH-Optimierungen (Pipelining, ControlMaster)
-- Logging nach `ansible.log`
+The Ansible configuration is pre-configured with:
+- YAML output for better readability
+- Fact caching for performance
+- SSH optimizations (pipelining, ControlMaster)
+- Logging to `ansible.log`
 
 ### Inventory
 
-Inventory-Dateien liegen in `inventory/`:
-- `github-runners.yml`: GitHub Runner Hosts
+Inventory files are located in `inventory/`:
+- `github-runners.yml`: GitHub Runner hosts
 
-**Format**: YAML (empfohlen) oder INI
+**Format**: YAML (recommended) or INI
 
-### Variablen
+### Variables
 
-Variablen können überschrieben werden:
+Variables can be overridden:
 
 ```yaml
-# In Playbook
+# In playbook
 vars:
   terraform_version: "1.8.0"
   tflint_enabled: false
 
-# In Inventory
+# In inventory
 github_runner_prod:
   vars:
     terraform_version: "1.8.0"
 
-# Per Command-Line
+# Via command line
 ansible-playbook playbooks/github_runner_setup.yml -e "terraform_version=1.8.0"
 ```
 
@@ -140,106 +140,106 @@ ansible-playbook playbooks/github_runner_setup.yml -e "terraform_version=1.8.0"
 
 ### Pre-Flight Checks
 
-Vor jeder Ausführung:
+Before each execution:
 
 ```bash
-# Syntax-Check
+# Syntax check
 ansible-playbook playbooks/github_runner_setup.yml --syntax-check
 
-# Connectivity-Check
+# Connectivity check
 ansible all -m ping
 
-# Dry-Run
+# Dry-run
 ansible-playbook playbooks/github_runner_setup.yml --check
 ```
 
 ### Debugging
 
 ```bash
-# Verbose-Modus (-v, -vv, -vvv, -vvvv)
+# Verbose mode (-v, -vv, -vvv, -vvvv)
 ansible-playbook playbooks/github_runner_setup.yml -vvv
 
-# Logs prüfen
+# Check logs
 tail -f ansible.log
 
-# Einzelne Tasks ausführen
+# Execute individual tasks
 ansible-playbook playbooks/github_runner_setup.yml --start-at-task="Task Name"
 
-# Facts sammeln
+# Gather facts
 ansible all -m setup
 ```
 
-### Idempotenz
+### Idempotence
 
-Alle Rollen sind idempotent. Mehrfaches Ausführen führt nicht zu Problemen:
+All roles are idempotent. Running them multiple times causes no issues:
 
 ```bash
-# Kann beliebig oft ausgeführt werden
+# Can be executed repeatedly
 ansible-playbook playbooks/github_runner_setup.yml
 ```
 
 ## Troubleshooting
 
-### SSH-Verbindung fehlschlägt
+### SSH connection fails
 
 ```bash
-# Connectivity testen
+# Test connectivity
 ansible all -m ping
 
-# SSH-Debug
+# SSH debug
 ssh -vvv root@<RUNNER_IP>
 
-# ansible.cfg: host_key_checking deaktivieren
+# ansible.cfg: disable host_key_checking
 ```
 
-### Runner startet nicht
+### Runner doesn't start
 
 ```bash
-# Service-Status prüfen
+# Check service status
 ssh github-runner@<RUNNER_IP>
 sudo systemctl status github-runner
 
-# Logs anzeigen
+# Show logs
 sudo journalctl -u github-runner -f
 
-# Manuell testen
+# Test manually
 cd /opt/actions-runner
 ./run.sh
 ```
 
-### Playbook schlägt fehl
+### Playbook fails
 
 ```bash
-# Verbose-Modus
+# Verbose mode
 ansible-playbook playbooks/github_runner_setup.yml -vvv
 
-# Einzelne Tags ausführen
+# Execute individual tags
 ansible-playbook playbooks/github_runner_setup.yml --tags preflight
 
-# Logs prüfen
+# Check logs
 tail -f ansible.log
 ```
 
 ## Tags
 
-Alle Playbooks unterstützen Tags für selektive Ausführung:
+All playbooks support tags for selective execution:
 
-| Tag | Beschreibung |
-|-----|--------------|
-| `github-runner` | Alle GitHub Runner Tasks |
-| `preflight` | Pre-Flight Checks |
-| `system` | System-Setup (User, Packages) |
-| `packages` | Package-Installation |
-| `user` | User-Erstellung |
-| `terraform` | Terraform-Installation |
-| `tflint` | TFLint-Installation |
-| `runner` | GitHub Runner Installation |
-| `service` | Systemd-Service Setup |
-| `network` | Netzwerk-Checks |
+| Tag | Description |
+|-----|-------------|
+| `github-runner` | All GitHub Runner tasks |
+| `preflight` | Pre-flight checks |
+| `system` | System setup (user, packages) |
+| `packages` | Package installation |
+| `user` | User creation |
+| `terraform` | Terraform installation |
+| `tflint` | TFLint installation |
+| `runner` | GitHub Runner installation |
+| `service` | Systemd service setup |
+| `network` | Network checks |
 
-## Erweitern
+## Extending
 
-### Neue Rolle erstellen
+### Create new role
 
 ```bash
 cd ansible/roles
@@ -247,7 +247,7 @@ mkdir -p new-role/{defaults,handlers,tasks,templates,files}
 touch new-role/{defaults,handlers,tasks}/main.yml
 ```
 
-### Neues Playbook erstellen
+### Create new playbook
 
 ```bash
 cd ansible/playbooks
@@ -267,7 +267,7 @@ vim new_playbook.yml
 
 ## CI/CD Integration
 
-Ansible-Playbooks können in CI/CD-Pipelines integriert werden:
+Ansible playbooks can be integrated into CI/CD pipelines:
 
 ```yaml
 # .github/workflows/ansible.yml
@@ -290,16 +290,16 @@ jobs:
           ansible-playbook playbooks/github_runner_setup.yml
 ```
 
-## Weitere Ressourcen
+## Additional Resources
 
-- [Ansible Dokumentation](https://docs.ansible.com/)
+- [Ansible Documentation](https://docs.ansible.com/)
 - [Best Practices](https://docs.ansible.com/ansible/latest/tips_tricks/ansible_tips_tricks.html)
-- [GitHub Runner Rolle](roles/github-runner/README.md)
+- [GitHub Runner Role](roles/github-runner/README.md)
 
 ## Support
 
-Bei Problemen:
-1. Pre-Flight Checks ausführen
-2. Logs prüfen (`ansible.log`, `journalctl`)
-3. Verbose-Modus aktivieren (`-vvv`)
-4. Dokumentation konsultieren
+For issues:
+1. Run pre-flight checks
+2. Check logs (`ansible.log`, `journalctl`)
+3. Enable verbose mode (`-vvv`)
+4. Consult documentation

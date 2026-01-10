@@ -123,6 +123,6 @@ See the `examples/` directory for more usage patterns:
 
 ## Requirements
 
-- Terraform >= 1.7.0
+- Terraform >= 1.14.3
 - `bpg/proxmox` provider >= 0.91.0
 - Proxmox VE >= 8.0

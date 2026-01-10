@@ -15,6 +15,13 @@ PROXMOX_API_TOKEN_ID        = terraform@pve!tf-automation
 PROXMOX_API_TOKEN_SECRET    = <secret-from-step-1>
 ```
 
+**Vault-First Approach**: This project is designed with HashiCorp Vault as the primary secrets management solution. GitHub Secrets provide a bootstrap mechanism for CI/CD workflows. For production environments, migrate to Vault for:
+- Dynamic secret generation
+- Automatic credential rotation
+- Centralized access control
+- Comprehensive audit logging
+- Secrets versioning and rollback
+
 ## GitHub Environment Setup
 
 ```bash
@@ -183,9 +190,10 @@ curl -k -H "Authorization: PVEAPIToken=terraform@pve!tf-automation=<SECRET>" \
 2. Review plan output before merge
 3. Address drift issues promptly
 4. Document manual Proxmox changes
-5. Rotate API tokens regularly
+5. Rotate API tokens regularly (or use Vault for automatic rotation)
 6. Keep apply logs for audits (90 days)
 7. Don't bypass environment protection
+8. Migrate to Vault for production secret management
 
 ## Useful Aliases
 

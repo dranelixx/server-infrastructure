@@ -63,3 +63,6 @@ Thumbs.db
 *.pem
 *.key
 secrets/
+
+# Private Documentation
+docs/private/
