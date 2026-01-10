@@ -1,41 +1,80 @@
 ---
 # Systemd service setup tasks
+# Note: The runner must be configured before this task runs
 
-- name: Create systemd service file from template
-  ansible.builtin.template:
-    src: github-runner.service.j2
-    dest: "/etc/systemd/system/{{ github_runner_service_name }}.service"
-    owner: root
-    group: root
-    mode: '0644'
-  become: yes
-  notify: Reload systemd
+- name: Check if runner is configured
+  ansible.builtin.stat:
+    path: "{{ github_runner_home }}/.runner"
+  register: runner_configured
   tags:
     - service
 
-- name: Flush handlers to reload systemd
-  ansible.builtin.meta: flush_handlers
-  tags:
-    - service
-
-- name: Enable GitHub runner service (but don't start it)
-  ansible.builtin.systemd:
-    name: "{{ github_runner_service_name }}"
-    enabled: "{{ github_runner_service_enabled }}"
-    daemon_reload: yes
-  become: yes
-  tags:
-    - service
-
-- name: Display service status information
+- name: Display configuration notice
   ansible.builtin.debug:
     msg:
-      - "GitHub Actions Runner service has been configured:"
-      - "  - Service name: {{ github_runner_service_name }}"
-      - "  - Service enabled: {{ github_runner_service_enabled }}"
-      - "  - Service state: Not started (requires manual configuration first)"
+      - "Runner is not yet configured."
+      - "Service installation will be skipped."
       - ""
-      - "To check service status after configuration:"
-      - "  sudo systemctl status {{ github_runner_service_name }}"
+      - "Run playbook with github_token to auto-configure:"
+      - "  ansible-playbook ... -e 'github_token=ghp_xxx'"
+  when: not runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Check if service is already installed
+  ansible.builtin.shell: "systemctl list-units --full --all | grep -q 'actions.runner.*.service'"
+  register: service_exists
+  changed_when: false
+  failed_when: false
+  become: yes
+  when: runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Install runner service using svc.sh
+  ansible.builtin.command:
+    cmd: "{{ github_runner_home }}/svc.sh install {{ github_runner_user }}"
+  become: yes
+  when:
+    - runner_configured.stat.exists
+    - service_exists.rc != 0
+  register: service_installed
+  tags:
+    - service
+
+- name: Start runner service
+  ansible.builtin.command:
+    cmd: "{{ github_runner_home }}/svc.sh start"
+  become: yes
+  when:
+    - runner_configured.stat.exists
+    - service_installed is defined and service_installed.changed
+  tags:
+    - service
+
+- name: Wait for service to start
+  ansible.builtin.wait_for:
+    timeout: 5
+  when:
+    - runner_configured.stat.exists
+    - service_installed is defined and service_installed.changed
+  tags:
+    - service
+
+- name: Get service status
+  ansible.builtin.shell: "systemctl status actions.runner.*.service | head -15"
+  register: service_status
+  changed_when: false
+  become: yes
+  when: runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Display service status
+  ansible.builtin.debug:
+    msg: "{{ service_status.stdout_lines }}"
+  when:
+    - runner_configured.stat.exists
+    - service_status is defined
   tags:
     - service

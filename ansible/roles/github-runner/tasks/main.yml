@@ -32,38 +32,40 @@
     - github-runner
     - runner
 
+- name: Include runner configuration tasks
+  ansible.builtin.import_tasks: runner-config.yml
+  tags:
+    - github-runner
+    - runner-config
+
 - name: Include systemd service setup tasks
   ansible.builtin.import_tasks: service.yml
   tags:
     - github-runner
     - service
 
-- name: Display post-installation instructions
+- name: Display post-installation summary
   ansible.builtin.debug:
     msg:
       - "=========================================="
-      - "GitHub Actions Runner Installation Complete!"
+      - "GitHub Actions Runner Setup Complete!"
       - "=========================================="
       - ""
-      - "MANUAL STEPS REQUIRED:"
+      - "Next steps depend on configuration method:"
       - ""
-      - "1. Get runner token from GitHub:"
-      - "   Navigate to: {{ github_repo_url }}/settings/actions/runners/new"
+      - "AUTOMATIC (Recommended):"
+      - "  Re-run playbook with GitHub token:"
+      - "  ansible-playbook ... -e 'github_token=ghp_xxx'"
+      - "  This will automatically configure and start the runner."
       - ""
-      - "2. SSH to the container:"
-      - "   ssh {{ github_runner_user }}@{{ ansible_host | default(inventory_hostname) }}"
+      - "MANUAL:"
+      - "  1. Get token: {{ github_repo_url }}/settings/actions/runners/new"
+      - "  2. SSH: ssh root@{{ ansible_host | default(inventory_hostname) }}"
+      - "  3. Configure: cd {{ github_runner_home }} && ./config.sh --url {{ github_repo_url }} --token <TOKEN> --unattended"
+      - "  4. Install: sudo ./svc.sh install {{ github_runner_user }}"
+      - "  5. Start: sudo ./svc.sh start"
       - ""
-      - "3. Configure the runner:"
-      - "   cd {{ github_runner_home }}"
-      - "   ./config.sh --url {{ github_repo_url }} --token <YOUR_TOKEN>"
-      - ""
-      - "4. Start the runner service:"
-      - "   sudo systemctl start {{ github_runner_service_name }}"
-      - "   sudo systemctl status {{ github_runner_service_name }}"
-      - ""
-      - "5. Verify runner is online:"
-      - "   Check {{ github_repo_url }}/settings/actions/runners"
-      - ""
+      - "Verify: {{ github_repo_url }}/settings/actions/runners"
       - "=========================================="
   tags:
     - github-runner

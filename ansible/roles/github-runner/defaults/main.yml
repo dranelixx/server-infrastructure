@@ -13,6 +13,12 @@ github_repo_url: "https://github.com/dranelixx/server-infrastructure"
 github_repo_owner: "dranelixx"
 github_repo_name: "server-infrastructure"
 
+# GitHub API Token for automatic runner registration
+# Pass as extra var: -e "github_token=ghp_xxx"
+# Requires 'repo' or 'admin:org' scope for registration tokens
+# Leave empty to skip auto-configuration (manual setup required)
+github_token: ""
+
 # Terraform configuration
 terraform_version: "1.7.5"
 terraform_gpg_key_url: "https://apt.releases.hashicorp.com/gpg"
