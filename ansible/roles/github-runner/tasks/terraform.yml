@@ -5,7 +5,7 @@
   ansible.builtin.apt_key:
     url: "{{ terraform_gpg_key_url }}"
     state: present
-  become: yes
+  become: true
   tags:
     - terraform
 
@@ -14,14 +14,14 @@
     repo: "deb [arch=amd64] {{ terraform_repo_url }} {{ ansible_distribution_release }} main"
     state: present
     filename: hashicorp
-  become: yes
+  become: true
   tags:
     - terraform
 
 - name: Update apt cache after adding HashiCorp repo
   ansible.builtin.apt:
-    update_cache: yes
-  become: yes
+    update_cache: true
+  become: true
   tags:
     - terraform
 
@@ -37,7 +37,7 @@
   ansible.builtin.apt:
     name: terraform
     state: absent
-  become: yes
+  become: true
   when:
     - terraform_version != "latest"
     - installed_terraform_version.stdout != terraform_version
@@ -49,8 +49,8 @@
   ansible.builtin.apt:
     name: "terraform={{ terraform_version }}-*"
     state: present
-    update_cache: yes
-  become: yes
+    update_cache: true
+  become: true
   when: terraform_version != "latest"
   tags:
     - terraform
@@ -59,7 +59,7 @@
   ansible.builtin.apt:
     name: terraform
     state: latest
-  become: yes
+  become: true
   when: terraform_version == "latest"
   tags:
     - terraform

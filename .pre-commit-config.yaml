@@ -56,14 +56,14 @@ repos:
       #     - --hook-config=--add-to-existing-file=true
       #     - --hook-config=--create-file-if-not-exist=true
 
-  # Markdown formatting (disabled: auto-fixes can be intrusive)
-  # - repo: https://github.com/igorshubovych/markdownlint-cli
-  #   rev: v0.39.0
-  #   hooks:
-  #     - id: markdownlint
-  #       name: Markdown linting
-  #       args: ['--fix']
-  #       exclude: ^\.github/
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.47.0
+    hooks:
+      - id: markdownlint
+        name: Markdown linting
+        args: ['--fix']
+        exclude: ^\.github/
 
   # YAML formatting (disabled on Windows due to path issues)
   # - repo: https://github.com/jumanjihouse/pre-commit-hook-yamlfmt

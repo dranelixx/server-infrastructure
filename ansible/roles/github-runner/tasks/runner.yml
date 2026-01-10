@@ -11,7 +11,7 @@
 - name: Get latest GitHub Actions runner version
   ansible.builtin.uri:
     url: "https://api.github.com/repos/actions/runner/releases/latest"
-    return_content: yes
+    return_content: true
     timeout: 30
   register: runner_latest_release
   retries: 3
@@ -78,10 +78,10 @@
       ansible.builtin.unarchive:
         src: "{{ runner_temp_dir.path }}/actions-runner.tar.gz"
         dest: "{{ github_runner_home }}"
-        remote_src: yes
+        remote_src: true
         owner: "{{ github_runner_user }}"
         group: "{{ github_runner_group }}"
-      become: yes
+      become: true
       tags:
         - runner
 
@@ -98,8 +98,8 @@
         state: directory
         owner: "{{ github_runner_user }}"
         group: "{{ github_runner_group }}"
-        recurse: yes
-      become: yes
+        recurse: true
+      become: true
       tags:
         - runner
 
@@ -107,7 +107,7 @@
       ansible.builtin.file:
         path: "{{ github_runner_home }}/{{ item }}"
         mode: '0755'
-      become: yes
+      become: true
       loop:
         - config.sh
         - run.sh
@@ -124,7 +124,7 @@
     owner: "{{ github_runner_user }}"
     group: "{{ github_runner_group }}"
     mode: '0755'
-  become: yes
+  become: true
   tags:
     - runner
 
@@ -133,8 +133,8 @@
     src: "{{ github_runner_home }}/externals/node20/bin/{{ item }}"
     dest: "/usr/local/bin/{{ item }}"
     state: link
-    force: yes
-  become: yes
+    force: true
+  become: true
   loop:
     - node
     - npm
@@ -143,7 +143,7 @@
 
 - name: Check runner version
   ansible.builtin.command: "{{ github_runner_home }}/bin/Runner.Listener --version"
-  become: yes
+  become: true
   become_user: "{{ github_runner_user }}"
   register: runner_version_output
   changed_when: false

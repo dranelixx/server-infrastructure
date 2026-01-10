@@ -3,9 +3,9 @@
 
 - name: Update apt cache
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
     cache_valid_time: 3600
-  become: yes
+  become: true
   tags:
     - system
     - packages
@@ -14,7 +14,7 @@
   ansible.builtin.apt:
     name: "{{ required_packages }}"
     state: present
-  become: yes
+  become: true
   tags:
     - system
     - packages
@@ -23,8 +23,8 @@
   ansible.builtin.group:
     name: "{{ github_runner_group }}"
     state: present
-    system: yes
-  become: yes
+    system: true
+  become: true
   tags:
     - system
     - user
@@ -35,10 +35,10 @@
     group: "{{ github_runner_group }}"
     home: "{{ github_runner_home }}"
     shell: /bin/bash
-    system: yes
-    create_home: yes
+    system: true
+    create_home: true
     comment: "GitHub Actions Runner"
-  become: yes
+  become: true
   tags:
     - system
     - user
@@ -47,8 +47,8 @@
   ansible.builtin.user:
     name: "{{ github_runner_user }}"
     groups: sudo
-    append: yes
-  become: yes
+    append: true
+  become: true
   tags:
     - system
     - user
@@ -57,10 +57,10 @@
   ansible.builtin.lineinfile:
     path: /etc/sudoers.d/github-runner
     line: "{{ github_runner_user }} ALL=(ALL) NOPASSWD: /bin/systemctl start {{ github_runner_service_name }}, /bin/systemctl stop {{ github_runner_service_name }}, /bin/systemctl restart {{ github_runner_service_name }}, /bin/systemctl status {{ github_runner_service_name }}"
-    create: yes
+    create: true
     mode: '0440'
     validate: 'visudo -cf %s'
-  become: yes
+  become: true
   tags:
     - system
     - user
@@ -72,6 +72,6 @@
     owner: "{{ github_runner_user }}"
     group: "{{ github_runner_group }}"
     mode: '0755'
-  become: yes
+  become: true
   tags:
     - system

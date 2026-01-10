@@ -4,7 +4,7 @@
 - name: Get latest TFLint version from GitHub
   ansible.builtin.uri:
     url: "https://api.github.com/repos/terraform-linters/tflint/releases/latest"
-    return_content: yes
+    return_content: true
   register: tflint_latest_release
   when: tflint_version == "latest"
   tags:
@@ -55,7 +55,7 @@
       ansible.builtin.unarchive:
         src: "{{ tflint_temp_dir.path }}/tflint.zip"
         dest: "{{ tflint_temp_dir.path }}"
-        remote_src: yes
+        remote_src: true
       tags:
         - tflint
 
@@ -64,8 +64,8 @@
         src: "{{ tflint_temp_dir.path }}/tflint"
         dest: /usr/local/bin/tflint
         mode: '0755'
-        remote_src: yes
-      become: yes
+        remote_src: true
+      become: true
       tags:
         - tflint
 

@@ -25,3 +25,7 @@ MD024:
 # MD046: Code block style
 MD046:
   style: fenced
+
+# MD060: Table column style
+MD060:
+  style: aligned
