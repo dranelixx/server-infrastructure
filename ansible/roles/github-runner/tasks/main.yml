@@ -1,0 +1,71 @@
+---
+# Main tasks for GitHub Actions Runner role
+
+- name: Include pre-flight checks
+  ansible.builtin.import_tasks: preflight.yml
+  tags:
+    - github-runner
+    - preflight
+
+- name: Include system setup tasks
+  ansible.builtin.import_tasks: system.yml
+  tags:
+    - github-runner
+    - system
+
+- name: Include Terraform installation tasks
+  ansible.builtin.import_tasks: terraform.yml
+  tags:
+    - github-runner
+    - terraform
+
+- name: Include TFLint installation tasks
+  ansible.builtin.import_tasks: tflint.yml
+  when: tflint_enabled | bool
+  tags:
+    - github-runner
+    - tflint
+
+- name: Include GitHub runner installation tasks
+  ansible.builtin.import_tasks: runner.yml
+  tags:
+    - github-runner
+    - runner
+
+- name: Include runner configuration tasks
+  ansible.builtin.import_tasks: runner-config.yml
+  tags:
+    - github-runner
+    - runner-config
+
+- name: Include systemd service setup tasks
+  ansible.builtin.import_tasks: service.yml
+  tags:
+    - github-runner
+    - service
+
+- name: Display post-installation summary
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "GitHub Actions Runner Setup Complete!"
+      - "=========================================="
+      - ""
+      - "Next steps depend on configuration method:"
+      - ""
+      - "AUTOMATIC (Recommended):"
+      - "  Re-run playbook with GitHub token:"
+      - "  ansible-playbook ... -e 'github_token=ghp_xxx'"
+      - "  This will automatically configure and start the runner."
+      - ""
+      - "MANUAL:"
+      - "  1. Get token: {{ github_repo_url }}/settings/actions/runners/new"
+      - "  2. SSH: ssh root@{{ ansible_host | default(inventory_hostname) }}"
+      - "  3. Configure: cd {{ github_runner_home }} && ./config.sh --url {{ github_repo_url }} --token <TOKEN> --unattended"
+      - "  4. Install: sudo ./svc.sh install {{ github_runner_user }}"
+      - "  5. Start: sudo ./svc.sh start"
+      - ""
+      - "Verify: {{ github_repo_url }}/settings/actions/runners"
+      - "=========================================="
+  tags:
+    - github-runner

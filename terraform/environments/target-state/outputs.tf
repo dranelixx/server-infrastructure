@@ -58,7 +58,7 @@ output "vm_inventory" {
 output "vlan_assignments" {
   description = "VLAN assignments for network documentation"
   value = {
-    vlan_10_management = []  # No VMs directly on Management VLAN
+    vlan_10_management = [] # No VMs directly on Management VLAN
 
     vlan_20_production = [
       module.plex.name,

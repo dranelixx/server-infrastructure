@@ -1,0 +1,178 @@
+name: Terraform Plan
+
+# Führt Terraform Plan bei Pull Requests aus und postet das Ergebnis als Kommentar
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-plan.yml'
+
+# Nur ein Plan pro PR gleichzeitig, ältere Runs abbrechen
+concurrency:
+  group: terraform-plan-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  plan-current-state:
+    name: Plan - Current State
+    runs-on: self-hosted
+
+    defaults:
+      run:
+        working-directory: terraform/environments/current-state
+
+    env:
+      TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14.3'
+          terraform_wrapper: true
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        env:
+          TF_CLI_ARGS: '-no-color'
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
+        env:
+          TF_VAR_proxmox_api_url: ${{ secrets.PROXMOX_API_ENDPOINT }}
+          TF_VAR_proxmox_api_token_id: ${{ secrets.PROXMOX_API_TOKEN_ID }}
+          TF_VAR_proxmox_api_token_secret: ${{ secrets.PROXMOX_API_TOKEN_SECRET }}
+          TF_VAR_proxmox_tls_insecure: 'true'
+
+      - name: Generate Plan Summary
+        id: summary
+        if: always()
+        run: |
+          terraform show -no-color tfplan > plan_output.txt 2>&1 || echo "Could not display plan"
+
+          # Kurze Zusammenfassung extrahieren
+          if grep -q "No changes" plan_output.txt; then
+            echo "summary=Keine Änderungen erforderlich" >> $GITHUB_OUTPUT
+            echo "changes=false" >> $GITHUB_OUTPUT
+          elif grep -q "Plan:" plan_output.txt; then
+            PLAN_SUMMARY=$(grep "Plan:" plan_output.txt | head -n 1)
+            echo "summary=${PLAN_SUMMARY}" >> $GITHUB_OUTPUT
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "summary=Error during plan" >> $GITHUB_OUTPUT
+            echo "changes=error" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post Plan Comment
+        uses: actions/github-script@v7
+        if: always()
+        env:
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          FMT_OUTCOME: ${{ steps.fmt.outcome }}
+          INIT_OUTCOME: ${{ steps.init.outcome }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          SUMMARY: ${{ steps.summary.outputs.summary }}
+        with:
+          script: |
+            const fs = require('fs');
+
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync('terraform/environments/current-state/plan_output.txt', 'utf8');
+            } catch (error) {
+              planOutput = 'Could not read plan output';
+            }
+
+            // Truncate for GitHub Comment (max 65536 characters)
+            const maxLength = 60000;
+            if (planOutput.length > maxLength) {
+              planOutput = planOutput.substring(0, maxLength) + '\n\n... (Output truncated, see Artifacts for full plan)';
+            }
+
+            const output = `### Terraform Plan - Current State
+
+            **Environment:** \`current-state\`
+            **Status:** ${process.env.PLAN_OUTCOME === 'success' ? '✅ Success' : '❌ Failed'}
+
+            #### Format Check: \`${process.env.FMT_OUTCOME}\`
+            #### Init: \`${process.env.INIT_OUTCOME}\`
+            #### Validate: \`${process.env.VALIDATE_OUTCOME}\`
+            #### Plan: \`${process.env.PLAN_OUTCOME}\`
+
+            **Summary:** ${process.env.SUMMARY}
+
+            <details><summary>Show Plan Output</summary>
+
+            \`\`\`hcl
+            ${planOutput}
+            \`\`\`
+
+            </details>
+
+            **Workflow Run:** [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            `;
+
+            // Finde existierenden Kommentar
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Terraform Plan - Current State')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: output
+              });
+            }
+
+      - name: Upload Plan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: current-state-plan-pr-${{ github.event.pull_request.number }}
+          path: |
+            terraform/environments/current-state/tfplan
+            terraform/environments/current-state/plan_output.txt
+          retention-days: 30
+
+      - name: Check Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+

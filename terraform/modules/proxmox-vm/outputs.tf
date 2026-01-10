@@ -1,22 +1,22 @@
-# Proxmox VM Module Outputs
+# Proxmox VM Module Outputs (bpg/proxmox)
 
 output "vmid" {
   description = "The Proxmox VM ID"
-  value       = proxmox_vm_qemu.vm.vmid
+  value       = proxmox_virtual_environment_vm.vm.vm_id
 }
 
 output "name" {
   description = "The VM name"
-  value       = proxmox_vm_qemu.vm.name
+  value       = proxmox_virtual_environment_vm.vm.name
 }
 
 output "id" {
-  description = "The full Proxmox resource ID (node/type/vmid)"
-  value       = proxmox_vm_qemu.vm.id
+  description = "The full Proxmox resource ID"
+  value       = proxmox_virtual_environment_vm.vm.id
 }
 
 output "ipv4_address" {
-  description = "The primary IPv4 address (from cloud-init or variable)"
+  description = "The primary IPv4 address (from static config or QEMU agent)"
   value       = var.ip_address != null ? split("/", var.ip_address)[0] : null
 }
 

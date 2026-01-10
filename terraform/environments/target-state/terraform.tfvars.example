@@ -1,0 +1,21 @@
+# Proxmox Provider Configuration Example
+#
+# IMPORTANT: Copy this file to terraform.tfvars and fill with real values
+# terraform.tfvars is gitignored and will NOT be committed to repository
+
+# Proxmox API Endpoint
+# Format: https://<IP_OR_HOSTNAME>:8006 (NO /api2/json suffix!)
+proxmox_api_url = "https://<PROXMOX_HOST>:8006"
+
+# API Token Authentication (RECOMMENDED)
+# Format: user@realm!token-id
+# Example: terraform@pve!github-actions
+proxmox_api_token_id     = "<USER>@<REALM>!<TOKEN_ID>"
+proxmox_api_token_secret = "<YOUR_TOKEN_SECRET>"
+
+# Legacy Password Authentication (OPTIONAL - only if not using tokens)
+# proxmox_user     = "root@pam"
+# proxmox_password = "<YOUR_PASSWORD>"
+
+# TLS Verification (set to false for self-signed certificates)
+proxmox_tls_insecure = true

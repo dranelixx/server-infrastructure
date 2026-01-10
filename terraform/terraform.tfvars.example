@@ -2,7 +2,7 @@
 # Copy this file to terraform.tfvars and fill in your credentials
 # NEVER commit terraform.tfvars to Git!
 
-proxmox_api_url = "https://10.0.1.10:8006/api2/json"
+proxmox_api_url = "https://<PROXMOX_HOST>:8006/api2/json"
 
 # Option 1: API Token Authentication (Recommended)
 proxmox_api_token_id     = "root@pam!terraform"

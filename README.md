@@ -29,7 +29,7 @@ Dieses Repository demonstriert **Enterprise-Level DevOps Skills** durch:
 
 **Colo Prague:**
 - **Thor** (HP DL320e Gen8 v2): Proxmox Host + pfSense VM
-- **Loki** (HP DL380 Gen9): Proxmox Compute (7 VMs + 13 LXCs)
+- **Loki** (HP DL380 Gen9): Proxmox Compute (5 VMs + 13 LXCs)
 - **HP 1910-24G Switch**: LACP-fähig, VLANs 10/20/30
 
 **Externe Services:**
@@ -161,6 +161,65 @@ ansible-playbook playbooks/monitoring_stack.yml
 
 ---
 
+## 🛠️ Development Setup
+
+### Pre-commit Hooks
+
+Dieses Repository nutzt Pre-commit Hooks für automatische Code-Qualitätsprüfungen:
+
+```bash
+# Pre-commit installieren
+pip install pre-commit
+
+# Hooks aktivieren
+pre-commit install
+
+# Manuell ausführen
+pre-commit run --all-files
+```
+
+**Aktive Hooks:**
+- ✅ `terraform fmt` - Automatische Formatierung
+- ✅ `terraform validate` - Syntax-Validierung
+- ✅ `tflint` - Terraform Best Practices Linting
+- ✅ `terraform-docs` - Auto-generierte README Updates
+- ✅ `markdownlint` - Markdown Formatierung
+- ✅ `gitleaks` - Secret Detection
+- ✅ Line-ending Normalisierung (CRLF → LF)
+
+### GitHub Actions Workflows
+
+**Automatische Drift Detection** (`.github/workflows/terraform-drift.yml`):
+- 📅 **Schedule**: Täglich um 06:00 UTC
+- 🔍 **Prüfung**: `terraform plan` gegen Proxmox API
+- 🚨 **Alert**: GitHub Issue bei Drift-Erkennung
+- 📊 **Environments**: current-state, target-state
+
+**Pull Request Validation** (`.github/workflows/terraform-plan.yml`):
+- 🔎 **Trigger**: PR zu `main`
+- ✓ **Checks**: fmt, validate, plan
+- 💬 **Output**: Plan als PR Comment
+
+**Automated Apply** (`.github/workflows/terraform-apply.yml`):
+- 🔄 **Trigger**: Merge zu `main`
+- ✋ **Approval**: Manual Review erforderlich
+- 🚀 **Deployment**: Terraform apply mit State-Locking
+
+**Secrets erforderlich:**
+- `PROXMOX_API_ENDPOINT` (z.B. `https://<PROXMOX_HOST>:8006/api2/json`)
+- `PROXMOX_API_TOKEN_ID` (z.B. `terraform@pve!github-actions`)
+- `PROXMOX_API_TOKEN_SECRET` (PVE API Token)
+
+**Self-hosted Runner:**
+- **LXC Container** `github-runner-prod-cz-01` (VMID 6200)
+- **Network Access**: Direkter Zugriff auf Proxmox API (10.0.1.0/24)
+- **Setup**: Ansible Playbook `ansible/playbooks/github_runner_setup.yml`
+- **Purpose**: GitHub-hosted Runners können private Proxmox Network nicht erreichen
+
+Siehe [.github/workflows/README.md](.github/workflows/README.md) für Details.
+
+---
+
 ## 🔄 CI/CD Workflow
 
 ### Pull Request Workflow
@@ -200,7 +259,7 @@ ansible-playbook playbooks/monitoring_stack.yml
 
 | Kategorie | Technologie | Zweck |
 |-----------|-------------|-------|
-| **IaC** | Terraform (telmate/proxmox) | VM/LXC Provisioning |
+| **IaC** | Terraform (bpg/proxmox) | VM/LXC Provisioning |
 | **Config Management** | Ansible | Server-Konfiguration, API Calls |
 | **Virtualisierung** | Proxmox VE 8.4 | Hypervisor (KVM + LXC) |
 | **Networking** | pfSense 2.8, HP 1910-24G | Firewall, VLAN Routing, LACP |
@@ -241,5 +300,5 @@ Dieses Repository ist ein **Portfolio-Projekt** und dient zu Demonstrationszweck
 
 ## 📧 Kontakt
 
-**DevOps Portfolio Projekt** von Adrik
-GitHub: [@adrik](https://github.com/adrik) | [LinkedIn](https://linkedin.com/in/adrik)
+**DevOps Portfolio Projekt** von Adrian Konopczynski
+GitHub: [@dranelixx](https://github.com/dranelixx) | [LinkedIn](https://www.linkedin.com/in/adrian-konopczynski-5432b5166/)

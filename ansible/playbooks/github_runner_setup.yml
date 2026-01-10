@@ -1,0 +1,119 @@
+---
+##############################################################################
+# GitHub Actions Self-Hosted Runner Setup Playbook
+##############################################################################
+#
+# This playbook installs and configures a GitHub Actions self-hosted runner
+# on an LXC container for running Terraform workflows.
+#
+# Target: github-runner-prod-cz-01 (VMID 6200)
+# Purpose: Self-hosted runner with access to private network (10.0.1.0/24)
+#
+# PREREQUISITES:
+# - Ubuntu 20.04+ LXC container
+# - Network access to Proxmox API (10.0.1.10:8006)
+# - SSH access to container
+# - Ansible inventory configured with 'ansible-github-runner' tag
+#
+# MANUAL STEPS AFTER RUNNING THIS PLAYBOOK:
+# ==========================================
+#
+# 1. Get runner token from GitHub:
+#    - Navigate to: https://github.com/dranelixx/server-infrastructure/settings/actions/runners/new
+#    - Select "Linux" and "x64"
+#    - Copy the token from the configuration command
+#
+# 2. SSH to the container:
+#    ssh github-runner@<container-ip>
+#    (or use the IP from inventory: ansible_host)
+#
+# 3. Configure the runner:
+#    cd /opt/actions-runner
+#    ./config.sh --url https://github.com/dranelixx/server-infrastructure --token <YOUR_TOKEN>
+#
+#    Follow the prompts:
+#    - Runner name: github-runner-prod-cz-01 (or custom name)
+#    - Runner group: Default
+#    - Labels: self-hosted,Linux,X64,terraform,proxmox (or custom)
+#    - Work folder: Press Enter for default (_work)
+#
+# 4. Start the runner service:
+#    sudo systemctl start github-runner
+#    sudo systemctl status github-runner
+#
+# 5. Verify runner is online:
+#    - Check: https://github.com/dranelixx/server-infrastructure/settings/actions/runners
+#    - You should see your runner with "Idle" status
+#
+# 6. Test the runner:
+#    - Trigger a workflow that uses: runs-on: [self-hosted, terraform]
+#    - Monitor logs: sudo journalctl -u github-runner -f
+#
+# TROUBLESHOOTING:
+# ================
+# - Runner not starting: Check logs with 'sudo journalctl -u github-runner -xe'
+# - Network issues: Verify connectivity with 'curl https://api.github.com'
+# - Permission issues: Ensure github-runner user owns /opt/actions-runner
+# - Service issues: Run './run.sh' manually to see detailed output
+#
+##############################################################################
+
+- name: Setup GitHub Actions Self-Hosted Runner
+  hosts: all
+  gather_facts: yes
+  become: no
+
+  vars:
+    # Override default variables if needed
+    github_runner_version: "latest"
+    github_runner_user: "github-runner"
+    github_runner_home: "/opt/actions-runner"
+    terraform_version: "1.7.5"
+    tflint_enabled: true
+
+    # GitHub repository configuration
+    github_repo_url: "https://github.com/dranelixx/server-infrastructure"
+
+    # Network connectivity (proxmox_api_host is in host_vars)
+    proxmox_api_port: 8006
+
+  pre_tasks:
+    - name: Display playbook information
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "GitHub Actions Runner Setup"
+          - "=========================================="
+          - "Target Host: {{ inventory_hostname }}"
+          - "GitHub Repo: {{ github_repo_url }}"
+          - "Runner Home: {{ github_runner_home }}"
+          - "Terraform Version: {{ terraform_version }}"
+          - "TFLint Enabled: {{ tflint_enabled }}"
+          - "=========================================="
+      tags:
+        - always
+
+  roles:
+    - role: github-runner
+      tags:
+        - github-runner
+
+  post_tasks:
+    - name: Display completion summary
+      ansible.builtin.debug:
+        msg:
+          - ""
+          - "=========================================="
+          - "Installation Complete!"
+          - "=========================================="
+          - ""
+          - "Next Steps:"
+          - "1. Get runner token from GitHub (see header comments)"
+          - "2. SSH to container and configure runner"
+          - "3. Start the systemd service"
+          - "4. Verify runner is online in GitHub settings"
+          - ""
+          - "For detailed instructions, see the header comments in this playbook."
+          - "=========================================="
+      tags:
+        - always

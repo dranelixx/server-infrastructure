@@ -1,0 +1,8 @@
+---
+# Handlers for GitHub Actions Runner role
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  become: yes
+  listen: "Reload systemd"

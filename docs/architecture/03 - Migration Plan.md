@@ -2,116 +2,107 @@
 
 ## Migration Plan: HP 1910-24G Switch & Thor Proxmox Migration
 
-**Target Date:** 31. Januar - 1. Februar 2026 **Location:** Colo Prague (On-Site) **Estimated Downtime:** 2-4 Stunden **Rollback Window:** Verfügbar (Dell Switch bleibt vor Ort)
+**Target Date:** 31 January - 1 February 2026
+**Location:** Colo Prague (On-Site)
+**Estimated Downtime:** 2-4 hours
+**Rollback Window:** Available (Dell Switch remains on-site)
 
 * * *
 
 ## Executive Summary
 
-Dieses Dokument beschreibt die vollständige Migration von der aktuellen Infrastruktur (Dell PowerConnect 2824, Thor bare metal pfSense) zur Zielarchitektur (HP 1910-24G mit LACP, Thor Proxmox mit pfSense VM, Loki LACP Bond).
+This document describes the complete migration from the current infrastructure (Dell PowerConnect 2824, Thor bare-metal pfSense) to the target architecture (HP 1910-24G with LACP, Thor Proxmox with pfSense VM, Loki LACP bond).
 
-**Kritische Änderungen:**
+**Critical Changes:**
 
-* ✅ HP Switch Installation (LACP-fähig)
-* ✅ Thor: Bare Metal pfSense → Proxmox + pfSense VM
+* ✅ HP Switch installation (LACP-capable)
+* ✅ Thor: Bare-Metal pfSense → Proxmox + pfSense VM
 * ✅ Loki: Single Link → LACP Bond (4x 1 GbE)
 * ✅ VLAN Segmentation (10/20/30)
 * ✅ NIC Passthrough (Intel 82571EB eno0-1 → pfSense VM)
-* ✅ WireGuard OOB Gateway LXC
+* ✅ WireGuard OOB gateway LXC
 
-**Rollback-Strategie:** Dell Switch bleibt vor Ort, komplette Rückmigration in 30 Minuten möglich.
+**Rollback Strategy:** Dell Switch remains on-site; complete rollback possible within 30 minutes.
 
 * * *
 
 ## Pre-Migration Checklist
 
-### Eine Woche vorher (24. Januar 2026)
+### One Week Before (24 January 2026)
 
-- [ ] **Backups erstellen:**
-  
-  - [ ] pfSense config.xml exportieren (`Diagnostics → Backup & Restore`)
-  - [ ] Proxmox VMs/LXCs backup (manuell oder PBS)
+- [ ] **Create backups:**
+  - [ ] pfSense config.xml export (`Diagnostics → Backup & Restore`)
+  - [ ] Proxmox VMs/LXCs backup (manual or PBS)
   - [ ] TrueNAS config export
-  - [ ] `/etc/network/interfaces` von Loki sichern
+  - [ ] Secure `/etc/network/interfaces` from Loki
 
-- [ ] **Hardware vorbereiten:**
-  
-  - [ ] HP 1910-24G Switch Config validieren (via Serial Console)
-  
-  - [ ] Alle Kabel beschriften (vor Ort mitbringen: Label Maker)
-  
-  - [ ] USB-Stick mit ISOs vorbereiten:
-    
+- [ ] **Prepare hardware:**
+  - [ ] Validate HP 1910-24G Switch Config (via Serial Console)
+  - [ ] Label all cables (bring Label Maker on-site)
+  - [ ] Prepare USB stick with ISOs:
     * Proxmox VE 8.4.14 ISO
-    * pfSense 2.8.1 ISO (falls VM neu erstellt werden muss)
+    * pfSense 2.8.1 ISO (if the VM needs to be recreated)
 
-- [ ] **Dokumentation drucken:**
-  
-  - [ ] Dieses Migrationsdokument (A4, doppelseitig)
+- [ ] **Print documentation:**
+  - [ ] This migration document (A4, double-sided)
   - [ ] Switch Port Mapping (Target State)
-  - [ ] IP-Adressen-Tabelle (VLAN 10/20/30)
-  - [ ] Rollback-Prozedur (separate Seite, Rot markiert)
+  - [ ] IP Address Table (VLAN 10/20/30)
+  - [ ] Rollback Procedure (separate page, marked in red)
 
-- [ ] **Remote Access testen:**
-  
-  - [ ] Colo VPN erreichbar (172.20.10.x)
-  - [ ] iLO Thor/Loki funktionsfähig (77.77.77.2-3)
-  - [ ] Serial Console Kabel HP Switch testen
+- [ ] **Test remote access:**
+  - [ ] Colo VPN reachable (172.20.10.x)
+  - [ ] iLO Thor/Loki functional (77.77.77.2-3)
+  - [ ] Test Serial Console cable for HP Switch
 
-### Am Vortag (30. Januar 2026)
+### The Day Before (30 January 2026)
 
-- [ ] **Wartungsfenster ankündigen:**
-  
-  - [ ] Pterodactyl Game-Server-Nutzer informieren (4h Downtime)
-  - [ ] Plex-Nutzer informieren (WhatsApp Gruppe)
-  - [ ] Nextcloud-Downtime (falls relevant)
+- [ ] **Announce maintenance window:**
+  - [ ] Inform Pterodactyl Game Server users (4h downtime)
+  - [ ] Inform Plex users (WhatsApp group)
+  - [ ] Nextcloud downtime (if relevant)
 
-- [ ] **Finale Backups:**
-  
-  - [ ] pfSense config.xml (frisch exportieren)
+- [ ] **Final backups:**
+  - [ ] pfSense config.xml (fresh export)
   - [ ] Proxmox cluster config
-  - [ ] Aktuelle VM-Liste screenshot (`qm list`)
+  - [ ] Current VM list screenshot (`qm list`)
 
-- [ ] **Toolbox packen:**
-  
-  - [ ] Laptop + Netzteil
-  - [ ] USB-Serial-Kabel (HP Switch Console)
-  - [ ] RJ45 Ethernet-Kabel (min. 10x, verschiedene Längen)
+- [ ] **Pack toolbox:**
+  - [ ] Laptop + Power Adapter
+  - [ ] USB-to-Serial cable (HP Switch Console)
+  - [ ] RJ45 Ethernet cables (min. 10x, various lengths)
   - [ ] Label Maker + Tape
-  - [ ] Notizblock + Stift (für MAC-Adressen, falls nötig)
-  - [ ] USB-Stick mit ISOs
+  - [ ] Notepad + Pen (for MAC addresses, if necessary)
+  - [ ] USB stick with ISOs
 
-### On-Site Check (31. Januar, 09:00)
+### On-Site Check (31 January, 09:00)
 
-- [ ] **Physischer Zugang:**
-  
-  - [ ] Rack zugänglich
-  - [ ] Dell Switch sichtbar/erreichbar
-  - [ ] Alle Server physisch vorhanden
+- [ ] **Physical Access:**
+  - [ ] Rack accessible
+  - [ ] Dell Switch visible/reachable
+  - [ ] All servers physically present
 
-- [ ] **Verbindungen prüfen:**
-  
+- [ ] **Check connections:**
   - [ ] Laptop → Dell Switch Port 24 (VLAN 69)
-  - [ ] Serial Console → HP Switch (COM Port erkannt)
-  - [ ] iLO Zugriff: [https://77.77.77.2](https://77.77.77.2) (Thor), [https://77.77.77.3](https://77.77.77.3) (Loki)
+  - [ ] Serial Console → HP Switch (COM Port detected)
+  - [ ] iLO Access: [https://77.77.77.2](https://77.77.77.2) (Thor), [https://77.77.77.3](https://77.77.77.3) (Loki)
 
-- [ ] **GO/NO-GO Entscheidung:**
-  
-  - [ ] Alle Backups vorhanden?
-  - [ ] Alle Hardware vor Ort?
-  - [ ] Rollback-Strategie verstanden?
+- [ ] **GO/NO-GO Decision:**
+  - [ ] All backups available?
+  - [ ] All hardware on-site?
+  - [ ] Rollback strategy understood?
 
 * * *
 
-## Phase 1: HP Switch Installation (45 Minuten)
+## Phase 1: HP Switch Installation (45 minutes)
 
-**Zeitfenster:** 10:00 - 10:45 **Risiko:** Mittel (Network Outage während Switch-Wechsel)
+**Time window:** 10:00 - 10:45
+**Risk:** Medium (Network Outage during Switch swap)
 
-### 1.1 Dell Switch Port Mapping dokumentieren
+### 1.1 Document Dell Switch Port Mapping
 
 ```sh
-# Vor dem Abklemmen: Aktuelle Verkabelung fotografieren
-# Label an jedem Kabel anbringen:
+# Before disconnecting: Photograph current cabling
+# Attach labels to each cable:
 # - "Thor em0 → Port 23"
 # - "Loki eno1 → Port 1"
 # - "Thor iLO → Port 17"
@@ -121,69 +112,69 @@ Dieses Dokument beschreibt die vollständige Migration von der aktuellen Infrast
 
 ### 1.2 Controlled Shutdown
 
-**Auf Loki Proxmox (via SSH 10.0.1.10):**
+**On Loki Proxmox (via SSH 10.0.1.10):**
 
 ```sh
-# Alle VMs/LXCs sauber herunterfahren
-qm list  # Liste nochmal prüfen
+# Shut down all VMs/LXCs cleanly
+qm list  # Check list once more
 for vmid in 1000 1100 2000 4000 8000; do
-    echo "Shutdown VM $vmid..."
+    echo "Shutting down VM $vmid..."
     qm shutdown $vmid --timeout 120
 done
 
-# LXCs herunterfahren
+# Shut down LXCs
 for ctid in 3000 3002 5000 5001 5050 6000 6100 9000; do
-    echo "Shutdown CT $ctid..."
+    echo "Shutting down CT $ctid..."
     pct shutdown $ctid --timeout 60
 done
 
-# Proxmox host herunterfahren (via iLO Virtual Power Button möglich)
+# Shut down Proxmox host (possible via iLO Virtual Power Button)
 shutdown -h now
 ```
 
-**Auf Thor pfSense (via WebGUI [https://fw-prod-cz-thor.getinn.top:10443](https://fw-prod-cz-thor.getinn.top:10443)):**
+**On Thor pfSense (via WebGUI):**
 
 ```
 Diagnostics → Halt System → Confirm
 ```
 
-**Physische Verifikation (via iLO Remote Console):**
+**Physical verification (via iLO Remote Console):**
 
-- [ ] Loki vollständig heruntergefahren (keine POST-Messages)
-- [ ] Thor vollständig heruntergefahren
+- [ ] Loki completely shut down (no POST messages)
+- [ ] Thor completely shut down
 
-### 1.3 HP Switch physisch installieren
+### 1.3 Physically install HP Switch
 
 ```sh
-# Dell Switch Kabel entfernen (geordnet, eins nach dem anderen):
-1. Laptop-Kabel (Port 24) entfernen
-2. iLO-Kabel (Port 17, 18) entfernen
-3. Thor em0 (Port 23) entfernen
-4. Loki eno1 (Port 1) entfernen
+# Remove Dell Switch cables (ordered, one after another):
+1. Remove Laptop cable (Port 24)
+2. Remove iLO cables (Port 17, 18)
+3. Remove Thor em0 (Port 23)
+4. Remove Loki eno1 (Port 1)
 
-# Dell Switch ausbauen, zur Seite legen (NICHT entfernen aus Rack)
+# Remove Dell Switch, set aside (do NOT remove from rack)
 
-# HP Switch installieren:
-1. HP 1910-24G in Rack montieren
-2. Power-Kabel anschließen (warten bis Boot abgeschlossen)
-3. Serial Console anschließen (Laptop COM Port)
+# Install HP Switch:
+1. Mount HP 1910-24G in Rack
+2. Connect power cable (wait until Boot is completed)
+3. Connect Serial Console (Laptop COM Port)
 ```
 
-### 1.4 HP Switch Basis-Konfiguration validieren
+### 1.4 Validate HP Switch Base Configuration
 
 **Via Serial Console (PuTTY: 38400 8N1):**
 
 ```sh
 <HP> display current-configuration
 
-# Erwartete Ausgabe prüfen:
-# - VLAN 10/20/30 existieren
-# - Bridge-Aggregation1 (Ports 1-2)
-# - Bridge-Aggregation2 (Ports 9-12)
+# Check expected output:
+# - VLAN 10/20/30 exist
+# - bridge-Aggregation1 (Ports 1-2)
+# - bridge-Aggregation2 (Ports 9-12)
 # - Vlan-interface10 IP: 10.0.10.2
 ```
 
-**Falls Config fehlt oder falsch:**
+**If Config is missing or incorrect:**
 
 ```sh
 <HP> system-view
@@ -197,26 +188,26 @@ Diagnostics → Halt System → Confirm
 [HP-vlan30] description Compute
 [HP-vlan30] quit
 
-# Management IP setzen
+# Set Management IP
 [HP] interface Vlan-interface10
 [HP-Vlan-interface10] ip address 10.0.10.2 255.255.255.0
 [HP-Vlan-interface10] quit
 
-# Config speichern
+# Save Config
 [HP] save
 The current configuration will be written to the device. Are you sure? [Y/N]:y
 ```
 
-### 1.5 Initiale Verkabelung (Management Only)
+### 1.5 Initial Cabling (Management Only)
 
 ```sh
-# Nur kritische Links verbinden:
-HP Port 17 → Thor iLO (untagged VLAN 10 - wird später migriert)
-HP Port 18 → Loki iLO (untagged VLAN 10 - wird später migriert)
-HP Port 24 → Laptop (Access VLAN 10 für Management)
+# Connect only critical links:
+HP Port 17 → Thor iLO (untagged VLAN 10 - will be migrated later)
+HP Port 18 → Loki iLO (untagged VLAN 10 - will be migrated later)
+HP Port 24 → Laptop (Access VLAN 10 for Management)
 ```
 
-**Port 24 konfigurieren:**
+**Configure Port 24:**
 
 ```sh
 <HP> system-view
@@ -227,48 +218,49 @@ HP Port 24 → Laptop (Access VLAN 10 für Management)
 <HP> save
 ```
 
-**Laptop IP setzen (statisch):**
+**Set Laptop IP (static):**
 
 ```
 IP: 10.0.10.99/24
-Gateway: (leer lassen)
+Gateway: (leave empty)
 ```
 
-**HP Switch Management testen:**
+**Test HP Switch Management:**
 
 ```sh
-# Vom Laptop:
+# From laptop:
 ping 10.0.10.2
-# Erwartete Antwort: < 1ms
+# Expected response: < 1ms
 
 # HTTP GUI:
 http://10.0.10.2
-# Login: admin / (standard PW)
+# Login: admin / (default PW)
 ```
 
-**CHECKPOINT 1:** HP Switch erreichbar, Management funktioniert.
+**CHECKPOINT 1:** HP Switch reachable, Management works.
 
 * * *
 
-## Phase 2: Thor - Proxmox Installation (60 Minuten)
+## Phase 2: Thor - Proxmox Installation (60 minutes)
 
-**Zeitfenster:** 10:45 - 11:45 **Risiko:** Hoch (Data Loss bei ZFS Pool, kompletter pfSense Neuaufbau)
+**Time window:** 10:45 - 11:45
+**Risk:** High (Data Loss on ZFS Pool, complete pfSense rebuild)
 
 ### 2.1 Proxmox VE 8.4.14 Installation
 
 **Via iLO Remote Console ([https://77.77.77.2](https://77.77.77.2)):**
 
 ```
-1. iLO Virtual Media → ISO mounten (Proxmox VE 8.4.14)
+1. iLO Virtual Media → Mount ISO (Proxmox VE 8.4.14)
 2. Boot Order → CD/DVD First
-3. Power On → Installation starten
+3. Power On → Start installation
 
 Proxmox Installation:
 - Agree to EULA
 - Target Harddisk: /dev/sda (Patriot P210 128GB)
 - Filesystem: ZFS (RAID1)
-  - Select Disks: /dev/sda, /dev/sdb (BEIDE SSDs)
-  - ashift: 12 (Standard)
+  - Select Disks: /dev/sda, /dev/sdb (BOTH SSDs)
+  - ashift: 12 (Default)
   - compress: lz4
   - checksum: on
   - copies: 1
@@ -277,183 +269,183 @@ Proxmox Installation:
 - Timezone: Europe/Berlin
 - Keyboard: de
 
-- Admin Password: [Sicheres Passwort verwenden]
+- Admin password: [Use secure password]
 - Email: [Admin-Email]
 
-- Management Interface: eno2 (Broadcom BCM5720 - Onboard NIC)
-  WICHTIG: NICHT bge0 oder bge1 wählen (werden für pfSense gebraucht)
+- Management interface: eno2 (Broadcom BCM5720 - Onboard NIC)
+  IMPORTANT: Do NOT choose bge0 or bge1 (they will be used for pfSense)
 
 - Hostname (FQDN): pve-prod-cz-thor.getinn.top
 - IP: 10.0.10.5/24
-- Gateway: 10.0.10.1 (wird pfSense VM sein)
-- DNS: 1.1.1.1 (temporär)
+- Gateway: 10.0.10.1 (will be the pfSense VM)
+- DNS: 1.1.1.1 (temporary)
 
-Installation durchführen → Reboot
+Perform installation → Reboot
 ```
 
-**Nach Installation:**
+**After installation:**
 
 ```sh
-# Via iLO Virtual Console Login:
+# Login via iLO Virtual Console:
 # Username: root
-# Password: [wie oben gesetzt]
+# Password: [as set above]
 
-# Netzwerk prüfen:
+# Check network:
 ip addr show eno2
-# Erwartete Ausgabe: 10.0.10.5/24
+# Expected output: 10.0.10.5/24
 
 ping 10.0.10.2  # HP Switch Management
-# Erwartete Antwort: < 1ms
+# Expected response: < 1ms
 
-# NOCH NICHT ERREICHBAR von außen (kein Gateway/Routing)
+# STILL NOT REACHABLE from outside (no gateway/routing)
 ```
 
-### 2.2 IOMMU (VT-d) aktivieren
+### 2.2 Activate IOMMU (VT-d)
 
-**Ziel:** PCI Passthrough für Intel 82571EB NICs an pfSense VM.
+**Goal:** PCI Passthrough for Intel 82571EB NICs to pfSense VM.
 
-**GRUB Konfiguration bearbeiten:**
+**Edit GRUB Configuration:**
 
 ```sh
 nano /etc/default/grub
 
-# Zeile finden:
+# Find line:
 GRUB_CMDLINE_LINUX_DEFAULT="quiet"
 
-# Ändern zu:
+# Change to:
 GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt"
 ```
 
-**GRUB Update & Module laden:**
+**Update GRUB & Load Modules:**
 
 ```sh
-# GRUB neu generieren
+# Generate new GRUB
 update-grub
 
-# VFIO Module aktivieren
+# Activate VFIO modules
 echo "vfio" >> /etc/modules
 echo "vfio_iommu_type1" >> /etc/modules
 echo "vfio_pci" >> /etc/modules
 echo "vfio_virqfd" >> /etc/modules
 
-# Module sofort laden (ohne Reboot)
+# Load modules immediately (without reboot)
 modprobe vfio
 modprobe vfio_iommu_type1
 modprobe vfio_pci
 modprobe vfio_virqfd
 
-# IOMMU Interrupt Remapping prüfen
+# Check IOMMU Interrupt Remapping
 dmesg | grep -e IOMMU -e DMAR
-# Erwartete Ausgabe: "DMAR: Intel(R) Virtualization Technology for Directed I/O"
+# Expected output: "DMAR: Intel(R) Virtualization Technology for Directed I/O"
 ```
 
-**System neustarten:**
+**System Restart:**
 
 ```sh
 reboot
 ```
 
-**Nach Reboot - IOMMU verifizieren:**
+**After reboot - Verify IOMMU:**
 
 ```sh
-# IOMMU Groups anzeigen
+# Display IOMMU Groups
 pvesh get /nodes/pve-prod-cz-thor/hardware/pci --pci-class-blacklist ""
 
-# Alternative: Manuell prüfen
+# Alternative: Manual check
 dmesg | grep -i iommu
-# Erwartete Ausgabe: "IOMMU enabled"
+# Expected output: "IOMMU enabled"
 
 find /sys/kernel/iommu_groups/ -type l
-# Sollte IOMMU Groups anzeigen
+# Should display IOMMU Groups
 ```
 
-### 2.3 Intel 82571EB NICs identifizieren
+### 2.3 Identify Intel 82571EB NICs
 
 ```sh
-# Alle PCI Devices anzeigen
+# Display all PCI Devices
 lspci -nn | grep -i ethernet
 
-# Erwartete Ausgabe (ähnlich):
+# Expected output (similar):
 # 09:00.0 Ethernet controller [0200]: Intel Corporation 82571EB Gigabit Ethernet Controller [8086:105e] (rev 06)
 # 09:00.1 Ethernet controller [0200]: Intel Corporation 82571EB Gigabit Ethernet Controller [8086:105e] (rev 06)
 # 0a:00.0 Ethernet controller [0200]: Intel Corporation 82571EB Gigabit Ethernet Controller [8086:105e] (rev 06)
 # 0a:00.1 Ethernet controller [0200]: Intel Corporation 82571EB Gigabit Ethernet Controller [8086:105e] (rev 06)
 
-# PCIe Adressen notieren:
+# Note PCIe Addresses:
 # eno0: 0000:09:00.0 (WAN)
-# eno1: 0000:09:00.1 (LACP Member für Proxmox - RESERVED)
-# eno2: 0000:0a:00.0 (LACP Member für Proxmox - RESERVED)
-# eno3: 0000:0a:00.1 (LACP Member für Proxmox - RESERVED)
+# eno1: 0000:09:00.1 (LACP Member for Proxmox - RESERVED)
+# eno2: 0000:0a:00.0 (LACP Member for Proxmox - RESERVED)
+# eno3: 0000:0a:00.1 (LACP Member for Proxmox - RESERVED)
 ```
 
-**WICHTIG:** Nur `eno0` (0000:09:00.0) wird an pfSense VM durchgereicht. eno1-3 bleiben für Proxmox LACP.
+**IMPORTANT:** Only `eno0` (0000:09:00.0) will be passed through to the pfSense VM. eno1-3 remain for Proxmox LACP.
 
-### 2.4 PCI Device für Passthrough vorbereiten
+### 2.4 Prepare PCI Device for Passthrough
 
 ```sh
-# Vendor/Device ID ermitteln
+# Determine Vendor/Device ID
 lspci -n -s 09:00.0
-# Ausgabe: 09:00.0 0200: 8086:105e (rev 06)
+# Output: 09:00.0 0200: 8086:105e (rev 06)
 # → Vendor ID: 8086, Device ID: 105e
 
-# VFIO Binding für dieses Device
+# VFIO binding for this device
 echo "options vfio-pci ids=8086:105e" > /etc/modprobe.d/vfio.conf
 
-# Module Blacklist (verhindert Linux-Treiber Binding)
+# Module Blacklist (prevents Linux driver binding)
 echo "blacklist e1000e" >> /etc/modprobe.d/blacklist.conf
 
-# initramfs neu generieren
+# Generate new initramfs
 update-initramfs -u -k all
 
-# System neustarten (kritisch!)
+# System Restart (critical!)
 reboot
 ```
 
-**Nach Reboot - Passthrough verifizieren:**
+**After reboot - Verify Passthrough:**
 
 ```sh
-# Device sollte jetzt VFIO-Treiber nutzen:
+# Device should now use the VFIO driver:
 lspci -k -s 09:00.0
 
-# Erwartete Ausgabe:
+# Expected output:
 # 09:00.0 Ethernet controller: Intel Corporation 82571EB
 #     Kernel driver in use: vfio-pci
 #     Kernel modules: e1000e
 
-# Falls "e1000e" unter "Kernel driver in use" steht → Fehler!
+# If "e1000e" is under "Kernel driver in use" → Error!
 ```
 
-**CHECKPOINT 2:** Proxmox läuft, IOMMU aktiv, NIC bereit für Passthrough.
+**CHECKPOINT 2:** Proxmox runs, IOMMU active, NIC ready for Passthrough.
 
 * * *
 
-## Phase 3: Netzwerk-Bridges konfigurieren (15 Minuten)
+## Phase 3: Network Bridge Configuration (15 minutes)
 
-**Zeitfenster:** 11:45 - 12:00
+**Time window:** 11:45 - 12:00
 
-### 3.1 `/etc/network/interfaces` bearbeiten
+### 3.1 Edit `/etc/network/interfaces`
 
-**Aktuellen Zustand sichern:**
+**Secure current state:**
 
 ```sh
 cp /etc/network/interfaces /root/interfaces.backup.$(date +%s)
 ```
 
-**Neue Konfiguration schreiben:**
+**Write new configuration:**
 
 ```sh
 nano /etc/network/interfaces
 ```
 
-**Komplette Konfiguration:**
+**Complete Configuration:**
 
 ```sh
 # Loopback
 auto lo
 iface lo inet loopback
 
-# WAN NIC (für pfSense VM - wird via Passthrough genutzt)
-# KEIN "auto eno0" - wird nicht vom Host genutzt
+# WAN NIC (for pfSense VM - will be used via Passthrough)
+# NO "auto eno0" - will not be used by the Host
 
 # Management NIC (Proxmox Host)
 auto eno2
@@ -468,9 +460,9 @@ iface vmbr_mgmt inet static
     bridge-fd 0
     bridge-vlan-aware yes
     bridge-vids 10
-    #Management Bridge - VLAN 10 only
+    # Management bridge - VLAN 10 only
 
-# Colo VPN NIC (isoliert für WireGuard OOB Gateway LXC)
+# Colo VPN NIC (isolated for WireGuard OOB gateway LXC)
 auto bge1
 iface bge1 inet manual
 
@@ -480,9 +472,9 @@ iface vmbr_oob inet static
     bridge-ports bge1
     bridge-stp off
     bridge-fd 0
-    #Colo VPN - Isolated for WireGuard OOB Gateway
+    # Colo VPN - Isolated for WireGuard OOB gateway
 
-# VLAN-Aware Bridge (für LXCs ohne dedizierte NICs)
+# VLAN-Aware bridge (for LXCs without dedicated NICs)
 auto vmbr0
 iface vmbr0 inet manual
     bridge-ports none
@@ -490,50 +482,50 @@ iface vmbr0 inet manual
     bridge-fd 0
     bridge-vlan-aware yes
     bridge-vids 10 20 30
-    #VLAN Bridge for LXCs - VLANs 10/20/30
+    # VLAN bridge for LXCs - VLANs 10/20/30
 ```
 
-**Netzwerk neu starten:**
+**Restart network:**
 
 ```sh
-# ACHTUNG: iLO Remote Console MUSS offen bleiben!
-# Risiko: Netzwerk-Verbindung verloren
+# ATTENTION: iLO Remote Console MUST stay open!
+# Risk: Lost network connection
 
 systemctl restart networking
 
-# Alternativer sicherer Weg:
+# Alternative safer way:
 ifreload -a
 ```
 
-**Verifikation:**
+**Verification:**
 
 ```sh
 ip addr show vmbr_mgmt
-# Erwartete Ausgabe: 10.0.10.5/24
+# Expected output: 10.0.10.5/24
 
 ip addr show vmbr_oob
-# Erwartete Ausgabe: 172.20.10.10/24
+# Expected output: 172.20.10.10/24
 
 brctl show
-# Erwartete Ausgabe: vmbr_mgmt (eno2), vmbr_oob (bge1), vmbr0 (none)
+# Expected output: vmbr_mgmt (eno2), vmbr_oob (bge1), vmbr0 (none)
 
 ping 10.0.10.2  # HP Switch
-# NOCH KEIN Gateway: Ping wird fehlschlagen (normal)
+# STILL NO gateway: Ping will fail (normal)
 ```
 
-**CHECKPOINT 3:** Alle Bridges konfiguriert.
+**CHECKPOINT 3:** All bridges configured.
 
 * * *
 
-## Phase 4: pfSense VM erstellen (45 Minuten)
+## Phase 4: pfSense VM Creation (45 minutes)
 
-**Zeitfenster:** 12:00 - 12:45
+**Time window:** 12:00 - 12:45
 
-### 4.1 VM via Proxmox WebGUI erstellen
+### 4.1 Create VM via Proxmox WebGUI
 
-**Proxmox WebGUI öffnen:**
+**Open Proxmox WebGUI:**
 
-Da noch kein Routing aktiv ist, muss die WebGUI via **Laptop** erreicht werden (direkt am Switch Port 24):
+Since no routing is active yet, the WebGUI must be accessed via **Laptop** (directly on Switch Port 24):
 
 ```
 URL: https://10.0.10.5:8006
@@ -549,79 +541,79 @@ General:
 - Name: fw-prod-cz-thor
 
 OS:
-- ISO image: [pfSense-CE-2.8.1-RELEASE-amd64.iso hochladen via iLO oder USB]
+- ISO image: [pfSense-CE-2.8.1-RELEASE-amd64.iso upload via iLO or USB]
 - Type: Other
 - Guest OS: FreeBSD
-- Version: 14.x (oder latest)
+- Version: 14.x (or latest)
 
 System:
 - BIOS: OVMF (UEFI)
 - Machine: q35
 - SCSI Controller: VirtIO SCSI single
-- Qemu Agent: ✅ (aktivieren)
+- Qemu Agent: ✅ (activate)
 - Add EFI Disk: ✅ (Storage: local-zfs, Pre-Enroll keys: NO)
 
 Disks:
 - Bus/Device: VirtIO Block (0)
 - Storage: local-zfs
-- Disk size: 32 GB (ausreichend für pfSense)
+- Disk size: 32 GB (sufficient for pfSense)
 - Cache: Write back
 - Discard: ✅
 - SSD emulation: ✅
 
 CPU:
 - Sockets: 1
-- Cores: 4 (E3-1230L hat 4C/8T, 4 Cores reichen)
-- Type: host (wichtig für Performance)
+- Cores: 4 (E3-1230L has 4C/8T, 4 Cores are sufficient)
+- Type: host (important for Performance)
 
 Memory:
-- Memory (MiB): 4096 (4 GB - ausreichend für pfSense mit Paketen)
-- Ballooning: ❌ (deaktivieren)
+- Memory (MiB): 4096 (4 GB - sufficient for pfSense with packages)
+- Ballooning: ❌ (deactivate)
 
 Network:
 - Bridge: vmbr_mgmt
 - Model: VirtIO (paravirt)
-- VLAN Tag: (leer)
-- Firewall: ❌ (deaktivieren)
-- NOTE: Dies wird die LAN-Schnittstelle (später em0 in pfSense)
+- VLAN Tag: (empty)
+- Firewall: ❌ (deactivate)
+- Note: This will be the LAN interface (later em0 in pfSense)
 
-Confirm: ✅ Create VM (aber NICHT starten!)
+Confirm: ✅ Create VM (but NOT start!)
 ```
 
-### 4.2 PCI Passthrough hinzufügen (Intel eno0 für WAN)
+### 4.2 Add PCI Passthrough (Intel eno0 for WAN)
 
 **Via WebGUI:**
 
 ```
 VM 100 (fw-prod-cz-thor) → Hardware → Add → PCI Device:
 - Raw Device: 0000:09:00.0 (Intel 82571EB - eno0)
-- All Functions: ❌ (nur diese eine Funktion)
+- All Functions: ❌ (only this function)
 - Primary GPU: ❌
 - ROM-Bar: ✅
-- PCI-Express: ✅ (wenn verfügbar)
+- PCI-Express: ✅ (if available)
 
 → Add
 ```
 
-**Alternative: Via CLI (falls GUI nicht funktioniert):**
+**Alternative: Via CLI (if GUI not working):**
 
 ```sh
 qm set 100 -hostpci0 0000:09:00.0,pcie=1
 ```
 
-**VM Config prüfen:**
+**Check VM Config:**
 
 ```sh
 cat /etc/pve/qemu-server/100.conf
 
-# Erwartete Ausgabe (ähnlich):
+# Expected output (similar):
 # hostpci0: 0000:09:00.0,pcie=1
 # net0: virtio=XX:XX:XX:XX:XX:XX,bridge=vmbr_mgmt
 ```
 
 ### 4.3 pfSense Installation
 
-**VM starten:**
+**Start VM:**
 
 ```sh
 qm start 100
@@ -633,7 +625,7 @@ qm start 100
 VM 100 → Console (NoVNC)
 
 pfSense Installer:
-1. Welcome: [Enter] (Accept)
+1. Welcome: [Enter] (accept)
 2. Install pfSense: [Enter]
 3. Keymap: German / de.kbd → Continue
 4. Partitioning: Auto (ZFS) → [Enter]
@@ -641,11 +633,11 @@ pfSense Installer:
    - Install: stripe (single disk)
    - Select: ada0 (32 GB VirtIO Disk)
    - Continue: [Enter]
-6. Installation läuft... (~3 Minuten)
+6. Installation runs... (~3 minutes)
 7. Manual Configuration: No → Reboot
 ```
 
-**Nach Reboot - Interface Assignment:**
+**After reboot - Interface assignment:**
 
 ```
 pfSense Console Menu:
@@ -654,20 +646,20 @@ Available interfaces:
   vtnet0 (VirtIO - vmbr_mgmt)
   igb0   (Intel 82571EB Passthrough - WAN)
 
-VLANs setup now? → n (no)
+Setup VLANs now? → n (no)
 
 WAN interface name: igb0 [Enter]
 LAN interface name: vtnet0 [Enter]
-Optional 1 interface: [Enter] (leer - später konfigurieren)
+Optional 1 interface: [Enter] (empty - configure later)
 
 Proceed? → y
 
 Interfaces assigned:
-  WAN  → igb0  (Passthrough NIC → wird zu bge0 on real HW)
-  LAN  → vtnet0 (VirtIO Bridge)
+  WAN  → igb0  (Passthrough NIC → will become bge0 on real HW)
+  LAN  → vtnet0 (VirtIO bridge)
 ```
 
-### 4.4 WAN Interface konfigurieren (temporär DHCP)
+### 4.4 Configure WAN Interface (temporary DHCP)
 
 ```
 pfSense Console:
@@ -678,25 +670,25 @@ Enter interface (wan): [Enter]
 Configure IPv4 address WAN interface via DHCP? → n (no)
 Enter new WAN IPv4 address: 87.236.199.191
 Enter WAN IPv4 subnet bit count: 23
-Enter new WAN IPv4 upstream gateway address: [Colo Gateway - dokumentiert in pfSense Backup]
+Enter new WAN IPv4 upstream gateway address: [Colo gateway - documented in pfSense backup]
 
 Configure IPv6 via DHCP6? → n (no)
 
-Revert to HTTP as webConfigurator protocol? → n (no - HTTPS beibehalten)
+Revert to HTTP as webConfigurator protocol? → n (no - keep HTTPS)
 ```
 
-**WICHTIG:** Nach WAN-Config sollte pfSense WebGUI erreichbar sein.
+**IMPORTANT:** After WAN Config, the pfSense WebGUI should be reachable.
 
 ### 4.5 pfSense Config Restore
 
-**Via Laptop (direkt am LAN Interface):**
+**Via Laptop (directly on LAN interface):**
 
 ```
-Temporärer Laptop-IP:
+Temporary Laptop IP:
 IP: 10.0.10.99/24
 Gateway: 10.0.10.1 (pfSense LAN)
 
-Browser öffnen:
+Open browser:
 https://10.0.10.1
 
 Login:
@@ -704,47 +696,47 @@ Login:
 - Password: pfsense (default)
 
 Diagnostics → Backup & Restore → Restore Backup:
-- Configuration file: [config-fw-prod-cz-thor-20260109.xml hochladen]
+- Configuration file: [upload config-fw-prod-cz-thor-20260109.xml]
 - Restore Configuration: ✅
 - Reboot: ✅
 
-→ System rebootet (~2 Minuten)
+→ System reboots (~2 minutes)
 ```
 
-**Nach Reboot - Verifikation:**
+**After reboot - verification:**
 
 ```
 pfSense Console:
 
-Interfaces sollten jetzt sein:
+Interfaces should now be:
   WAN   → igb0  (87.236.199.191/23)
   LAN   → vtnet0 (10.0.10.1/24)
   MGT   → vtnet0.69 (77.77.77.1/29) - VLAN 69
-  VPN   → [muss neu konfiguriert werden - siehe nächster Schritt]
+  VPN   → [needs to be reconfigured - see next step]
   WG_VPN → tun_wg0 (182.22.16.1/29)
 ```
 
-**CHECKPOINT 4:** pfSense VM läuft, WAN aktiv, Config restored.
+**CHECKPOINT 4:** pfSense VM runs, WAN active, Config restored.
 
 * * *
 
-## Phase 5: Thor Verkabelung (20 Minuten)
+## Phase 5: Thor Cabling (20 minutes)
 
-**Zeitfenster:** 12:45 - 13:05
+**Time window:** 12:45 - 13:05
 
-### 5.1 WAN-Kabel anschließen
+### 5.1 Connect WAN cable
 
 ```
 HP Switch Port 3 → Thor eno0 (Passthrough NIC - WAN via HP Switch)
 ```
 
-**ALTERNATIVE (falls direkter WAN Access bevorzugt):**
+**ALTERNATIVE (if direct WAN access preferred):**
 
 ```
-Colo Uplink direkt → Thor eno0 (Bypass Switch)
+Colo Uplink direct → Thor eno0 (Bypass Switch)
 ```
 
-**WICHTIG:** eno0 ist jetzt exklusiv der pfSense VM zugeordnet. Proxmox Host sieht diese NIC NICHT.
+**IMPORTANT:** eno0 is now exclusively assigned to the pfSense VM. The Proxmox Host does NOT see this NIC.
 
 ### 5.2 Management Link (eno2)
 
@@ -752,7 +744,7 @@ Colo Uplink direkt → Thor eno0 (Bypass Switch)
 HP Switch Port 1 → Thor eno2 (Proxmox Management - vmbr_mgmt)
 ```
 
-**HP Port 1 als Access Port (VLAN 10) konfigurieren:**
+**Configure HP Port 1 as Access Port (VLAN 10):**
 
 ```sh
 <HP> system-view
@@ -766,27 +758,27 @@ HP Switch Port 1 → Thor eno2 (Proxmox Management - vmbr_mgmt)
 **Proxmox Host Test:**
 
 ```sh
-# Auf Thor (via iLO Console):
+# On Thor (via iLO Console):
 ping 10.0.10.2  # HP Switch
-# Erwartete Antwort: < 1ms
+# Expected response: < 1ms
 
-ping 10.0.10.1  # pfSense LAN Gateway
-# Erwartete Antwort: < 1ms
+ping 10.0.10.1  # pfSense LAN gateway
+# Expected response: < 1ms
 
-# Internet-Test (via pfSense Routing):
+# Internet Test (via pfSense routing):
 ping 1.1.1.1
-# Erwartete Antwort: ~15ms (sollte jetzt funktionieren!)
+# Expected response: ~15ms (should now work!)
 ```
 
-**CHECKPOINT 5:** Thor vollständig verkabelt, Routing funktioniert.
+**CHECKPOINT 5:** Thor completely cabled, routing works.
 
 * * *
 
-## Phase 6: Loki LACP Migration (30 Minuten)
+## Phase 6: Loki LACP Migration (30 minutes)
 
-**Zeitfenster:** 13:05 - 13:35
+**Time window:** 13:05 - 13:35
 
-### 6.1 Loki hochfahren (temporär mit Single Link)
+### 6.1 Boot up Loki (temporary with Single Link)
 
 **Via iLO ([https://77.77.77.3](https://77.77.77.3)):**
 
@@ -794,29 +786,29 @@ ping 1.1.1.1
 Power On Server
 ```
 
-**Nach Boot - Proxmox Host Login (via SSH 10.0.1.10):**
+**After boot - Login to Proxmox Host (via SSH 10.0.1.10):**
 
 ```sh
-# Netzwerk Status:
+# Network status:
 ip addr show eno1
-# Sollte 10.0.1.10/24 haben (alter Zustand)
+# Should have 10.0.1.10/24 (old state)
 
-# VMs/LXCs Status:
+# VMs/LXCs status:
 qm list
 pct list
 
-# NOCH NICHT starten - erst LACP konfigurieren
+# DO NOT start yet - configure LACP first
 ```
 
-### 6.2 `/etc/network/interfaces` für LACP anpassen
+### 6.2 Adjust `/etc/network/interfaces` for LACP
 
-**Backup erstellen:**
+**Create backup:**
 
 ```sh
 cp /etc/network/interfaces /root/interfaces.backup.$(date +%s)
 ```
 
-**Neue Konfiguration:**
+**New configuration:**
 
 ```sh
 nano /etc/network/interfaces
@@ -846,7 +838,7 @@ auto eno4
 iface eno4 inet manual
     bond-master bond0
 
-# LACP Bond Interface
+# LACP Bond interface
 auto bond0
 iface bond0 inet manual
     bond-slaves eno1 eno2 eno3 eno4
@@ -855,7 +847,7 @@ iface bond0 inet manual
     bond-xmit-hash-policy layer3+4
     bond-lacp-rate fast
 
-# VLAN-Aware Bridge (Production Workloads)
+# VLAN-Aware bridge (Production Workloads)
 auto vmbr0
 iface vmbr0 inet static
     address 10.0.30.10/24
@@ -865,24 +857,24 @@ iface vmbr0 inet static
     bridge-fd 0
     bridge-vlan-aware yes
     bridge-vids 10 20 30
-    #LACP Aggregated Bridge - All VLANs
+    # LACP Aggregated bridge - All VLANs
 
-# Internal Storage Bridge (TrueNAS ↔ Plex ↔ arr-stack)
+# Internal Storage bridge (TrueNAS ↔ Plex ↔ arr-stack)
 auto vmbr_storage
 iface vmbr_storage inet manual
     bridge-ports none
     bridge-stp off
     bridge-fd 0
-    #Internal Storage - Unlimited Bandwidth (VM-to-VM only, no host IP needed)
+    # Internal Storage - Unlimited Bandwidth (VM-to-VM only, no host IP needed)
 ```
 
-**WICHTIG:** Gateway ändert sich von `10.0.1.1` (alte LAN) zu `10.0.30.1` (neue VLAN 30 Compute Gateway).
+**IMPORTANT:** Gateway changes from `10.0.1.1` (old LAN) to `10.0.30.1` (new VLAN 30 Compute gateway).
 
-### 6.3 Loki Kabel umstecken
+### 6.3 Reconnect Loki cables
 
-**VORHER:** Nur Port 1 aktiv (eno1 → Dell Switch Port 1)
+**BEFORE:** Only Port 1 active (eno1 → Dell Switch Port 1)
 
-**NACHHER:**
+**AFTER:**
 
 ```
 HP Switch Port 9  → Loki eno1
@@ -891,20 +883,20 @@ HP Switch Port 11 → Loki eno3
 HP Switch Port 12 → Loki eno4
 ```
 
-**ALLE VIER KABEL gleichzeitig anschließen, dann:**
+**Connect ALL FOUR cables simultaneously, then:**
 
-### 6.4 HP Switch LACP aktivieren
+### 6.4 Activate LACP on HP Switch
 
 ```sh
 <HP> system-view
 
-# Bridge-Aggregation2 für Loki (Ports 9-12)
-[HP] interface Bridge-Aggregation2
-[HP-Bridge-Aggregation2] description Loki-LACP-Bond
-[HP-Bridge-Aggregation2] port link-type trunk
-[HP-Bridge-Aggregation2] port trunk permit vlan 1 10 20 30
-[HP-Bridge-Aggregation2] link-aggregation mode dynamic
-[HP-Bridge-Aggregation2] quit
+# bridge-Aggregation2 for Loki (Ports 9-12)
+[HP] interface bridge-Aggregation2
+[HP-bridge-Aggregation2] description Loki-LACP-Bond
+[HP-bridge-Aggregation2] port link-type trunk
+[HP-bridge-Aggregation2] port trunk permit vlan 1 10 20 30
+[HP-bridge-Aggregation2] link-aggregation mode dynamic
+[HP-bridge-Aggregation2] quit
 
 # Port 9 (eno1)
 [HP] interface GigabitEthernet1/0/9
@@ -938,52 +930,52 @@ HP Switch Port 12 → Loki eno4
 <HP> save
 ```
 
-### 6.5 Loki Netzwerk neu starten
+### 6.5 Restart Loki Network
 
 ```sh
-# Via iLO Remote Console (sicher):
+# Via iLO Remote Console (safer):
 systemctl restart networking
 
-# Verifikation:
+# Verification:
 ip addr show bond0
-# Sollte "master" zeigen, KEIN IP (wird von vmbr0 genutzt)
+# Should show "master", NO IP (will be used by vmbr0)
 
 ip addr show vmbr0
-# Sollte 10.0.30.10/24 zeigen
+# Should show 10.0.30.10/24
 
 cat /proc/net/bonding/bond0
-# Erwartete Ausgabe:
+# Expected output:
 # Bonding Mode: IEEE 802.3ad Dynamic link aggregation
-# MII Status: up
+# MII status: up
 # Aggregator ID: 1
 # Number of ports: 4
-# Slave Interface: eno1
-# Slave Interface: eno2
-# Slave Interface: eno3
-# Slave Interface: eno4
+# Slave interface: eno1
+# Slave interface: eno2
+# Slave interface: eno3
+# Slave interface: eno4
 ```
 
-**HP Switch LACP Status prüfen:**
+**Check HP Switch LACP status:**
 
 ```sh
 <HP> display link-aggregation summary
 
-# Erwartete Ausgabe:
-# Bridge-Aggregation2: UP
+# Expected output:
+# bridge-Aggregation2: UP
 # Selected ports: GE1/0/9, GE1/0/10, GE1/0/11, GE1/0/12
 ```
 
-**CHECKPOINT 6:** Loki LACP aktiv, 4 Gbps aggregiert.
+**CHECKPOINT 6:** Loki LACP active, 4 Gbps aggregated.
 
 * * *
 
-## Phase 7: pfSense VLAN & Firewall Config (45 Minuten)
+## Phase 7: pfSense VLAN & Firewall Config (45 minutes)
 
-**Zeitfenster:** 13:35 - 14:20
+**Time window:** 13:35 - 14:20
 
-### 7.1 pfSense VM - zusätzliche VirtIO NICs hinzufügen
+### 7.1 pfSense VM - Add additional VirtIO NICs
 
-**Problem:** Config Restore hat die alten physischen Interfaces importiert. Neue VM braucht separate VirtIO NICs für VLANs.
+**Problem:** Config Restore imported the old physical interfaces. New VM needs separate VirtIO NICs for VLANs.
 
 **Via Proxmox WebGUI ([https://10.0.10.5:8006](https://10.0.10.5:8006)):**
 
@@ -1005,24 +997,24 @@ Network Device 3:
 → Add
 ```
 
-**VM Config prüfen:**
+**Check VM Config:**
 
 ```sh
 cat /etc/pve/qemu-server/100.conf
 
-# Erwartete Ausgabe:
+# Expected output:
 # net0: virtio=XX:XX:XX:XX:XX:XX,bridge=vmbr_mgmt (LAN - VLAN 10 untagged)
 # net1: virtio=YY:YY:YY:YY:YY:YY,bridge=vmbr_mgmt,tag=20 (Production - VLAN 20)
 # net2: virtio=ZZ:ZZ:ZZ:ZZ:ZZ:ZZ,bridge=vmbr_mgmt,tag=30 (Compute - VLAN 30)
 ```
 
-**pfSense VM rebooten:**
+**Reboot pfSense VM:**
 
 ```sh
 qm reboot 100
 ```
 
-### 7.2 pfSense Interface Assignment
+### 7.2 pfSense interface assignment
 
 **Via pfSense WebGUI ([https://10.0.10.1](https://10.0.10.1)):**
 
@@ -1059,7 +1051,7 @@ Interfaces → COMPUTE (OPT2):
 - Save → Apply Changes
 ```
 
-### 7.3 DHCP Server aktivieren (VLANs)
+### 7.3 Activate DHCP Server (VLANs)
 
 ```
 Services → DHCP Server:
@@ -1079,9 +1071,9 @@ COMPUTE Tab:
 - Save
 ```
 
-### 7.4 Firewall Rules (Basic Allow All - für Testing)
+### 7.4 Firewall Rules (Basic Allow All - for Testing)
 
-**WARNUNG:** Diese Rules erlauben ALLES. Später einschränken!
+**WARNING:** These rules allow EVERYTHING. Restrict later!
 
 ```
 Firewall → Rules:
@@ -1107,19 +1099,19 @@ COMPUTE Tab → Add (Top):
 Apply Changes
 ```
 
-**CHECKPOINT 7:** pfSense VLANs konfiguriert, Routing aktiv.
+**CHECKPOINT 7:** pfSense VLANs configured, routing active.
 
 * * *
 
-## Phase 8: VM/LXC Migration (60 Minuten)
+## Phase 8: VM/LXC Migration (60 minutes)
 
-**Zeitfenster:** 14:20 - 15:20
+**Time window:** 14:20 - 15:20
 
-### 8.1 IP-Adressen-Mapping planen
+### 8.1 Plan IP Address Mapping
 
-**Alte IPs (10.0.1.x) → Neue IPs (VLAN 20/30):**
+**Old IPs (10.0.1.x) → New IPs (VLAN 20/30):**
 
-| VMID | Name           | Alt IP    | Neu IP        | VLAN |
+| VMID | Name           | Old IP    | New IP        | VLAN |
 | ---- | -------------- | --------- | ------------- | ---- |
 | 4000 | truenas        | 10.0.1.20 | 10.0.30.20/24 | 30   |
 | 1000 | pms-prod-cz-01 | 10.0.1.30 | 10.0.20.30/24 | 20   |
@@ -1127,7 +1119,7 @@ Apply Changes
 | 8000 | nextcloud      | 10.0.1.70 | 10.0.20.70/24 | 20   |
 | 1100 | the-arr-stack  | 10.0.1.90 | 10.0.30.90/24 | 30   |
 
-### 8.2 TrueNAS VM migrieren (VMID 4000)
+### 8.2 Migrate TrueNAS VM (VMID 4000)
 
 **Proxmox WebGUI:**
 
@@ -1137,17 +1129,17 @@ VM 4000 (truenas) → Hardware:
 net0 → Edit:
 - Bridge: vmbr0
 - VLAN Tag: 30
-- Model: VirtIO (unverändert)
+- Model: VirtIO (unchanged)
 - Save
 
 Add → Network Device (net1 - Storage):
 - Bridge: vmbr_storage
-- VLAN Tag: (leer)
+- VLAN Tag: (empty)
 - Model: VirtIO
 - Save
 ```
 
-**VM starten:**
+**Start VM:**
 
 ```sh
 qm start 4000
@@ -1188,12 +1180,12 @@ Default gateway: 10.0.30.1
 Reboot? → yes
 ```
 
-**Verifikation (nach Reboot):**
+**Verification (after reboot):**
 
 ```
 Browser: https://10.0.30.20
 
-TrueNAS Login testen
+Test TrueNAS login
 ```
 
 ### 8.3 Plex VM (VMID 1000) - Multi-Homed
@@ -1214,10 +1206,10 @@ Add → Network Device (net1):
 **Ubuntu VM Network Config (via Console):**
 
 ```sh
-# VM starten
+# Start VM
 qm start 1000
 
-# Console Login
+# Console login
 nano /etc/netplan/00-installer-config.yaml
 
 network:
@@ -1243,28 +1235,28 @@ network:
 netplan apply
 
 # Test
-ping 10.0.20.1  # Gateway
+ping 10.0.20.1  # gateway
 ping 10.10.10.1  # TrueNAS Storage
 ```
 
-**Plex Testen:**
+**Test Plex:**
 
 ```
 Browser: http://10.0.20.30:32400/web
 ```
 
-### 8.4 Weitere VMs analog migrieren
+### 8.4 Migrate other VMs analogously
 
-**Shortcuts (für alle verbleibenden VMs):**
+**Shortcuts (for all remaining VMs):**
 
 ```sh
 # docker-prod (VMID 2000) → VLAN 30
 qm set 2000 -net0 virtio,bridge=vmbr0,tag=30
-# Interne IP: 10.0.30.40/24 (via Netplan)
+# Internal IP: 10.0.30.40/24 (via Netplan)
 
 # nextcloud (VMID 8000) → VLAN 20
 qm set 8000 -net0 virtio,bridge=vmbr0,tag=20
-# Interne IP: 10.0.20.70/24
+# Internal IP: 10.0.20.70/24
 
 # the-arr-stack (VMID 1100) → VLAN 30 + vmbr_storage
 qm set 1100 -net0 virtio,bridge=vmbr0,tag=30
@@ -1273,11 +1265,11 @@ qm set 1100 -net1 virtio,bridge=vmbr_storage
 # ens19: 10.10.10.3/24
 ```
 
-**Jede VM einzeln starten, IP konfigurieren, testen.**
+**Start each VM individually, configure IP, and test.**
 
-### 8.5 LXCs migrieren (schneller)
+### 8.5 Migrate LXCs (Faster)
 
-**LXC Network Config ist einfacher (via Proxmox GUI):**
+**LXC Network Config is easier (via Proxmox GUI):**
 
 ```
 LXC 3000 (prometheus) → Network:
@@ -1289,10 +1281,10 @@ LXC 3002 (influxdb):
 LXC 5000 (ptero-panel-prod):
 - net0: bridge=vmbr0, tag=30, ip=10.0.30.100/24, gw=10.0.30.1
 
-# etc. für alle LXCs
+# etc. for all LXCs
 ```
 
-**Batch-Start:**
+**Batch Start:**
 
 ```sh
 for ctid in 3000 3002 5000 5001 5050 6000 6100; do
@@ -1300,15 +1292,15 @@ for ctid in 3000 3002 5000 5001 5050 6000 6100; do
 done
 ```
 
-**CHECKPOINT 8:** Alle VMs/LXCs laufen in neuen VLANs.
+**CHECKPOINT 8:** All VMs/LXCs running in new VLANs.
 
 * * *
 
-## Phase 9: WireGuard OOB Gateway LXC (30 Minuten)
+## Phase 9: WireGuard OOB Gateway LXC (30 minutes)
 
-**Zeitfenster:** 15:20 - 15:50
+**Time window:** 15:20 - 15:50
 
-### 9.1 LXC erstellen
+### 9.1 Create LXC
 
 **Proxmox WebGUI:**
 
@@ -1317,14 +1309,14 @@ Create CT:
 - Node: pve-prod-cz-thor
 - CT ID: 9100
 - Hostname: wg-oob-gateway
-- Password: [sicheres PW]
+- Password: [secure PW]
 - Template: debian-12-standard
 - Disk: 4 GB
 - CPU: 1 Core
 - Memory: 256 MB
 - Network:
   - net0: name=eth0, bridge=vmbr_mgmt, tag=10, ip=10.0.10.100/24, gw=10.0.10.1
-  - net1: name=eth1, bridge=vmbr_oob, ip=172.20.10.100/24, gw=(leer)
+  - net1: name=eth1, bridge=vmbr_oob, ip=172.20.10.100/24, gw=(empty)
 
 Options:
 - Start at boot: ✅
@@ -1333,9 +1325,9 @@ Options:
 Create
 ```
 
-### 9.2 WireGuard installieren & konfigurieren
+### 9.2 Install & Configure WireGuard
 
-**LXC starten & Console:**
+**Start LXC & Console:**
 
 ```sh
 pct start 9100
@@ -1344,33 +1336,33 @@ pct enter 9100
 # Updates
 apt update && apt upgrade -y
 
-# WireGuard installieren
+# Install WireGuard
 apt install -y wireguard iptables
 
-# Kernel Module (im Host laden - einmalig)
-# Auf Thor Proxmox Host:
+# Load Kernel Module (on the Host - one-time)
+# On Thor Proxmox Host:
 modprobe wireguard
 echo "wireguard" >> /etc/modules
 
-# Im LXC:
+# In LXC:
 cd /etc/wireguard
 
-# Keys generieren
+# Generate Keys
 wg genkey | tee privatekey | wg pubkey > publickey
 
 # WireGuard Config
 nano wg0.conf
 ```
 
-**wg0.conf Inhalt:**
+**wg0.conf content:**
 
 ```toml
 [Interface]
-PrivateKey = <Inhalt von privatekey>
+PrivateKey = <content from privatekey>
 Address = 172.20.10.100/24
 ListenPort = 51820
 
-# IP Forwarding aktivieren
+# Activate IP Forwarding
 PostUp = iptables -A FORWARD -i wg0 -j ACCEPT
 PostUp = iptables -A FORWARD -o wg0 -j ACCEPT
 PostUp = iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
@@ -1379,20 +1371,20 @@ PostDown = iptables -D FORWARD -i wg0 -j ACCEPT
 PostDown = iptables -D FORWARD -o wg0 -j ACCEPT
 PostDown = iptables -t nat -D POSTROUTING -o eth1 -j MASQUERADE
 
-# Client-Peers (Beispiel - User Laptop):
+# Client Peers (example - User Laptop):
 [Peer]
 PublicKey = <Laptop Public Key>
 AllowedIPs = 172.20.10.200/32
 ```
 
-**IP Forwarding permanent aktivieren:**
+**Permanently activate IP Forwarding:**
 
 ```sh
 echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
 sysctl -p
 ```
 
-**WireGuard starten:**
+**Start WireGuard:**
 
 ```sh
 wg-quick up wg0
@@ -1402,35 +1394,35 @@ systemctl enable wg-quick@wg0
 **Test:**
 
 ```sh
-# Im LXC:
-ping 172.20.10.1  # Colo VPN Gateway (via bge1)
+# In LXC:
+ping 172.20.10.1  # Colo VPN gateway (via bge1)
 
-# Von User Laptop (nach WireGuard Client Config):
+# From user Laptop (after WireGuard Client Config):
 ping 172.20.10.100  # LXC
-ping 77.77.77.2  # Thor iLO (via OOB Gateway!)
+ping 77.77.77.2  # Thor iLO (via OOB gateway!)
 ```
 
-**CHECKPOINT 9:** WireGuard OOB Gateway aktiv, iLO-Zugriff gesichert.
+**CHECKPOINT 9:** WireGuard OOB gateway active, iLO access secured.
 
 * * *
 
-## Phase 10: Final Validation (30 Minuten)
+## Phase 10: Final Validation (30 minutes)
 
-**Zeitfenster:** 15:50 - 16:20
+**Time window:** 15:50 - 16:20
 
 ### 10.1 Connectivity Tests
 
-**Von Loki Proxmox Host:**
+**From Loki Proxmox Host:**
 
 ```sh
 # VLAN 10 (Management)
-ping 10.0.10.1   # pfSense Gateway ✅
+ping 10.0.10.1   # pfSense gateway ✅
 ping 10.0.10.2   # HP Switch ✅
 ping 10.0.10.5   # Thor Proxmox ✅
 ping 10.0.10.100 # WireGuard OOB LXC ✅
 
-# VLAN 30 (Compute - eigenes Netz)
-ping 10.0.30.1   # pfSense Gateway ✅
+# VLAN 30 (Compute - own network)
+ping 10.0.30.1   # pfSense gateway ✅
 ping 10.0.30.20  # TrueNAS ✅
 
 # Internet
@@ -1438,19 +1430,19 @@ ping 1.1.1.1     # Cloudflare ✅
 curl -I https://google.com  # HTTP Test ✅
 ```
 
-**Von TrueNAS VM:**
+**From TrueNAS VM:**
 
 ```sh
-ping 10.0.30.1         # Gateway ✅
+ping 10.0.30.1         # gateway ✅
 ping 10.10.10.2        # Plex Storage NIC ✅
 ping 10.10.10.3        # arr-stack Storage NIC ✅
 ping 1.1.1.1           # Internet ✅
 ```
 
-**Von Plex VM:**
+**From Plex VM:**
 
 ```sh
-ping 10.0.20.1         # Production Gateway ✅
+ping 10.0.20.1         # Production gateway ✅
 ping 10.10.10.1        # TrueNAS Storage ✅
 curl http://10.0.20.30:32400/web  # Plex Web ✅
 ```
@@ -1466,43 +1458,43 @@ curl http://10.0.20.30:32400/web  # Plex Web ✅
 | Plex           | [http://10.0.20.30:32400/web](http://10.0.20.30:32400/web)   | Media Library ✅      |
 | Nextcloud      | [https://nextcloud.getinn.top](https://nextcloud.getinn.top) | Files ✅              |
 | Pterodactyl    | [https://panel.getinn.top](https://panel.getinn.top)         | Server List ✅        |
-| WireGuard VPN  | `ping 182.22.16.1` (von User Laptop)                         | Reply ✅              |
-| OOB Gateway    | `ping 77.77.77.2` (via WireGuard OOB)                        | Thor iLO reachable ✅ |
+| WireGuard VPN  | `ping 182.22.16.1` (from User Laptop)                         | Reply ✅              |
+| OOB gateway    | `ping 77.77.77.2` (via WireGuard OOB)                        | Thor iLO reachable ✅ |
 
 ### 10.3 Performance Tests
 
 **LACP Bandwidth:**
 
 ```sh
-# Auf Loki Host:
+# On Loki Host:
 iperf3 -s
 
-# Auf Thor Host:
+# On Thor Host:
 iperf3 -c 10.0.30.10 -t 30 -P 4
 
-# Erwartete Ergebnis: ~3.7 Gbps aggregiert (4x 1 GbE mit Overhead)
+# Expected Result: ~3.7 Gbps aggregated (4x 1 GbE with Overhead)
 ```
 
 **Storage Performance (vmbr_storage):**
 
 ```sh
-# Auf Plex VM:
+# On Plex VM:
 dd if=/dev/zero of=/mnt/truenas/testfile bs=1G count=5 oflag=direct
 
-# Erwartete Geschwindigkeit: > 500 MB/s (virtueller Bridge, kein NIC Limit)
+# Expected speed: > 500 MB/s (virtual bridge, no NIC limit)
 ```
 
-### 10.4 Switch Status
+### 10.4 Switch status
 
 ```sh
 <HP> display link-aggregation summary
 
-# Erwartete Ausgabe:
+# Expected output:
 # BAGG2: UP (Loki - 4 ports selected)
 
 <HP> display interface brief
 
-# Alle Ports UP:
+# All Ports UP:
 # GE1/0/1: UP (Thor eno2 - Management)
 # GE1/0/9-12: UP (Loki eno1-4 - LACP)
 # GE1/0/17-18: UP (iLOs)
@@ -1516,7 +1508,7 @@ pfSense WebGUI → Status → Interfaces:
 WAN (igb0):
 - Status: up
 - IPv4: 87.236.199.191/23
-- Traffic: RX/TX aktiv ✅
+- Traffic: RX/TX active ✅
 
 LAN (vtnet0):
 - Status: up
@@ -1535,18 +1527,18 @@ WG_VPN (tun_wg0):
 - IPv4: 182.22.16.1/29 ✅
 ```
 
-**CHECKPOINT 10:** Alle Services funktional, Performance validiert.
+**CHECKPOINT 10:** All Services functional, Performance validated.
 
 * * *
 
-## Rollback-Prozedur (Bei kritischem Fehler)
+## Rollback Procedure (In case of critical error)
 
-**Trigger:** Kritischer Service-Ausfall > 30 Minuten ungelöst.
+**Trigger:** Critical Service failure > 30 minutes unresolved.
 
-### Rollback Schritt 1: VMs/LXCs stoppen
+### Rollback Step 1: Stop VMs/LXCs
 
 ```sh
-# Auf Loki:
+# On Loki:
 for vmid in $(qm list | awk '{print $1}' | grep -v VMID); do
     qm shutdown $vmid --timeout 60 --forceStop 1
 done
@@ -1556,7 +1548,7 @@ for ctid in $(pct list | awk '{print $1}' | grep -v VMID); do
 done
 ```
 
-### Rollback Schritt 2: Thor herunterfahren
+### Rollback Step 2: Shut down Thor
 
 ```sh
 # Thor pfSense VM:
@@ -1566,170 +1558,166 @@ qm shutdown 100 --timeout 60
 shutdown -h now
 ```
 
-### Rollback Schritt 3: Dell Switch reinstallieren
+### Rollback Step 3: Reinstall Dell Switch
 
 ```
-1. HP Switch stromlos
-2. Dell Switch anschließen
-3. Alte Verkabelung wiederherstellen:
+1. Power off HP Switch
+2. Connect Dell Switch
+3. Re-create old cabling:
    - Port 1: Loki eno1
    - Port 17-18: iLOs
    - Port 23: Thor em0 (LAN)
    - Port 24: Laptop
 
-4. Thor hochfahren (bare metal pfSense bootet automatisch)
-5. Loki hochfahren (alte /etc/network/interfaces via Backup)
+4. Boot up Thor (bare-metal pfSense boots automatically)
+5. Boot up Loki (old /etc/network/interfaces via backup)
 ```
 
-### Rollback Schritt 4: Verifikation
+### Rollback Step 4: Verification
 
 ```sh
 # Thor pfSense:
-# Sollte automatisch booten mit alter Config
+# Should automatically boot with old Config
 
 # Loki:
-# Falls neue Config aktiv:
+# If new Config active:
 cp /root/interfaces.backup.XXXXX /etc/network/interfaces
 systemctl restart networking
 
-# VMs starten:
+# Start VMs:
 qm start 4000  # TrueNAS
 qm start 1000  # Plex
 # etc.
 ```
 
-**Rollback-Zeit:** ~30 Minuten **Datenverlust:** Keiner (nur Config-Änderungen zurückgesetzt)
+**Rollback Time:** ~30 minutes
+**Data Loss:** None (only config changes are reverted)
 
 * * *
 
 ## Post-Migration Tasks
 
-### Innerhalb 24 Stunden:
+### Within 24 hours:
 
-- [ ] **Dell Switch sicher aufbewahren** (als Backup-Hardware)
+- [ ] **Securely store Dell Switch** (as backup hardware)
+- [ ] **Update Monitoring Dashboards** (new IPs)
+- [ ] **Check DNS Records** (if static IPs used)
+- [ ] **Test backup jobs** (new network paths)
+- [ ] **Update documentation:**
+  - [ ] 01-current-state.md → archive
+  - [ ] 02-target-state.md → rename to "01-current-state.md"
 
-- [ ] **Monitoring Dashboards aktualisieren** (neue IPs)
+### Within 1 week:
 
-- [ ] **DNS Records prüfen** (falls statische IPs genutzt)
+- [ ] **Harden firewall rules** (remove current "Allow All")
+- [ ] **Test VLAN Segmentation** (Inter-VLAN Isolation)
+- [ ] **Release OOB gateway for production use**
+- [ ] **Set up Performance Monitoring** (LACP Bandwidth Grafana Dashboard)
+- [ ] **Configure Hetzner Storage Box backup**
 
-- [ ] **Backup-Jobs testen** (neue Netzwerk-Pfade)
+### Within 1 month:
 
-- [ ] **Dokumentation aktualisieren:**
-  
-  - [ ] 01-current-state.md → archivieren
-  - [ ] 02-target-state.md → in "01-current-state.md" umbenennen
-
-### Innerhalb 1 Woche:
-
-- [ ] **Firewall-Rules härten** (aktuelle "Allow All" entfernen)
-- [ ] **VLAN Segmentation testen** (Inter-VLAN Isolation)
-- [ ] **OOB Gateway für produktiven Einsatz freigeben**
-- [ ] **Performance-Monitoring einrichten** (LACP Bandwidth Grafana Dashboard)
-- [ ] **Hetzner Storage Box Backup konfigurieren**
-
-### Innerhalb 1 Monat:
-
-- [ ] **Reverse Proxy LXC erstellen** (Traefik/Caddy für SSL Termination)
-- [ ] **Let's Encrypt Wildcard Cert automatisieren**
-- [ ] **Pterodactyl auf neue IPs migrieren** (wenn stabil)
-- [ ] **Load Testing** (Plex simultane Streams + arr-stack Downloads)
+- [ ] **Create Reverse Proxy LXC** (Traefik/Caddy for SSL Termination)
+- [ ] **Automate Let's Encrypt Wildcard Cert**
+- [ ] **Migrate Pterodactyl to new IPs** (if stable)
+- [ ] **Load Testing** (Plex simultaneous streams + arr-stack downloads)
 
 * * *
 
 ## Troubleshooting Guide
 
-### Problem: Proxmox Host kein Internet
+### Problem: Proxmox Host has no Internet
 
 **Symptom:** `ping 1.1.1.1` failed
 
-**Diagnose:**
+**Diagnosis:**
 
 ```sh
 ip route show
-# Gateway fehlt?
+# Gateway missing?
 
 ping 10.0.10.1
-# pfSense erreichbar?
+# pfSense reachable?
 ```
 
 **Fix:**
 
 ```sh
 ip route add default via 10.0.10.1 dev vmbr_mgmt
-# Permanent in /etc/network/interfaces eintragen
+# Permanently enter in /etc/network/interfaces
 ```
 
 * * *
 
-### Problem: LACP nicht aktiv
+### Problem: LACP not active
 
-**Symptom:** Nur 1 Port aktiv, andere DOWN
+**Symptom:** Only 1 Port active, others DOWN
 
-**Diagnose:**
+**Diagnosis:**
 
 ```sh
-# Auf Loki:
+# On Loki:
 cat /proc/net/bonding/bond0
-# "Aggregator ID" sollte identisch für alle Slaves sein
+# "Aggregator ID" should be identical for all slaves
 
-# Auf HP Switch:
-<HP> display link-aggregation verbose Bridge-Aggregation2
-# "Selected" sollte alle 4 Ports zeigen
+# On HP Switch:
+<HP> display link-aggregation verbose bridge-Aggregation2
+# "selected" should show all 4 ports
 ```
 
 **Fix:**
 
 ```sh
-# LACP Mode prüfen:
-[HP] interface Bridge-Aggregation2
-[HP-Bridge-Aggregation2] display this
-# "link-aggregation mode dynamic" muss vorhanden sein
+# Check LACP Mode:
+[HP] interface bridge-Aggregation2
+[HP-bridge-Aggregation2] display this
+# "link-aggregation mode dynamic" must be present
 
-# Falls "static":
-[HP-Bridge-Aggregation2] undo link-aggregation mode
-[HP-Bridge-Aggregation2] link-aggregation mode dynamic
-[HP-Bridge-Aggregation2] quit
+# If "static":
+[HP-bridge-Aggregation2] undo link-aggregation mode
+[HP-bridge-Aggregation2] link-aggregation mode dynamic
+[HP-bridge-Aggregation2] quit
 [HP] save
 ```
 
 * * *
 
-### Problem: pfSense VM bootet nicht
+### Problem: pfSense VM does not boot
 
 **Symptom:** VM stuck at "Booting..."
 
-**Diagnose:**
+**Diagnosis:**
 
 ```sh
 # Via Proxmox Console:
 qm terminal 100
 
-# UEFI Boot Order prüfen:
-# Boot Menu sollte "virtio0" (Disk) zeigen
+# Check UEFI Boot Order:
+# Boot Menu should show "virtio0" (Disk)
 
-# Falls CD/DVD Boot:
+# If CD/DVD Boot:
 qm set 100 -boot order=virtio0
 qm reboot 100
 ```
 
-**Fix (Worst Case - Config manuell importieren):**
+**Fix (worst case - manually import Config):**
 
 ```sh
-# pfSense neu installieren (siehe Phase 4.3)
-# Nach Installation: Config Restore via WebGUI
+# Reinstall pfSense (see Phase 4.3)
+# After installation: Restore Config via WebGUI
 ```
 
 * * *
 
 ### Problem: NIC Passthrough failed
 
-**Symptom:** `vfio-pci` nicht gebunden, `e1000e` aktiv
+**Symptom:** `vfio-pci` not bound, `e1000e` active
 
-**Diagnose:**
+**Diagnosis:**
 
 ```sh
 lspci -k -s 09:00.0
-# "Kernel driver in use: e1000e" → Fehler!
+# "Kernel driver in use: e1000e" → Error!
 ```
 
 **Fix:**
@@ -1738,79 +1726,84 @@ lspci -k -s 09:00.0
 # Module Blacklist:
 echo "blacklist e1000e" >> /etc/modprobe.d/blacklist.conf
 
-# VFIO neu binden:
+# Re-bind VFIO:
 echo "8086 105e" > /sys/bus/pci/drivers/vfio-pci/new_id
 
-# initramfs neu generieren:
+# Generate new initramfs:
 update-initramfs -u -k all
 reboot
 ```
 
 * * *
 
-### Problem: VMs haben kein Internet
+### Problem: VMs have no Internet
 
 **Symptom:** `ping 1.1.1.1` failed in VM
 
-**Diagnose:**
+**Diagnosis:**
 
 ```sh
 # In VM:
 ip route show
-# Gateway korrekt (10.0.20.1 / 10.0.30.1)?
+# Gateway correct (10.0.20.1 / 10.0.30.1)?
 
-# Auf pfSense:
+# On pfSense:
 pfSense WebGUI → Firewall → Rules
-# "Default deny all" aktiv?
+# "Default deny all" active?
 
-# NAT prüfen:
+# Check NAT:
 Firewall → NAT → Outbound
-# Auto-NAT für neue VLANs?
+# auto-NAT for new VLANs?
 ```
 
 **Fix:**
 
 ```sh
-# pfSense Firewall Rules:
+# pfSense firewall Rules:
 Firewall → Rules → PROD/COMPUTE
-# "Allow all" Regel temporär hinzufügen (siehe Phase 7.4)
+# Add "Allow all" rule temporarily (see Phase 7.4)
 
 # Outbound NAT:
 Firewall → NAT → Outbound
-# Mode: Automatic (sollte auto-NAT für 10.0.20.0/24 und 10.0.30.0/24 erstellen)
+# Mode: Automatic (should create auto-NAT for 10.0.20.0/24 and 10.0.30.0/24)
 ```
 
 * * *
 
 ## Contact & Escalation
 
-**On-Site Support:** Keine verfügbar (Colo Prague) **Remote Support:** iLO + WireGuard OOB Gateway **Backup Contact:** \[Telefonnummer Colo Betreiber\]
+**On-Site Support:** Not available (Colo Prague)
+**Remote Support:** iLO + WireGuard OOB gateway
+**Backup Contact:** \[phone number Colo operator\]
 
-**Eskalation:**
+**Escalation:**
 
-1. **Kritischer Fehler:** Rollback innerhalb 30 Min starten (siehe Rollback-Prozedur)
-2. **Nicht-kritisch:** Issue dokumentieren, nach Migration fixen
-3. **Unbekanntes Problem:** Screenshot + Logs sammeln, remote analysieren
-
-* * *
-
-## Checkliste: Migration abgeschlossen
-
-- [ ] **Alle VMs laufen** (qm list → 5/5 running)
-- [ ] **Alle LXCs laufen** (pct list → 9/9 running)
-- [ ] **LACP aktiv** (4 Gbps Aggregation validiert)
-- [ ] **pfSense Routing** (alle VLANs haben Internet)
-- [ ] **Services erreichbar** (Plex, Nextcloud, Pterodactyl getestet)
-- [ ] **iLO via OOB Gateway** (WireGuard funktional)
-- [ ] **Performance validiert** (iperf3 Tests erfolgreich)
-- [ ] **Backups gesichert** (pfSense config.xml, VM backups vorhanden)
-- [ ] **Dokumentation aktualisiert** (neue IPs, Port Mapping)
-- [ ] **Dell Switch gesichert** (als Rollback-Hardware aufbewahrt)
+1. **Critical error:** Start Rollback within 30 min (see Rollback Procedure)
+2. **Non-critical:** Document issue, fix after migration
+3. **Unknown problem:** Collect screenshots + logs, analyze remotely
 
 * * *
 
-**Dokument Version:** 1.0 **Erstellt:** 2026-01-09 **Zuletzt geprüft:** \[Datum nach Pre-Flight Check\] **Status:** READY FOR EXECUTION
+## Checklist: Migration Completed
+
+- [ ] **All VMs running** (qm list → 5/5 running)
+- [ ] **All LXCs running** (pct list → 9/9 running)
+- [ ] **LACP active** (4 Gbps Aggregation validated)
+- [ ] **pfSense routing** (all VLANs have Internet)
+- [ ] **Services reachable** (Plex, Nextcloud, Pterodactyl tested)
+- [ ] **iLO via OOB gateway** (WireGuard functional)
+- [ ] **Performance validated** (iperf3 tests successful)
+- [ ] **Backups secured** (pfSense config.xml, VM backups available)
+- [ ] **Documentation updated** (new IPs, Port Mapping)
+- [ ] **Dell Switch secured** (kept as rollback hardware)
 
 * * *
 
-**Hinweis:** Dieses Dokument vor Ort ausdrucken und während der Migration Schritt für Schritt abhaken. Bei Abweichungen sofort dokumentieren.
+**Document Version:** 1.0
+**Created:** 2026-01-09
+**Last Checked:** \[date after Pre-Flight Check\]
+**Status:** READY FOR EXECUTION
+
+* * *
+
+**Note:** Print this document on-site and check off each step during the migration. Immediately document any deviations.

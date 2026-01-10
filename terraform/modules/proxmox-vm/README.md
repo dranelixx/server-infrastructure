@@ -124,5 +124,5 @@ See the `examples/` directory for more usage patterns:
 ## Requirements
 
 - Terraform >= 1.7.0
-- `telmate/proxmox` provider ~> 3.0
+- `bpg/proxmox` provider >= 0.91.0
 - Proxmox VE >= 8.0

@@ -2,7 +2,7 @@
 # IMPORTANT: Never commit terraform.tfvars with real credentials!
 
 variable "proxmox_api_url" {
-  description = "Proxmox API URL (e.g., https://10.0.1.10:8006/api2/json)"
+  description = "Proxmox API URL (e.g., https://<PROXMOX_HOST>:8006/api2/json)"
   type        = string
 }
 

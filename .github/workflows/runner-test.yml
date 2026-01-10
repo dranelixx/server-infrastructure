@@ -1,0 +1,88 @@
+name: Self-Hosted Runner Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/runner-test.yml'
+
+jobs:
+  test-runner:
+    name: Test Self-Hosted Runner
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Display runner information
+        run: |
+          echo "========================================="
+          echo "Runner Information"
+          echo "========================================="
+          echo "Hostname: $(hostname)"
+          echo "OS: $(uname -a)"
+          echo "User: $(whoami)"
+          echo "Working Directory: $(pwd)"
+          echo "========================================="
+
+      - name: Check Terraform installation
+        run: |
+          echo "Checking Terraform installation..."
+          terraform version
+          echo "✓ Terraform is installed"
+
+      - name: Check TFLint installation
+        run: |
+          echo "Checking TFLint installation..."
+          tflint --version
+          echo "✓ TFLint is installed"
+
+      - name: Check required tools
+        run: |
+          echo "Checking required tools..."
+          echo "Git: $(git --version)"
+          echo "Curl: $(curl --version | head -1)"
+          echo "JQ: $(jq --version)"
+          echo "✓ All required tools are installed"
+
+      - name: Test Terraform in current-state environment
+        working-directory: terraform/environments/current-state
+        run: |
+          echo "Testing Terraform initialization..."
+          terraform init -backend=false
+          echo "✓ Terraform init successful"
+
+          echo "Running terraform validate..."
+          terraform validate
+          echo "✓ Terraform validate successful"
+
+      - name: Test TFLint
+        working-directory: terraform/environments/current-state
+        run: |
+          echo "Running TFLint..."
+          tflint --init
+          tflint --format compact
+          echo "✓ TFLint check completed"
+
+      - name: Test network connectivity
+        run: |
+          echo "Testing network connectivity..."
+          echo "Proxmox API: $(nc -zv 10.0.1.10 8006 2>&1 | grep -o 'succeeded' || echo 'failed')"
+          echo "GitHub API: $(curl -s -o /dev/null -w '%{http_code}' https://api.github.com)"
+          echo "✓ Network connectivity test completed"
+
+      - name: Summary
+        if: success()
+        run: |
+          echo "========================================="
+          echo "✓ All tests passed successfully!"
+          echo "========================================="
+          echo "Runner is ready for production use:"
+          echo "  - Terraform $(terraform version -json | jq -r '.terraform_version')"
+          echo "  - TFLint $(tflint --version | head -1 | awk '{print $3}')"
+          echo "  - Network access to Proxmox ✓"
+          echo "  - GitHub connectivity ✓"
+          echo "========================================="

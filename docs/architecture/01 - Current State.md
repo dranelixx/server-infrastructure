@@ -415,41 +415,41 @@ Colo VPN (bge1) → pfSense → em0.69 (VLAN 69) → Switch (tagged)
 ### Critical
 
 1. **❌ No Link Aggregation**
-   
+
    * Switch limitation prevents LACP
    * Loki has 3x idle GbE ports (eno2-4)
    * Thor has 4x idle GbE ports (eno0-3)
 
 2. **❌ Bandwidth Bottleneck**
-   
+
    * Single 1 GbE link for 14 active workloads
    * Plex (HW transcoding) + arr-stack + TrueNAS saturate link
 
 3. **❌ No Redundancy**
-   
+
    * Single link failure = complete outage
 
 ### Medium
 
 1. **⚠️ High RAM Utilization**
-   
+
    * 87% usage (110.4 GB / 128 GB)
    * Swap: 582 MB active (memory pressure)
 
 2. **⚠️ Flat Network**
-   
+
    * All services on 10.0.1.0/24
    * No traffic isolation
 
 ### Low
 
 1. **ℹ️ No Systematic Backups**
-   
+
    * Hetzner Storage Box ready but not configured
    * pfSense config: no auto-backup
 
 2. **ℹ️ Minimal Monitoring Usage**
-   
+
    * Prometheus/Grafana/Graylog deployed
    * Dashboards rarely checked (except Plex)
    * Alerting: only backup notifications

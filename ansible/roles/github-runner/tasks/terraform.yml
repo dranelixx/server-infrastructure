@@ -1,0 +1,78 @@
+---
+# Terraform installation tasks
+
+- name: Add HashiCorp GPG key
+  ansible.builtin.apt_key:
+    url: "{{ terraform_gpg_key_url }}"
+    state: present
+  become: yes
+  tags:
+    - terraform
+
+- name: Add HashiCorp repository
+  ansible.builtin.apt_repository:
+    repo: "deb [arch=amd64] {{ terraform_repo_url }} {{ ansible_distribution_release }} main"
+    state: present
+    filename: hashicorp
+  become: yes
+  tags:
+    - terraform
+
+- name: Update apt cache after adding HashiCorp repo
+  ansible.builtin.apt:
+    update_cache: yes
+  become: yes
+  tags:
+    - terraform
+
+- name: Check installed Terraform version
+  ansible.builtin.shell: terraform version -json 2>/dev/null | jq -r '.terraform_version' || echo "not_installed"
+  register: installed_terraform_version
+  changed_when: false
+  failed_when: false
+  tags:
+    - terraform
+
+- name: Remove old Terraform version if version mismatch
+  ansible.builtin.apt:
+    name: terraform
+    state: absent
+  become: yes
+  when:
+    - terraform_version != "latest"
+    - installed_terraform_version.stdout != terraform_version
+    - installed_terraform_version.stdout != "not_installed"
+  tags:
+    - terraform
+
+- name: Install Terraform
+  ansible.builtin.apt:
+    name: "terraform={{ terraform_version }}-*"
+    state: present
+    update_cache: yes
+  become: yes
+  when: terraform_version != "latest"
+  tags:
+    - terraform
+
+- name: Install latest Terraform version
+  ansible.builtin.apt:
+    name: terraform
+    state: latest
+  become: yes
+  when: terraform_version == "latest"
+  tags:
+    - terraform
+
+- name: Verify Terraform installation
+  ansible.builtin.command: terraform version
+  register: terraform_version_output
+  changed_when: false
+  tags:
+    - terraform
+
+- name: Display Terraform version
+  ansible.builtin.debug:
+    msg: "{{ terraform_version_output.stdout_lines }}"
+  tags:
+    - terraform
