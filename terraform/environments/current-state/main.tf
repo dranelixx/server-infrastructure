@@ -373,6 +373,41 @@ module "influxdbv2" {
   tags = ["production", "lxc", "monitoring", "ansible-influxdb", "debian", "proxmox-helper-scripts"]
 }
 
+# Secrets Management
+module "vault" {
+  source = "../../modules/proxmox-lxc"
+
+  name        = "vault-prod-cz-01"
+  vmid        = 3100
+  target_node = "pve-prod-cz-loki"
+  description = "HashiCorp Vault - Secrets Management"
+
+  # Resources
+  cores  = 2
+  memory = 2048
+  swap   = 512
+
+  # Storage
+  disk_size    = 16
+  storage_pool = "local-zfs"
+
+  # Network
+  bridge           = "vmbr0"
+  vlan_tag         = null
+  firewall_enabled = false
+
+  # Template
+
+  # Container Settings
+  unprivileged  = true
+  start_on_boot = true
+  started       = true
+  protection    = true
+
+  # Tags
+  tags = ["production", "lxc", "security", "vault", "secrets"]
+}
+
 # Pterodactyl Game Panel Infrastructure
 module "ptero_panel" {
   source = "../../modules/proxmox-lxc"
