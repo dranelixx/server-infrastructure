@@ -1,4 +1,4 @@
-# Current State (IST) Environment
+# Current State Environment
 
 ## Overview
 
@@ -10,7 +10,7 @@ This Terraform environment represents the **current infrastructure state** befor
 
 ## Purpose
 
-1. **Documentation**: Infrastructure-as-Code representation of IST-Zustand
+1. **Documentation**: Infrastructure-as-Code representation of current state
 2. **Import Existing VMs**: Bring current VMs under Terraform management
 3. **Drift Detection**: Monitor manual changes via `terraform plan`
 4. **Migration Baseline**: Compare against target-state for migration validation
@@ -38,7 +38,7 @@ This Terraform environment represents the **current infrastructure state** befor
 #### Infrastructure Services
 | VM Name | VMID | Purpose | vCPU | RAM | Disk | Storage | IP |
 |---------|------|---------|------|-----|------|---------|-----|
-| truenas-prod-cz-01 | 4000 | NAS Storage (ZFS, NFS/SMB) | 6 | 24 GB | 100G | local-zfs | 10.0.1.20/24 |
+| truenas-prod-cz-01 | 4000 | NAS Storage (ZFS, NFS/SMB) | 6 | 32 GB | 100G | local-zfs | 10.0.1.20/24 |
 | docker-prod-cz-01 | 2000 | Docker Host (Multiple Stacks) | 6 | 12 GB | 128G | local-zfs | 10.0.1.50/24 |
 
 #### Cloud Services
@@ -46,7 +46,7 @@ This Terraform environment represents the **current infrastructure state** befor
 |---------|------|---------|------|-----|------|---------|-----|
 | nextcloud-prod-cz-01 | 8000 | Nextcloud Instance (File Sync & Collaboration) | 12 | 16 GB | 100G | local-zfs | 10.0.1.100/24 |
 
-**Total VM Resources**: 34 vCPUs, 80 GB RAM
+**Total VM Resources**: 34 vCPUs, 88 GB RAM
 
 ### LXC Containers in Current State
 
@@ -55,6 +55,11 @@ This Terraform environment represents the **current infrastructure state** befor
 |----------------|------|---------|-------|-----|------|---------|
 | prometheus-prod-cz-01 | 3000 | Prometheus Monitoring | 2 | 512 MB | 4G | local-ssd01 |
 | influxdbv2-prod-cz-01 | 3002 | Time-Series Database | 2 | 3 GB | 8G | local-ssd01 |
+
+#### Security Infrastructure
+| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
+|----------------|------|---------|-------|-----|------|---------|
+| vault-prod-cz-01 | 3100 | HashiCorp Vault (Secrets Management) | 2 | 2 GB | 16G | local-zfs |
 
 #### Pterodactyl Game Panel
 | Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
@@ -82,14 +87,19 @@ This Terraform environment represents the **current infrastructure state** befor
 | syncthing-prod-cz-01 | 6101 | File Synchronization | 2 | 2 GB | 50G | local-hdd01 |
 | vscode-prod-cz-01 | 6102 | VS Code Server | 8 | 8 GB | 20G | local-ssd01 |
 
+#### CI/CD Infrastructure
+| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
+|----------------|------|---------|-------|-----|------|---------|
+| github-runner-prod-cz-01 | 6200 | GitHub Actions Self-Hosted Runner | 2 | 2 GB | 20G | local-zfs |
+
 #### Logging
 | Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
 |----------------|------|---------|-------|-----|------|---------|
 | graylog-prod-cz-01 | 9000 | Centralized Logging | 4 | 12 GB | 130G | local-hdd01 |
 
-**Total LXC Resources**: 44 vCPUs, 57 GB RAM (running) + 19 vCPUs, 16 GB RAM (stopped)
+**Total LXC Resources**: 43 vCPUs, 57.5 GB RAM (running) + 22 vCPUs, 22 GB RAM (stopped)
 
-**Grand Total Infrastructure**: 78 vCPUs (running) + 19 vCPUs (stopped), 137 GB RAM (running) + 16 GB RAM (stopped)
+**Grand Total Infrastructure**: 77 vCPUs (running) + 22 vCPUs (stopped), 145.5 GB RAM (running) + 22 GB RAM (stopped)
 
 ## Usage
 
@@ -117,6 +127,7 @@ terraform import 'module.nextcloud.proxmox_virtual_environment_vm.vm' pve-prod-c
 # Import LXCs (format: node/vmid)
 terraform import 'module.prometheus.proxmox_virtual_environment_container.container' pve-prod-cz-loki/3000
 terraform import 'module.influxdbv2.proxmox_virtual_environment_container.container' pve-prod-cz-loki/3002
+terraform import 'module.vault.proxmox_virtual_environment_container.container' pve-prod-cz-loki/3100
 terraform import 'module.ptero_panel.proxmox_virtual_environment_container.container' pve-prod-cz-loki/5000
 terraform import 'module.ptero_wings.proxmox_virtual_environment_container.container' pve-prod-cz-loki/5001
 terraform import 'module.ptero_mariadb.proxmox_virtual_environment_container.container' pve-prod-cz-loki/5050
@@ -127,6 +138,7 @@ terraform import 'module.trilium.proxmox_virtual_environment_container.container
 terraform import 'module.syncthing.proxmox_virtual_environment_container.container' pve-prod-cz-loki/6101
 terraform import 'module.vscode.proxmox_virtual_environment_container.container' pve-prod-cz-loki/6102
 terraform import 'module.ptero_panel_devel_02.proxmox_virtual_environment_container.container' pve-prod-cz-loki/6103
+terraform import 'module.github_runner.proxmox_virtual_environment_container.container' pve-prod-cz-loki/6200
 terraform import 'module.graylog.proxmox_virtual_environment_container.container' pve-prod-cz-loki/9000
 
 # Verify state
@@ -173,9 +185,3 @@ Set up automated drift detection via GitHub Actions (see `.github/workflows/terr
 - **Tags**: Resources tagged with `ansible-*` for dynamic inventory filtering
 - **No VLAN Support**: Dell switch limitation - all traffic on flat network
 - **Helper Scripts**: Many LXCs created via Proxmox Helper Scripts - descriptions and original tags preserved via `lifecycle.ignore_changes`
-
-## Related Documentation
-
-- [01 - Current State.md](../../../docs/architecture/01%20-%20Current%20State.md) - Detailed IST documentation
-- [02 - Target State.md](../../../docs/architecture/02%20-%20Target%20State.md) - Migration target
-- [03 - Migration Plan.md](../../../docs/architecture/03%20-%20Migration%20Plan.md) - Step-by-step migration

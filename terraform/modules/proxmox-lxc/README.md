@@ -195,7 +195,7 @@ module "dev_environment" {
 
 | Name | Version |
 |------|---------|
-| terraform | >= 1.7.0 |
+| terraform | >= 1.14.3 |
 | proxmox (bpg/proxmox) | >= 0.91.0 |
 
 ## Notes

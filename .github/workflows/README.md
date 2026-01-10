@@ -66,6 +66,8 @@ PROXMOX_API_TOKEN_ID       # e.g. terraform@pve!tf-automation
 PROXMOX_API_TOKEN_SECRET   # Secret of the API token
 ```
 
+**Note**: This project follows a Vault-first secrets management approach. For production deployments, consider migrating secrets from GitHub Secrets to HashiCorp Vault for centralized secret management, rotation, and audit logging. GitHub Secrets serve as a bootstrap mechanism for CI/CD workflows until Vault integration is fully implemented.
+
 ### 2. Create Proxmox API Token
 
 ```bash
@@ -215,6 +217,7 @@ This prevents state locks and race conditions.
 - Terraform outputs are deleted after 30/90 days
 - API access only via GitHub-hosted runners (secure IP range)
 - Terraform state local (or in Terraform Cloud, if configured)
+- **Vault Integration**: For enhanced security, production deployments should leverage HashiCorp Vault for dynamic secret generation, automatic rotation, and comprehensive audit trails. GitHub Secrets currently serve as the interim solution during initial infrastructure setup.
 
 ## Further Documentation
 
