@@ -185,9 +185,3 @@ Set up automated drift detection via GitHub Actions (see `.github/workflows/terr
 - **Tags**: Resources tagged with `ansible-*` for dynamic inventory filtering
 - **No VLAN Support**: Dell switch limitation - all traffic on flat network
 - **Helper Scripts**: Many LXCs created via Proxmox Helper Scripts - descriptions and original tags preserved via `lifecycle.ignore_changes`
-
-## Related Documentation
-
-- [01 - Current State.md](../../../docs/architecture/01%20-%20Current%20State.md) - Detailed current state documentation
-- [02 - Target State.md](../../../docs/architecture/02%20-%20Target%20State.md) - Migration target
-- [03 - Migration Plan.md](../../../docs/architecture/03%20-%20Migration%20Plan.md) - Step-by-step migration

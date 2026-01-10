@@ -124,16 +124,16 @@ Variables can be overridden:
 ```yaml
 # In playbook
 vars:
-  terraform_version: "1.8.0"
+  terraform_version: "1.14.3"
   tflint_enabled: false
 
 # In inventory
 github_runner_prod:
   vars:
-    terraform_version: "1.8.0"
+    terraform_version: "1.14.3"
 
 # Via command line
-ansible-playbook playbooks/github_runner_setup.yml -e "terraform_version=1.8.0"
+ansible-playbook playbooks/github_runner_setup.yml -e "terraform_version=1.14.3"
 ```
 
 ## Best Practices
