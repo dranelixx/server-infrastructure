@@ -57,70 +57,70 @@ module "example_container" {
 
 ### General Configuration
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `name` | string | - | Container hostname (1-63 characters) |
-| `vmid` | number | - | Proxmox Container ID (100-999999999) |
-| `target_node` | string | - | Proxmox node name (e.g., "pve-prod-cz-loki") |
-| `description` | string | `""` | Container description |
-| `start_on_boot` | bool | `true` | Auto-start on Proxmox boot |
-| `started` | bool | `true` | Start container after creation |
-| `protection` | bool | `false` | Prevent accidental deletion |
-| `tags` | list(string) | `[]` | Tags for organization and Ansible |
+| Variable        | Type         | Default | Description                                  |
+| --------------- | ------------ | ------- | -------------------------------------------- |
+| `name`          | string       | -       | Container hostname (1-63 characters)         |
+| `vmid`          | number       | -       | Proxmox Container ID (100-999999999)         |
+| `target_node`   | string       | -       | Proxmox node name (e.g., "pve-prod-cz-loki") |
+| `description`   | string       | `""`    | Container description                        |
+| `start_on_boot` | bool         | `true`  | Auto-start on Proxmox boot                   |
+| `started`       | bool         | `true`  | Start container after creation               |
+| `protection`    | bool         | `false` | Prevent accidental deletion                  |
+| `tags`          | list(string) | `[]`    | Tags for organization and Ansible            |
 
 ### Resource Configuration
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `cores` | number | `2` | Number of CPU cores (1-256) |
-| `memory` | number | `2048` | RAM in MB (16-1048576) |
-| `swap` | number | `512` | Swap space in MB (0-1048576) |
+| Variable | Type   | Default | Description                  |
+| -------- | ------ | ------- | ---------------------------- |
+| `cores`  | number | `2`     | Number of CPU cores (1-256)  |
+| `memory` | number | `2048`  | RAM in MB (16-1048576)       |
+| `swap`   | number | `512`   | Swap space in MB (0-1048576) |
 
 ### Disk Configuration
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `disk_size` | number | `20` | Root filesystem size in GB (1-10240) |
-| `storage_pool` | string | `"local-zfs"` | Storage pool name |
+| Variable       | Type   | Default       | Description                          |
+| -------------- | ------ | ------------- | ------------------------------------ |
+| `disk_size`    | number | `20`          | Root filesystem size in GB (1-10240) |
+| `storage_pool` | string | `"local-zfs"` | Storage pool name                    |
 
 ### Network Configuration
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `bridge` | string | `"vmbr0"` | Network bridge |
-| `vlan_tag` | number | `null` | VLAN ID (1-4094, null = no VLAN) |
-| `firewall_enabled` | bool | `false` | Enable Proxmox firewall |
+| Variable           | Type   | Default   | Description                      |
+| ------------------ | ------ | --------- | -------------------------------- |
+| `bridge`           | string | `"vmbr0"` | Network bridge                   |
+| `vlan_tag`         | number | `null`    | VLAN ID (1-4094, null = no VLAN) |
+| `firewall_enabled` | bool   | `false`   | Enable Proxmox firewall          |
 
 ### Template Configuration
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `template_vmid` | number | `null` | Template container ID to clone from (optional) |
+| Variable        | Type   | Default | Description                                    |
+| --------------- | ------ | ------- | ---------------------------------------------- |
+| `template_vmid` | number | `null`  | Template container ID to clone from (optional) |
 
 ### Security Configuration
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `unprivileged` | bool | `true` | Run as unprivileged container (recommended) |
+| Variable       | Type | Default | Description                                 |
+| -------------- | ---- | ------- | ------------------------------------------- |
+| `unprivileged` | bool | `true`  | Run as unprivileged container (recommended) |
 
 ### Startup Configuration
 
-| Variable | Type | Default | Description |
-|----------|------|---------|-------------|
-| `startup_order` | number | `null` | Boot order (lower = first, null = any) |
-| `startup_delay` | number | `0` | Delay in seconds after start |
-| `shutdown_timeout` | number | `0` | Timeout for clean shutdown |
+| Variable           | Type   | Default | Description                            |
+| ------------------ | ------ | ------- | -------------------------------------- |
+| `startup_order`    | number | `null`  | Boot order (lower = first, null = any) |
+| `startup_delay`    | number | `0`     | Delay in seconds after start           |
+| `shutdown_timeout` | number | `0`     | Timeout for clean shutdown             |
 
 ## Outputs
 
-| Output | Description |
-|--------|-------------|
-| `vmid` | The Proxmox Container ID |
-| `name` | The container hostname |
-| `id` | The full Proxmox resource ID |
-| `tags` | Container tags (for Ansible inventory) |
-| `target_node` | Proxmox node where container is running |
-| `resource_specs` | Container resource specifications (cores, memory, swap, disk_size) |
+| Output           | Description                                                          |
+| ---------------- | -------------------------------------------------------------------- |
+| `vmid`           | The Proxmox Container ID                                             |
+| `name`           | The container hostname                                               |
+| `id`             | The full Proxmox resource ID                                         |
+| `tags`           | Container tags (for Ansible inventory)                               |
+| `target_node`    | Proxmox node where container is running                              |
+| `resource_specs` | Container resource specifications (cores, memory, swap, disk_size)   |
 | `network_config` | Container network configuration (bridge, vlan_tag, firewall_enabled) |
 
 ## Examples
@@ -193,17 +193,19 @@ module "dev_environment" {
 
 ## Requirements
 
-| Name | Version |
-|------|---------|
-| terraform | >= 1.14.3 |
+| Name                  | Version   |
+| --------------------- | --------- |
+| terraform             | >= 1.14.3 |
 | proxmox (bpg/proxmox) | >= 0.91.0 |
 
 ## Notes
 
 - This module optionally supports cloning from a pre-existing LXC template (specified via `template_vmid`)
-- If `template_vmid` is `null`, the container is created without cloning (requires manual OS installation or Proxmox Helper Scripts)
+- If `template_vmid` is `null`, the container is created without cloning (requires manual OS installation or Proxmox
+  Helper Scripts)
 - Unprivileged containers are recommended for security
-- Description, console, operating_system, and clone settings are ignored in lifecycle to preserve Proxmox Helper Scripts metadata
+- Description, console, operating_system, and clone settings are ignored in lifecycle to preserve Proxmox Helper
+  Scripts metadata
 - Tags are managed by Terraform (Helper Scripts tags should be added to Terraform config to preserve them)
 - Network and initialization settings are ignored in lifecycle to allow manual modifications in Proxmox
 - Tags are useful for Ansible dynamic inventory (e.g., `ansible-prometheus`)

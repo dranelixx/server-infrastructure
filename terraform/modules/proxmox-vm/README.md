@@ -77,18 +77,18 @@ module "truenas" {
 
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|------|---------|----------|
-| `name` | VM name | `string` | - | yes |
-| `vmid` | Proxmox VM ID (100-999999) | `number` | - | yes |
-| `target_node` | Proxmox node name | `string` | - | yes |
-| `cores` | CPU cores | `number` | `2` | no |
-| `memory` | Memory in MB | `number` | `2048` | no |
-| `disk_size` | Disk size (e.g., "32G") | `string` | `"32G"` | no |
-| `network_interfaces` | List of network interfaces | `list(object)` | See below | no |
-| `ip_address` | Static IP (CIDR) | `string` | `null` | no |
-| `gateway` | Default gateway | `string` | `null` | no |
-| `tags` | Tags for organization | `list(string)` | `[]` | no |
+| Name                 | Description                | Type           | Default   | Required |
+| -------------------- | -------------------------- | -------------- | --------- | -------- |
+| `name`               | VM name                    | `string`       | -         | yes      |
+| `vmid`               | Proxmox VM ID (100-999999) | `number`       | -         | yes      |
+| `target_node`        | Proxmox node name          | `string`       | -         | yes      |
+| `cores`              | CPU cores                  | `number`       | `2`       | no       |
+| `memory`             | Memory in MB               | `number`       | `2048`    | no       |
+| `disk_size`          | Disk size (e.g., "32G")    | `string`       | `"32G"`   | no       |
+| `network_interfaces` | List of network interfaces | `list(object)` | See below | no       |
+| `ip_address`         | Static IP (CIDR)           | `string`       | `null`    | no       |
+| `gateway`            | Default gateway            | `string`       | `null`    | no       |
+| `tags`               | Tags for organization      | `list(string)` | `[]`      | no       |
 
 ### Network Interface Object
 
@@ -104,13 +104,13 @@ module "truenas" {
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
-| `vmid` | The Proxmox VM ID |
-| `name` | The VM name |
-| `ipv4_address` | The primary IPv4 address |
+| Name                 | Description                      |
+| -------------------- | -------------------------------- |
+| `vmid`               | The Proxmox VM ID                |
+| `name`               | The VM name                      |
+| `ipv4_address`       | The primary IPv4 address         |
 | `network_interfaces` | Network interfaces configuration |
-| `tags` | VM tags (for Ansible inventory) |
+| `tags`               | VM tags (for Ansible inventory)  |
 
 ## Examples
 

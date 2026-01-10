@@ -5,7 +5,8 @@
 [![Proxmox](https://img.shields.io/badge/Proxmox-8.4-E57000?logo=proxmox&logoColor=white)](https://www.proxmox.com/)
 [![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub_Actions-2088FF?logo=github-actions&logoColor=white)](https://github.com/features/actions)
 
-> **Production-grade Infrastructure-as-Code** for multi-location server infrastructure with Proxmox, pfSense, TrueNAS and fully automated CI/CD pipeline.
+> **Production-grade Infrastructure-as-Code** for multi-location server infrastructure with Proxmox, pfSense, TrueNAS
+> and fully automated CI/CD pipeline.
 
 ---
 
@@ -28,11 +29,13 @@ This repository demonstrates **Enterprise-Level DevOps Skills** through:
 ### Physical Infrastructure
 
 **Colocation Datacenter:**
+
 - **Thor** (HP DL320e Gen8 v2): Proxmox Host + pfSense VM
 - **Loki** (HP DL380 Gen9): Proxmox Compute (5 VMs + 13 LXCs)
 - **HP 1910-24G Switch**: LACP-capable, VLANs 10/20/30
 
 **External Services:**
+
 - **Netcup VPS**: Mailcow (Email Hosting)
 - **Hetzner**: VPS + Storage Box (Backups)
 
@@ -91,7 +94,7 @@ flowchart TB
 
 ## Repository Structure
 
-```
+```text
 server-infrastructure/
 ├── terraform/
 │   ├── environments/
@@ -101,21 +104,17 @@ server-infrastructure/
 │       ├── proxmox-vm/         # Reusable VM Module (Multi-NIC, VLAN Support)
 │       ├── proxmox-lxc/        # Reusable LXC Module
 │       └── network-bridge/     # Network Abstraction
-
 ├── ansible/
 │   ├── playbooks/              # Configuration Management
 │   ├── roles/                  # Proxmox, pfSense, TrueNAS, Monitoring
 │   └── inventory/scripts/      # Dynamic Inventory (Terraform Outputs)
-
 ├── monitoring/
 │   ├── prometheus/             # Metrics, Alerts, Recording Rules
 │   └── grafana/                # Dashboards (Infrastructure, Network, Storage)
-
 ├── .github/workflows/
 │   ├── terraform-plan.yml      # PR: Plan only
 │   ├── terraform-apply.yml     # Merge: Apply with Manual Approval
 │   └── terraform-drift.yml     # Daily drift detection
-
 └── docs/architecture/          # Detailed Architecture Documentation
 ```
 
@@ -180,6 +179,7 @@ pre-commit run --all-files
 ```
 
 **Active Hooks:**
+
 - `terraform fmt` - Automatic Formatting
 - `terraform validate` - Syntax Validation
 - `tflint` - Terraform Best Practices Linting
@@ -191,28 +191,33 @@ pre-commit run --all-files
 ### GitHub Actions Workflows
 
 **Automated Drift Detection** (`.github/workflows/terraform-drift.yml`):
+
 - **Schedule**: Daily at 06:00 UTC
 - **Check**: `terraform plan` against Proxmox API
 - **Alert**: GitHub Issue on drift detection
 - **Environments**: current-state, target-state
 
 **Pull Request Validation** (`.github/workflows/terraform-plan.yml`):
+
 - **Trigger**: PR to `main`
 - **Checks**: fmt, validate, plan
 - **Output**: Plan as PR Comment
 
 **Automated Apply** (`.github/workflows/terraform-apply.yml`):
+
 - **Trigger**: Merge to `main`
 - **Approval**: Manual Review required
 - **Deployment**: Terraform apply with State-Locking
 
 **Secrets Management:**
 All infrastructure secrets are managed through **HashiCorp Vault**. Only Vault access credentials are stored in GitHub Secrets:
+
 - `VAULT_ADDR` - Vault server URL
 - `VAULT_ROLE_ID` - AppRole authentication
 - `VAULT_SECRET_ID` - AppRole secret
 
 **Self-hosted Runner:**
+
 - **LXC Container** `github-runner-prod-cz-01` (VMID 6200)
 - **Network Access**: Direct access to Proxmox API (10.0.1.0/24)
 - **Setup**: Ansible Playbook `ansible/playbooks/github_runner_setup.yml`
@@ -260,17 +265,17 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 
 ## Technology Stack
 
-| Category | Technology | Purpose |
-|----------|------------|---------|
-| **IaC** | Terraform (bpg/proxmox) | VM/LXC Provisioning |
-| **Config Management** | Ansible | Server Configuration, API Calls |
-| **Virtualization** | Proxmox VE 8.4 | Hypervisor (KVM + LXC) |
-| **Networking** | pfSense 2.8, HP 1910-24G | Firewall, VLAN Routing, LACP |
-| **Storage** | TrueNAS, ZFS | NFS/SMB Shares, Datasets |
-| **Secrets Management** | HashiCorp Vault | Centralized Secret Storage |
-| **Monitoring** | Prometheus, Grafana, Alertmanager | Metrics, Dashboards, Alerts |
-| **CI/CD** | GitHub Actions | Automated Testing, Deployment |
-| **State Backend** | Terraform Cloud | Remote State, Locking |
+| Category               | Technology                        | Purpose                         |
+| ---------------------- | --------------------------------- | ------------------------------- |
+| **IaC**                | Terraform (bpg/proxmox)           | VM/LXC Provisioning             |
+| **Config Management**  | Ansible                           | Server Configuration, API Calls |
+| **Virtualization**     | Proxmox VE 8.4                    | Hypervisor (KVM + LXC)          |
+| **Networking**         | pfSense 2.8, HP 1910-24G          | Firewall, VLAN Routing, LACP    |
+| **Storage**            | TrueNAS, ZFS                      | NFS/SMB Shares, Datasets        |
+| **Secrets Management** | HashiCorp Vault                   | Centralized Secret Storage      |
+| **Monitoring**         | Prometheus, Grafana, Alertmanager | Metrics, Dashboards, Alerts     |
+| **CI/CD**              | GitHub Actions                    | Automated Testing, Deployment   |
+| **State Backend**      | Terraform Cloud                   | Remote State, Locking           |
 
 ---
 

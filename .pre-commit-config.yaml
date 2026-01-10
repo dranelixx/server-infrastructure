@@ -56,6 +56,15 @@ repos:
       #     - --hook-config=--add-to-existing-file=true
       #     - --hook-config=--create-file-if-not-exist=true
 
+  # Prettier for markdown formatting
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        name: Format markdown with Prettier
+        types_or: [markdown]
+        exclude: ^\.github/
+
   # Markdown linting
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.47.0

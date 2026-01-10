@@ -17,85 +17,96 @@ This Terraform environment represents the **current infrastructure state** befor
 
 ## Network Configuration
 
-| Component | Configuration |
-|-----------|---------------|
-| **Switch** | Dell PowerConnect 2824 (Flat) |
-| **Subnet** | 10.0.1.0/24 |
-| **Gateway** | 10.0.1.1 (pfSense Thor) |
-| **VLANs** | None (flat network) |
-| **Bridge** | vmbr0 (no VLAN tagging) |
+| Component   | Configuration                 |
+| ----------- | ----------------------------- |
+| **Switch**  | Dell PowerConnect 2824 (Flat) |
+| **Subnet**  | 10.0.1.0/24                   |
+| **Gateway** | 10.0.1.1 (pfSense Thor)       |
+| **VLANs**   | None (flat network)           |
+| **Bridge**  | vmbr0 (no VLAN tagging)       |
 
 ## Infrastructure Overview
 
 ### VMs in Current State
 
 #### Media Infrastructure
-| VM Name | VMID | Purpose | vCPU | RAM | Disk | Storage | IP |
-|---------|------|---------|------|-----|------|---------|-----|
-| pms-prod-cz-01 | 1000 | Plex Media Server (4K Transcoding) | 6 | 20 GB | 100G | local-zfs | 10.0.1.30/24 |
-| the-arr-stack-prod-01 | 1100 | Sonarr/Radarr/Lidarr Stack | 4 | 8 GB | 64G | local-zfs | 10.0.1.90/24 |
+
+| VM Name               | VMID | Purpose                            | vCPU | RAM   | Disk | Storage   | IP           |
+| --------------------- | ---- | ---------------------------------- | ---- | ----- | ---- | --------- | ------------ |
+| pms-prod-cz-01        | 1000 | Plex Media Server (4K Transcoding) | 6    | 20 GB | 100G | local-zfs | 10.0.1.30/24 |
+| the-arr-stack-prod-01 | 1100 | Sonarr/Radarr/Lidarr Stack         | 4    | 8 GB  | 64G  | local-zfs | 10.0.1.90/24 |
 
 #### Infrastructure Services
-| VM Name | VMID | Purpose | vCPU | RAM | Disk | Storage | IP |
-|---------|------|---------|------|-----|------|---------|-----|
-| truenas-prod-cz-01 | 4000 | NAS Storage (ZFS, NFS/SMB) | 6 | 32 GB | 100G | local-zfs | 10.0.1.20/24 |
-| docker-prod-cz-01 | 2000 | Docker Host (Multiple Stacks) | 6 | 12 GB | 128G | local-zfs | 10.0.1.50/24 |
+
+| VM Name            | VMID | Purpose                       | vCPU | RAM   | Disk | Storage   | IP           |
+| ------------------ | ---- | ----------------------------- | ---- | ----- | ---- | --------- | ------------ |
+| truenas-prod-cz-01 | 4000 | NAS Storage (ZFS, NFS/SMB)    | 6    | 32 GB | 100G | local-zfs | 10.0.1.20/24 |
+| docker-prod-cz-01  | 2000 | Docker Host (Multiple Stacks) | 6    | 12 GB | 128G | local-zfs | 10.0.1.50/24 |
 
 #### Cloud Services
-| VM Name | VMID | Purpose | vCPU | RAM | Disk | Storage | IP |
-|---------|------|---------|------|-----|------|---------|-----|
-| nextcloud-prod-cz-01 | 8000 | Nextcloud Instance (File Sync & Collaboration) | 12 | 16 GB | 100G | local-zfs | 10.0.1.100/24 |
+
+| VM Name              | VMID | Purpose                                        | vCPU | RAM   | Disk | Storage   | IP            |
+| -------------------- | ---- | ---------------------------------------------- | ---- | ----- | ---- | --------- | ------------- |
+| nextcloud-prod-cz-01 | 8000 | Nextcloud Instance (File Sync & Collaboration) | 12   | 16 GB | 100G | local-zfs | 10.0.1.100/24 |
 
 **Total VM Resources**: 34 vCPUs, 88 GB RAM
 
 ### LXC Containers in Current State
 
 #### Monitoring Infrastructure
-| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
-|----------------|------|---------|-------|-----|------|---------|
-| prometheus-prod-cz-01 | 3000 | Prometheus Monitoring | 2 | 512 MB | 4G | local-ssd01 |
-| influxdbv2-prod-cz-01 | 3002 | Time-Series Database | 2 | 3 GB | 8G | local-ssd01 |
+
+| Container Name        | VMID | Purpose               | Cores | RAM    | Disk | Storage     |
+| --------------------- | ---- | --------------------- | ----- | ------ | ---- | ----------- |
+| prometheus-prod-cz-01 | 3000 | Prometheus Monitoring | 2     | 512 MB | 4G   | local-ssd01 |
+| influxdbv2-prod-cz-01 | 3002 | Time-Series Database  | 2     | 3 GB   | 8G   | local-ssd01 |
 
 #### Security Infrastructure
-| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
-|----------------|------|---------|-------|-----|------|---------|
-| vault-prod-cz-01 | 3100 | HashiCorp Vault (Secrets Management) | 2 | 2 GB | 16G | local-zfs |
+
+| Container Name   | VMID | Purpose                              | Cores | RAM  | Disk | Storage   |
+| ---------------- | ---- | ------------------------------------ | ----- | ---- | ---- | --------- |
+| vault-prod-cz-01 | 3100 | HashiCorp Vault (Secrets Management) | 2     | 2 GB | 16G  | local-zfs |
 
 #### Pterodactyl Game Panel
-| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
-|----------------|------|---------|-------|-----|------|---------|
-| ptero-panel-prod-cz-01 | 5000 | Panel (Management) | 2 | 1 GB | 8G | local-zfs |
-| ptero-wings-prod-cz-01 | 5001 | Wings (Game Servers) | 24 | 32 GB | 200G | local-hdd01 |
-| ptero-mariadb-prod-cz-01 | 5050 | MariaDB Database | 2 | 1 GB | 28G | local-ssd01 |
+
+| Container Name           | VMID | Purpose              | Cores | RAM   | Disk | Storage     |
+| ------------------------ | ---- | -------------------- | ----- | ----- | ---- | ----------- |
+| ptero-panel-prod-cz-01   | 5000 | Panel (Management)   | 2     | 1 GB  | 8G   | local-zfs   |
+| ptero-wings-prod-cz-01   | 5001 | Wings (Game Servers) | 24    | 32 GB | 200G | local-hdd01 |
+| ptero-mariadb-prod-cz-01 | 5050 | MariaDB Database     | 2     | 1 GB  | 28G  | local-ssd01 |
 
 #### Development Containers (Stopped)
-| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
-|----------------|------|---------|-------|-----|------|---------|
-| ptero-wings-devel-cz-01 | 5998 | Wings Development | 4 | 4 GB | 12G | local-zfs |
-| ptero-panel-devel-cz-01 | 5999 | Panel Development | 4 | 4 GB | 8G | local-zfs |
-| ptero-panel-devel-02 | 6103 | Panel Development #2 | 4 | 4 GB | 22G | local |
+
+| Container Name          | VMID | Purpose              | Cores | RAM  | Disk | Storage   |
+| ----------------------- | ---- | -------------------- | ----- | ---- | ---- | --------- |
+| ptero-wings-devel-cz-01 | 5998 | Wings Development    | 4     | 4 GB | 12G  | local-zfs |
+| ptero-panel-devel-cz-01 | 5999 | Panel Development    | 4     | 4 GB | 8G   | local-zfs |
+| ptero-panel-devel-02    | 6103 | Panel Development #2 | 4     | 4 GB | 22G  | local     |
 
 #### IT Infrastructure
-| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
-|----------------|------|---------|-------|-----|------|---------|
-| netbox-prod-cz-01 | 6000 | IPAM and DCIM | 2 | 3 GB | 16G | local-zfs |
+
+| Container Name    | VMID | Purpose       | Cores | RAM  | Disk | Storage   |
+| ----------------- | ---- | ------------- | ----- | ---- | ---- | --------- |
+| netbox-prod-cz-01 | 6000 | IPAM and DCIM | 2     | 3 GB | 16G  | local-zfs |
 
 #### Productivity
-| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
-|----------------|------|---------|-------|-----|------|---------|
-| trilium-prod-cz-01 | 6100 | Personal Knowledge Base | 1 | 1 GB | 8G | local-zfs |
-| syncthing-prod-cz-01 | 6101 | File Synchronization | 2 | 2 GB | 50G | local-hdd01 |
-| vscode-prod-cz-01 | 6102 | VS Code Server | 8 | 8 GB | 20G | local-ssd01 |
+
+| Container Name       | VMID | Purpose                 | Cores | RAM  | Disk | Storage     |
+| -------------------- | ---- | ----------------------- | ----- | ---- | ---- | ----------- |
+| trilium-prod-cz-01   | 6100 | Personal Knowledge Base | 1     | 1 GB | 8G   | local-zfs   |
+| syncthing-prod-cz-01 | 6101 | File Synchronization    | 2     | 2 GB | 50G  | local-hdd01 |
+| vscode-prod-cz-01    | 6102 | VS Code Server          | 8     | 8 GB | 20G  | local-ssd01 |
 
 #### CI/CD Infrastructure
-| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
-|----------------|------|---------|-------|-----|------|---------|
-| github-runner-prod-cz-01 | 6200 | GitHub Actions Self-Hosted Runner | 2 | 2 GB | 20G | local-zfs |
+
+| Container Name           | VMID | Purpose                           | Cores | RAM  | Disk | Storage   |
+| ------------------------ | ---- | --------------------------------- | ----- | ---- | ---- | --------- |
+| github-runner-prod-cz-01 | 6200 | GitHub Actions Self-Hosted Runner | 2     | 2 GB | 20G  | local-zfs |
 
 #### Logging
-| Container Name | VMID | Purpose | Cores | RAM | Disk | Storage |
-|----------------|------|---------|-------|-----|------|---------|
-| graylog-prod-cz-01 | 9000 | Centralized Logging | 4 | 12 GB | 130G | local-hdd01 |
+
+| Container Name     | VMID | Purpose             | Cores | RAM   | Disk | Storage     |
+| ------------------ | ---- | ------------------- | ----- | ----- | ---- | ----------- |
+| graylog-prod-cz-01 | 9000 | Centralized Logging | 4     | 12 GB | 130G | local-hdd01 |
 
 **Total LXC Resources**: 43 vCPUs, 57.5 GB RAM (running) + 22 vCPUs, 22 GB RAM (stopped)
 
@@ -169,11 +180,13 @@ Set up automated drift detection via GitHub Actions (see `.github/workflows/terr
 ## Migration to Target State
 
 **Before migration**:
+
 1. Verify current-state matches reality: `terraform plan` → "No changes"
 2. Review target-state configuration
 3. Create backup: `ansible-playbook playbooks/backup_vms.yml`
 
 **After migration**:
+
 1. Update current-state to match new reality (becomes deprecated)
 2. Archive this workspace for historical reference
 3. Use target-state as new source of truth
