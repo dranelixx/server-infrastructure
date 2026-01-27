@@ -6,12 +6,48 @@ Tracked improvements and planned work for this infrastructure.
 
 ## Priority 1 - Security (Critical)
 
-- [ ] **Mailcow Hardening** - Exposed mail server needs security review
-  - fail2ban configuration
-  - Rate limiting
-  - SPF/DKIM/DMARC verification
-  - Disable unused services
-  - Review open ports
+### 🔐 Fort Knox Tier (Highest Priority)
+
+- [ ] **Vaultwarden Hardening** - Password manager for family & friends
+  - CRITICAL: Other people's credentials at stake
+  - Reverse proxy hardening (rate limiting, fail2ban)
+  - Admin panel disabled or IP-restricted
+  - 2FA enforcement for all users
+  - Disable registrations (invite-only)
+  - Regular security updates (Watchtower or manual)
+  - Backup encryption verification
+  - Consider: Dedicated VM instead of shared hosting
+
+- [ ] **Mailcow Hardening** - Clean since Feb 2025 rebuild, hardening still needed
+  - **Incident Response Readiness** (be prepared for next time)
+    - Centralized logging (all auth attempts, sudo usage)
+    - File Integrity Monitoring (AIDE or Tripwire)
+    - Alert on sudoers file changes
+    - Alert on new SSH keys added
+    - Baseline documentation (what is "normal")
+    - Incident response runbook
+  - **Hardening**
+    - fail2ban with aggressive bans
+    - Rate limiting on SMTP/IMAP
+    - SPF/DKIM/DMARC verification
+    - Disable unused services (POP3?)
+    - Review and minimize open ports
+    - Regular Mailcow updates
+  - **Forensics Learning** (if old snapshot still exists)
+    - Analyze compromised snapshot in isolated VM
+    - Find initial access vector
+    - Document persistence mechanisms (sudoers, crontabs, authorized_keys)
+    - Write incident report for personal learning
+
+- [ ] **HashiCorp Vault Hardening** - Central secrets management
+  - Same "Fort Knox" standard as Vaultwarden
+  - Audit logging enabled and monitored
+  - Seal/unseal procedures documented
+  - Network isolation (not accessible from everywhere)
+  - Regular token/lease rotation
+  - Alert on failed auth attempts
+
+### Standard Security Tasks
 
 - [ ] **Flat Network Firewall Audit** - Review current-state network segmentation
   - Check Proxmox firewall rules between VMs/LXCs
