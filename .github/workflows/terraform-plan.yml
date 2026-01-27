@@ -5,9 +5,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'terraform/**'
-      - '.github/workflows/terraform-plan.yml'
 
 # Nur ein Plan pro PR gleichzeitig, ältere Runs abbrechen
 concurrency:
@@ -20,8 +17,33 @@ permissions:
   issues: write
 
 jobs:
+  # ============================================
+  # JOB 1: Prüfe welche Dateien geändert wurden
+  # ============================================
+  detect-changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      terraform: ${{ steps.filter.outputs.terraform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for Terraform changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            terraform:
+              - 'terraform/**'
+              - '.github/workflows/terraform-plan.yml'
+
+  # ============================================
+  # JOB 2: Der echte Plan (nur wenn Terraform geändert)
+  # ============================================
   plan-current-state:
     name: Plan - Current State
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'true'
     runs-on: self-hosted
 
     defaults:
@@ -188,3 +210,19 @@ jobs:
       - name: Check Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
+
+  # ============================================
+  # JOB 3: Skip-Job (wenn KEINE Terraform Änderungen)
+  # WICHTIG: Hat den GLEICHEN NAMEN wie Job 2!
+  # ============================================
+  plan-skip:
+    name: Plan - Current State
+    needs: detect-changes
+    if: needs.detect-changes.outputs.terraform == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip Terraform Plan
+        run: |
+          echo "::notice::No Terraform changes detected, skipping plan"
+          echo "Changed files in this PR don't affect Terraform configuration."
+          echo "Plan step is not required."
