@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # Proxmox LXC Container Module
 
 Reusable Terraform module for creating Proxmox LXC containers using the `bpg/proxmox` provider (v0.91.0+).

@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # GitHub Actions Self-Hosted Runner - Maintenance Guide
 
 This guide covers common maintenance tasks for the GitHub Actions self-hosted runner running on LXC container

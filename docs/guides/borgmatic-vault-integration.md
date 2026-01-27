@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-27 -->
+
 # Borgmatic Backup with HashiCorp Vault Integration
 
 This guide describes how to integrate borgmatic backups with HashiCorp Vault for

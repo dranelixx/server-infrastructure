@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # Ansible Automation
 
 Ansible playbooks and roles for managing the server infrastructure.

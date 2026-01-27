@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # Target State Environment
 
 **Post-Migration Architecture** with HP 1910-24G Switch, VLAN Segmentation and LACP Bonding.
