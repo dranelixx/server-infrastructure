@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # GitHub Actions Workflows for Terraform
 
 These workflows automate Terraform operations for the Proxmox infrastructure.

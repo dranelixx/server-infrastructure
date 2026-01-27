@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # Proxmox VM Module
 
 Reusable Terraform module for creating and managing Proxmox VMs with advanced features:

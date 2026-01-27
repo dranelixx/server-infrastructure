@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # Server Infrastructure - Multi-Location IaC
 
 [![Terraform](https://img.shields.io/badge/Terraform-1.14.3-623CE4?logo=terraform&logoColor=white)](https://www.terraform.io/)

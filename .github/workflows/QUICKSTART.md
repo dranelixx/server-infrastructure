@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # Terraform Workflows - Quick Start Guide
 
 ## Secrets Setup (One-time)

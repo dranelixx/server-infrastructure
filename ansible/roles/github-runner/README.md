@@ -1,3 +1,5 @@
+<!-- LAST EDITED: 2026-01-10 -->
+
 # GitHub Actions Runner Role
 
 Ansible role to install and configure a GitHub Actions self-hosted runner on Ubuntu systems.
