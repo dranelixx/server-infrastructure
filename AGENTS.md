@@ -9,6 +9,23 @@ See [TODO.md](TODO.md) for current priorities and planned work.
 Production-grade Infrastructure-as-Code repository for multi-location server infrastructure.
 Uses Proxmox, pfSense, TrueNAS, Terraform Cloud (state), and HashiCorp Vault (secrets).
 
+## Architecture Decision Records
+
+Before making changes that affect architecture, consult the relevant ADRs in [docs/adr/](docs/adr/):
+
+| ADR                                                        | Topic        | Key Decision                           |
+| ---------------------------------------------------------- | ------------ | -------------------------------------- |
+| [ADR-0001](docs/adr/ADR-0001-self-hosted-github-runner.md) | CI/CD Runner | Self-hosted for private network access |
+| [ADR-0002](docs/adr/ADR-0002-vlan-network-segmentation.md) | Network      | VLANs 10/20/30 after HP switch install |
+| [ADR-0003](docs/adr/ADR-0003-hashicorp-vault-secrets.md)   | Secrets      | Vault with AppRole, not ansible-vault  |
+| [ADR-0004](docs/adr/ADR-0004-bpg-proxmox-provider.md)      | Terraform    | bpg/proxmox, not telmate               |
+| [ADR-0005](docs/adr/ADR-0005-terraform-state-backend.md)   | State        | Migrating TF Cloud → S3 + MinIO        |
+| [ADR-0006](docs/adr/ADR-0006-environment-separation.md)    | Environments | Separate directories, not workspaces   |
+| [ADR-0007](docs/adr/ADR-0007-lxc-vs-vm-placement.md)       | Workloads    | VM for passthrough/isolation, LXC else |
+| [ADR-0008](docs/adr/ADR-0008-backup-strategy.md)           | Backups      | vzdump + PBS + Borgmatic               |
+| [ADR-0009](docs/adr/ADR-0009-modular-terraform.md)         | Modules      | Shared modules, versioning planned     |
+| [ADR-0010](docs/adr/ADR-0010-cicd-strategy.md)             | CI/CD        | GitHub Actions, drift via Issues       |
+
 ## Common Commands
 
 ### Terraform

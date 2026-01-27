@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-10 -->
+<!-- LAST EDITED: 2026-01-27 -->
 
 # Server Infrastructure - Multi-Location IaC
 
@@ -283,10 +283,12 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 
 ## Documentation
 
+- **[Architecture Decision Records](docs/adr/)**: Documented decisions with context and trade-offs
 - **[Architecture Documentation](docs/architecture/)**: Current/Target States, Migration Plan
 - **[Terraform Modules](terraform/modules/)**: Reusable Components (terraform-docs)
 - **[Ansible Roles](ansible/roles/)**: Configuration Management Details
 - **[Runbooks](docs/runbooks/)**: Operational Procedures, Disaster Recovery
+- **[TODO.md](TODO.md)**: Current priorities and planned work
 
 ---
 
