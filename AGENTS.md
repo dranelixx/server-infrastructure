@@ -25,6 +25,7 @@ Before making changes that affect architecture, consult the relevant ADRs in [do
 | [ADR-0008](docs/adr/ADR-0008-backup-strategy.md)           | Backups      | vzdump + PBS + Borgmatic               |
 | [ADR-0009](docs/adr/ADR-0009-modular-terraform.md)         | Modules      | Shared modules, versioning planned     |
 | [ADR-0010](docs/adr/ADR-0010-cicd-strategy.md)             | CI/CD        | GitHub Actions, drift via Issues       |
+| [ADR-0011](docs/adr/ADR-0011-server-hardening-baseline.md) | Security     | CrowdSec, SSH hardening, auditd        |
 
 ## Common Commands
 
