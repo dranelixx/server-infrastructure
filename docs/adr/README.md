@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-01-28 -->
 
 # Architecture Decision Records (ADRs)
 
@@ -23,6 +23,7 @@ and its consequences. ADRs help future maintainers understand why certain choice
 | [ADR-0008](ADR-0008-backup-strategy.md)           | Backup Strategy                   | Accepted | 2026-01-27 |
 | [ADR-0009](ADR-0009-modular-terraform.md)         | Modular Terraform Structure       | Accepted | 2026-01-27 |
 | [ADR-0010](ADR-0010-cicd-strategy.md)             | CI/CD Strategy                    | Accepted | 2026-01-27 |
+| [ADR-0011](ADR-0011-server-hardening-baseline.md) | Server Hardening Baseline         | Accepted | 2026-01-28 |
 
 ## ADR Template
 

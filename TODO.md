@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-01-28 -->
 
 # TODO
 
@@ -8,36 +8,28 @@ Tracked improvements and planned work for this infrastructure.
 
 ### 🔐 Fort Knox Tier (Highest Priority)
 
-- [ ] **Vaultwarden Hardening** - Password manager for family & friends
-  - CRITICAL: Other people's credentials at stake
-  - Reverse proxy hardening (rate limiting, fail2ban)
-  - Admin panel disabled or IP-restricted
-  - 2FA enforcement for all users
-  - Disable registrations (invite-only)
-  - Regular security updates (Watchtower or manual)
-  - Backup encryption verification
-  - Consider: Dedicated VM instead of shared hosting
+- [x] **Vaultwarden Hardening** - Password manager for family & friends ✓ (2026-01-28)
+  - [x] Reverse proxy hardening (rate limiting, CrowdSec)
+  - [x] Admin panel IP-restricted (localhost only, SSH tunnel required)
+  - [x] Registrations disabled (SIGNUPS_ALLOWED=false)
+  - [x] Security headers configured (X-Frame-Options, CSP, etc.)
+  - [x] CrowdSec vaultwarden collection installed
+  - [x] 2FA available (enforcement is user responsibility)
+  - [ ] Backup encryption verification
 
-- [ ] **Mailcow Hardening** - Clean since Feb 2025 rebuild, hardening still needed
-  - **Incident Response Readiness** (be prepared for next time)
-    - Centralized logging (all auth attempts, sudo usage)
-    - File Integrity Monitoring (AIDE or Tripwire)
-    - Alert on sudoers file changes
-    - Alert on new SSH keys added
-    - Baseline documentation (what is "normal")
-    - Incident response runbook
+- [x] **Mailcow Hardening** - Clean since Feb 2025 rebuild ✓ (2026-01-28)
+  - **Incident Response Readiness**
+    - [x] Centralized logging (auditd + sudo logging)
+    - [x] Alert on sudoers file changes (auditd)
+    - [x] Alert on new SSH keys added (auditd)
+    - [ ] File Integrity Monitoring (AIDE) - future consideration
+    - [ ] Baseline documentation (what is "normal")
+    - [ ] Incident response runbook
   - **Hardening**
-    - fail2ban with aggressive bans
-    - Rate limiting on SMTP/IMAP
-    - SPF/DKIM/DMARC verification
-    - Disable unused services (POP3?)
-    - Review and minimize open ports
-    - Regular Mailcow updates
-  - **Forensics Learning** (if old snapshot still exists)
-    - Analyze compromised snapshot in isolated VM
-    - Find initial access vector
-    - Document persistence mechanisms (sudoers, crontabs, authorized_keys)
-    - Write incident report for personal learning
+    - [x] CrowdSec (replacing fail2ban) with postfix, dovecot, nginx collections
+    - [x] SPF/DKIM/DMARC verified (p=reject)
+    - [x] POP3 disabled (bound to localhost)
+    - [x] Ports reviewed (unnecessary services disabled)
 
 - [ ] **HashiCorp Vault Hardening** - Central secrets management
   - Same "Fort Knox" standard as Vaultwarden
@@ -154,6 +146,12 @@ Tracked improvements and planned work for this infrastructure.
 - [ ] **Netcup Piko VPS Setup**
   - Uptime Kuma for external monitoring
   - Consider: External Vault backup verification endpoint
+
+- [ ] **Vaultwarden Isolation** - Migrate to dedicated host for max isolation
+  - Currently shares host with Mailcow (resource efficiency)
+  - Proxmox at 88% RAM - no room for additional VM
+  - Option: Hetzner CX23 (2 vCPU, 4GB, €3,56/mo) - Vaultwarden needs ~200MB
+  - Evaluate if breach risk justifies cost
 
 - [ ] **Publish Terraform Modules**
   - Make proxmox-vm and proxmox-lxc modules more generic
