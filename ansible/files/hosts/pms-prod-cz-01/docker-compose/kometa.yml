@@ -1,0 +1,28 @@
+# Kometa - Media Library Metadata Manager
+# Secrets are rendered by Vault Agent into config/config.yml
+# OAuth tokens are managed by Kometa in config/auth.yml
+
+services:
+  kometa:
+    image: kometateam/kometa:latest
+    container_name: kometa
+    restart: unless-stopped
+    user: "3002:3002"
+    environment:
+      - TZ=Europe/Prague
+      # Run daily at 4 AM
+      - KOMETA_TIMES=04:00
+      # Prevent Kometa from reformatting config.yml (important for Vault-rendered config!)
+      - KOMETA_READ_ONLY_CONFIG=true
+      # Uncomment to run immediately on container start (useful for testing)
+      # - KOMETA_RUN=true
+    volumes:
+      # Config directory with config.yml (Vault-rendered) and auth.yml (Kometa-managed)
+      - /srv/kometa/config:/config:rw
+      # Defaults from Kometa repo (overlays, charts, etc.)
+      - /srv/kometa/defaults:/kometa/defaults:ro
+    # Use host network for access to local Plex, Radarr, Sonarr, Tautulli
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
+    # Note: read_only not used - Kometa needs to write auth.yml, logs, and cache to /config

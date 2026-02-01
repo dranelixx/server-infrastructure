@@ -1,0 +1,16 @@
+services:
+  plex-auto-languages:
+    image: remirigal/plex-auto-languages:latest
+    container_name: plex-auto-languages
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      - PUID=3004
+      - PGID=3004
+      - TZ=Europe/Prague
+    volumes:
+      - /srv/plex-auto-languages/config:/config
+    env_file:
+      - /srv/plex-auto-languages/config/.env
+    security_opt:
+      - no-new-privileges:true

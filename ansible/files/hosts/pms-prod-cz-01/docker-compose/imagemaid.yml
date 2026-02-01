@@ -1,0 +1,18 @@
+services:
+  imagemaid:
+    image: kometateam/imagemaid:latest
+    container_name: imagemaid
+    restart: unless-stopped
+    network_mode: "host"
+    environment:
+      - PUID=3003
+      - PGID=3003
+      - TZ=Europe/Prague
+    volumes:
+      - /srv/imagemaid/config:/config
+      # Mount the Plex Metadata directory
+      - "/var/lib/plexmediaserver/Library/Application Support/Plex Media Server:/plex"
+    env_file:
+      - /srv/imagemaid/config/.env
+    security_opt:
+      - no-new-privileges:true
