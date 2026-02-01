@@ -1,0 +1,19 @@
+services:
+  whatsapp-reminder:
+    # Build from local Dockerfile in /srv/whatsapp-automation
+    build: /srv/whatsapp-automation
+    image: whatsapp-reminder:latest
+    container_name: whatsapp-reminder
+    network_mode: "host"
+    # No auto-restart - runs on schedule via cron/systemd timer
+    restart: "no"
+    volumes:
+      # Bind-mount script for hot-reload during development
+      - /srv/whatsapp-automation/ninja_reminder.py:/app/ninja_reminder.py:ro
+    env_file:
+      - /srv/whatsapp-automation/config/.env
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true

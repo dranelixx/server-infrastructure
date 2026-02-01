@@ -39,3 +39,11 @@ template {
   perms       = "0600"
   command     = "setfacl -m m::r /srv/plex-auto-languages/config/.env"
 }
+
+# Template for Kometa
+template {
+  source      = "/etc/vault.d/templates/kometa.yml.ctmpl"
+  destination = "/srv/kometa/config/config.yml"
+  perms       = "0640"
+  command     = "docker restart kometa 2>/dev/null || true"
+}
