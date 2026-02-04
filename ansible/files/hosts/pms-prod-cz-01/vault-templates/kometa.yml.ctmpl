@@ -252,12 +252,24 @@ ntfy:
   topic: {{ $kometa.Data.data.ntfy_topic }}
 
 webhooks:
-  error: notifiarr
-  version: notifiarr
-  run_start: notifiarr
-  run_end: notifiarr
-  changes: notifiarr
-  delete: notifiarr
+  error:
+    - notifiarr
+    - ntfy
+  version:
+    - notifiarr
+    - ntfy
+  run_start:
+    - notifiarr
+    - ntfy
+  run_end:
+    - notifiarr
+    - ntfy
+  changes:
+    - notifiarr
+    - ntfy
+  delete:
+    - notifiarr
+    - ntfy
 
 plex:
   url: http://localhost:32400
