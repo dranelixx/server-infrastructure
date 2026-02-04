@@ -1,0 +1,21 @@
+# PlexTraktSync servers.yml - Rendered by Vault Agent
+# DO NOT EDIT - Changes will be overwritten
+# Source: ansible/files/hosts/pms-prod-cz-01/vault-templates/plex-trakt-sync-servers.yml.ctmpl
+#
+# Vault path: secret/prod/services/pms-prod-cz-01/plex
+
+{{- $plex := secret "secret/data/prod/services/pms-prod-cz-01/plex" }}
+
+servers:
+  default:
+    token: {{ $plex.Data.data.token }}
+    urls:
+      - https://10-0-1-30.a48b11d35c96417e97c77d1cf669906e.plex.direct:32400
+      - http://10.0.1.30:32400
+      - https://plex.dranelixx.de:32400
+      - https://87-236-199-191.a48b11d35c96417e97c77d1cf669906e.plex.direct:32400
+      - http://plex.dranelixx.de:32400
+      - http://87.236.199.191:32400
+      - http://172.18.0.1:32400
+    id: {{ $plex.Data.data.server_id }}
+    config: ~
