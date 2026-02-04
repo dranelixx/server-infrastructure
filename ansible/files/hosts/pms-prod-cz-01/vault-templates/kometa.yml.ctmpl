@@ -1,8 +1,28 @@
 # Kometa Configuration - Rendered by Vault Agent
 # DO NOT EDIT - Changes will be overwritten
-# Source: ansible/files/vault-templates/kometa.yml.ctmpl
+# Source: ansible/files/hosts/pms-prod-cz-01/vault-templates/kometa.yml.ctmpl
+#
+# Vault paths:
+#   Host-specific: secret/prod/services/pms-prod-cz-01/{plex,mdblist,omdb,kometa}
+#   Shared:        secret/prod/services/shared/{radarr,sonarr,tautulli,notifiarr,tmdb,oauth/*}
+
+{{- /* Host-specific secrets */ -}}
 {{- $plex := secret "secret/data/prod/services/pms-prod-cz-01/plex" -}}
-{{- $kometa := secret "secret/data/prod/services/pms-prod-cz-01/kometa" }}
+{{- $mdblist := secret "secret/data/prod/services/pms-prod-cz-01/mdblist" -}}
+{{- $omdb := secret "secret/data/prod/services/pms-prod-cz-01/omdb" -}}
+{{- $kometa := secret "secret/data/prod/services/pms-prod-cz-01/kometa" -}}
+
+{{- /* Shared service secrets */ -}}
+{{- $radarr := secret "secret/data/prod/services/shared/radarr" -}}
+{{- $sonarr := secret "secret/data/prod/services/shared/sonarr" -}}
+{{- $tautulli := secret "secret/data/prod/services/shared/tautulli" -}}
+{{- $notifiarr := secret "secret/data/prod/services/shared/notifiarr" -}}
+{{- $tmdb := secret "secret/data/prod/services/shared/tmdb" -}}
+
+{{- /* Shared OAuth secrets */ -}}
+{{- $trakt := secret "secret/data/prod/services/shared/oauth/trakt" -}}
+{{- $myanimelist := secret "secret/data/prod/services/shared/oauth/myanimelist" -}}
+{{- $anidb := secret "secret/data/prod/services/shared/oauth/anidb" }}
 
 libraries:
   Filme:
@@ -224,7 +244,12 @@ settings:
   show_unfiltered: false
 
 notifiarr:
-  apikey: {{ $kometa.Data.data.notifiarr_apikey }}
+  apikey: {{ $notifiarr.Data.data.apikey }}
+
+ntfy:
+  url: {{ $kometa.Data.data.ntfy_url }}
+  token: {{ $kometa.Data.data.ntfy_token }}
+  topic: {{ $kometa.Data.data.ntfy_topic }}
 
 webhooks:
   error: notifiarr
@@ -245,8 +270,8 @@ plex:
   verify_ssl:
 
 radarr:
-  url: http://10.0.1.90:7878
-  token: {{ $kometa.Data.data.radarr_token }}
+  url: {{ $radarr.Data.data.url_lan }}
+  token: {{ $radarr.Data.data.apikey }}
   add_missing: false
   add_existing: false
   root_folder_path: /data/media/movies
@@ -262,8 +287,8 @@ radarr:
   monitor_existing: false
 
 sonarr:
-  url: http://10.0.1.90:8989
-  token: {{ $kometa.Data.data.sonarr_token }}
+  url: {{ $sonarr.Data.data.url_lan }}
+  token: {{ $sonarr.Data.data.apikey }}
   add_missing: false
   add_existing: false
   root_folder_path: /data/media/tv
@@ -282,29 +307,29 @@ sonarr:
   monitor_existing: false
 
 tmdb:
-  apikey: {{ $kometa.Data.data.tmdb_apikey }}
+  apikey: {{ $tmdb.Data.data.apikey }}
   language: de
   cache_expiration: 60
   region:
 
 omdb:
-  apikey: {{ $kometa.Data.data.omdb_apikey }}
+  apikey: {{ $omdb.Data.data.apikey }}
   cache_expiration: 60
 
 mdblist:
-  apikey: {{ $kometa.Data.data.mdblist_apikey }}
+  apikey: {{ $mdblist.Data.data.apikey }}
   cache_expiration: 60
 
 mal:
-  client_id: {{ $kometa.Data.data.mal_client_id }}
-  client_secret: {{ $kometa.Data.data.mal_client_secret }}
-  localhost_url: {{ $kometa.Data.data.mal_localhost_url }}
+  client_id: {{ $myanimelist.Data.data.client_id }}
+  client_secret: {{ $myanimelist.Data.data.client_secret }}
+  localhost_url: {{ $myanimelist.Data.data.localhost_url }}
   cache_expiration: 60
   authorization:
-    access_token: {{ $kometa.Data.data.mal_access_token }}
+    access_token: {{ $myanimelist.Data.data.access_token }}
     token_type: Bearer
-    expires_in: {{ $kometa.Data.data.mal_expires_in }}
-    refresh_token: {{ $kometa.Data.data.mal_refresh_token }}
+    expires_in: {{ $myanimelist.Data.data.expires_in }}
+    refresh_token: {{ $myanimelist.Data.data.refresh_token }}
 
 anidb:
   client: defaultsamperage
@@ -312,20 +337,20 @@ anidb:
   language: de
   cache_expiration: 60
   username: DraneLixX
-  password: {{ $kometa.Data.data.anidb_password }}
+  password: {{ $anidb.Data.data.password }}
 
 trakt:
-  client_id: {{ $kometa.Data.data.trakt_client_id }}
-  client_secret: {{ $kometa.Data.data.trakt_client_secret }}
+  client_id: {{ $trakt.Data.data.client_id }}
+  client_secret: {{ $trakt.Data.data.client_secret }}
   authorization:
-    access_token: {{ $kometa.Data.data.trakt_access_token }}
+    access_token: {{ $trakt.Data.data.access_token }}
     token_type: Bearer
-    expires_in: {{ $kometa.Data.data.trakt_expires_in }}
-    refresh_token: {{ $kometa.Data.data.trakt_refresh_token }}
+    expires_in: {{ $trakt.Data.data.expires_in }}
+    refresh_token: {{ $trakt.Data.data.refresh_token }}
     scope: public
-    created_at: {{ $kometa.Data.data.trakt_created_at }}
+    created_at: {{ $trakt.Data.data.created_at }}
   pin:
 
 tautulli:
-  url: http://localhost:8181
-  apikey: {{ $kometa.Data.data.tautulli_apikey }}
+  url: {{ $tautulli.Data.data.url_loopback }}
+  apikey: {{ $tautulli.Data.data.apikey }}

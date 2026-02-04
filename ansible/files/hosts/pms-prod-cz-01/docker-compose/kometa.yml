@@ -1,6 +1,5 @@
 # Kometa - Media Library Metadata Manager
-# Secrets are rendered by Vault Agent into config/config.yml
-# OAuth tokens are managed by Kometa in config/auth.yml
+# Config (incl. OAuth tokens) rendered by Vault Agent into config/config.yml
 
 services:
   kometa:
@@ -17,7 +16,7 @@ services:
       # Uncomment to run immediately on container start (useful for testing)
       # - KOMETA_RUN=true
     volumes:
-      # Config directory with config.yml (Vault-rendered) and auth.yml (Kometa-managed)
+      # Config directory - Vault renders config.yml, Kometa writes logs/cache
       - /srv/kometa/config:/config:rw
       # Defaults from Kometa repo (overlays, charts, etc.)
       - /srv/kometa/defaults:/kometa/defaults:ro
@@ -25,4 +24,4 @@ services:
     network_mode: host
     security_opt:
       - no-new-privileges:true
-    # Note: read_only not used - Kometa needs to write auth.yml, logs, and cache to /config
+    # Note: read_only not used - Kometa needs to write logs and cache to /config
