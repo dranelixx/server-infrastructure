@@ -1,0 +1,17 @@
+# Varken - Media Server Statistics Aggregator
+# Config rendered by Vault Agent into varken.ini
+# Custom InfluxDB 2.0 fork: https://github.com/Boerderij/Varken/pull/242
+
+services:
+  app:
+    image: dranelixx/varken:influxdb2
+    container_name: varken_app
+    restart: unless-stopped
+    user: "3007:3007"
+    volumes:
+      - /srv/varken:/config
+    environment:
+      - TZ=Europe/Prague
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true

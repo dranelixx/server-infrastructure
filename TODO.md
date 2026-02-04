@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-28 -->
+<!-- LAST EDITED: 2026-02-04 -->
 
 # TODO
 
@@ -136,6 +136,17 @@ Tracked improvements and planned work for this infrastructure.
   - Revisit `lifecycle { ignore_changes }` in VM module
   - Remove workarounds where provider is now stable
   - Bring more attributes back under Terraform management
+
+- [ ] **Varken Fork Updates** (dranelixx/varken:influxdb2)
+  - Update `structures.py` for new Sonarr/Radarr API fields (`runtime`, `customFormatScore`, `lastSearchTime`, `releaseDate`)
+  - Fix `dbmanager.py` token handling (use `password` directly as token, not `username:password`)
+  - Update Python 3.9 → 3.11+
+  - Consider: Fork cleanup or contribute upstream to Boerderij/Varken
+
+- [ ] **Monitoring Stack Improvements**
+  - node_exporter: Add collectors (`--collector.systemd`, `--collector.processes`, `--collector.tcpstat`)
+  - node_exporter: Add `--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|run)($|/)`
+  - Consider: cadvisor for container metrics
 
 - [ ] **Evaluate terraform_docs in CI**
   - Currently disabled in pre-commit (modifies files after staging)
