@@ -1,0 +1,80 @@
+# Varken Configuration - Rendered by Vault Agent
+# DO NOT EDIT - Changes will be overwritten
+# Source: ansible/files/hosts/pms-prod-cz-01/vault-templates/varken.ini.ctmpl
+#
+# Vault paths:
+#   Host-specific: secret/prod/services/pms-prod-cz-01/varken
+#   Shared:        secret/prod/services/shared/{influxdb,radarr,sonarr,tautulli,jellyseerr}
+
+{{- $varken := secret "secret/data/prod/services/pms-prod-cz-01/varken" -}}
+{{- $influxdb := secret "secret/data/prod/services/shared/influxdb" -}}
+{{- $radarr := secret "secret/data/prod/services/shared/radarr" -}}
+{{- $sonarr := secret "secret/data/prod/services/shared/sonarr" -}}
+{{- $tautulli := secret "secret/data/prod/services/shared/tautulli" -}}
+{{- $jellyseerr := secret "secret/data/prod/services/shared/jellyseerr" }}
+
+[global]
+sonarr_server_ids = 1
+radarr_server_ids = 1
+lidarr_server_ids = false
+tautulli_server_ids = 1
+ombi_server_ids = false
+overseerr_server_ids = 1
+sickchill_server_ids = false
+unifi_server_ids = false
+maxmind_license_key = {{ $varken.Data.data.maxmind_license_key }}
+
+[influxdb]
+url = {{ $influxdb.Data.data.url }}
+port = {{ $influxdb.Data.data.port }}
+ssl = false
+verify_ssl = false
+username = {{ $varken.Data.data.influxdb_username }}
+password = {{ $varken.Data.data.influxdb_password }}
+org = {{ $influxdb.Data.data.org }}
+
+[tautulli-1]
+url = {{ $tautulli.Data.data.host }}
+apikey = {{ $tautulli.Data.data.apikey }}
+ssl = false
+verify_ssl = false
+get_activity = true
+get_activity_run_seconds = 30
+get_stats = true
+get_stats_run_seconds = 3600
+fallback_ip = 1.1.1.1
+
+[sonarr-1]
+url = {{ $sonarr.Data.data.host }}
+apikey = {{ $sonarr.Data.data.apikey }}
+ssl = false
+verify_ssl = false
+missing_days = 7
+missing_days_run_seconds = 300
+future_days = 1
+future_days_run_seconds = 300
+queue = true
+queue_run_seconds = 300
+
+[radarr-1]
+url = {{ $radarr.Data.data.host }}
+apikey = {{ $radarr.Data.data.apikey }}
+ssl = false
+verify_ssl = false
+queue = true
+queue_run_seconds = 300
+get_missing = true
+get_missing_run_seconds = 300
+
+[overseerr-1]
+url = {{ $jellyseerr.Data.data.host }}
+apikey = {{ $jellyseerr.Data.data.apikey }}
+ssl = false
+verify_ssl = false
+get_request_total_counts = true
+request_total_run_seconds = 30
+get_latest_requests = true
+num_latest_requests_to_fetch = 10
+num_latest_requests_seconds = 30
+get_issue_counts = true
+issue_counts_run_seconds = 30
