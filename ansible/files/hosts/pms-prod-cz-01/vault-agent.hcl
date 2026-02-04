@@ -47,3 +47,10 @@ template {
   perms       = "0640"
   command     = "docker restart kometa 2>/dev/null || true"
 }
+
+# Template for PlexTraktSync
+template {
+  source      = "/etc/vault.d/templates/plex-trakt-sync-servers.yml.ctmpl"
+  destination = "/srv/plex-trakt-sync/config/servers.yml"
+  perms       = "0640"
+}

@@ -1,0 +1,34 @@
+# PlexTraktSync - Sync Plex watch history with Trakt
+# Config files managed manually (servers.yml, .pytrakt.json)
+# OAuth tokens refreshed by the app itself
+
+services:
+  scheduler:
+    image: mcuadros/ofelia:0.3
+    container_name: plex-trakt-sync_scheduler
+    restart: unless-stopped
+    depends_on:
+      - app
+    command: daemon --docker
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      ofelia.job-exec.plextraktsync.schedule: "@every 12h"
+      ofelia.job-exec.plextraktsync.container: "plex-trakt-sync_app"
+      ofelia.job-exec.plextraktsync.command: "plextraktsync sync"
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    image: ghcr.io/taxel/plextraktsync:0.34.20
+    container_name: plex-trakt-sync_app
+    restart: unless-stopped
+    command: watch
+    user: "3006:3006"
+    volumes:
+      - /srv/plex-trakt-sync/config:/app/config
+    environment:
+      - TZ=Europe/Prague
+    network_mode: host
+    security_opt:
+      - no-new-privileges:true
