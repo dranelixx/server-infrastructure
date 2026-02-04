@@ -70,3 +70,11 @@ template {
   perms       = "0640"
   command     = "setfacl -m u:3007:r /srv/varken/varken.ini && docker restart varken_app 2>/dev/null || true"
 }
+
+# Template for Overlay Reset (runs manually, no restart needed)
+template {
+  source      = "/etc/vault.d/templates/overlay-reset.env.ctmpl"
+  destination = "/srv/overlay-reset/.env"
+  perms       = "0640"
+  command     = "setfacl -m u:3005:r /srv/overlay-reset/.env"
+}

@@ -148,6 +148,11 @@ Tracked improvements and planned work for this infrastructure.
   - node_exporter: Add `--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|run)($|/)`
   - Consider: cadvisor for container metrics
 
+- [ ] **Service Logs Refactoring**
+  - Move logs from `/srv/*/config/logs/` to `/var/log/services/{service}/`
+  - Standard Linux log structure, easier debugging
+  - Only secret files (.env, config.yml, servers.yml) remain restricted in /srv/\*/config/
+
 - [ ] **Evaluate terraform_docs in CI**
   - Currently disabled in pre-commit (modifies files after staging)
   - Consider running in CI instead of locally
