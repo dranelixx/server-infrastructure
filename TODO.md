@@ -153,6 +153,21 @@ Tracked improvements and planned work for this infrastructure.
   - Standard Linux log structure, easier debugging
   - Only secret files (.env, config.yml, servers.yml) remain restricted in /srv/\*/config/
 
+- [ ] **Centralized Log Aggregation**
+  - Graylog container (9000) on pve-prod-cz-loki exists
+  - Evaluate: keep centralized vs. decentralized with VPN to colo
+  - Ship logs from all hosts to Graylog (rsyslog/filebeat/promtail)
+
+- [ ] **SSH Key Hardening**
+  - Add passphrase to existing SSH keys (`ssh-keygen -p`)
+  - Consider ssh-agent with timeout for convenience
+
+- [ ] **Update Storage Upgrade Docs (P3500 Change)**
+  - Only 1x Intel P3500 available instead of 2x
+  - Update `docs/private/04 - Storage Upgrade/` (README, 02-hardware, 03-pool-setup)
+  - Decide: TrueNAS cache vs. Proxmox nvme-fast vs. split single drive
+  - Wait until hardware actually ships before updating
+
 - [ ] **Evaluate terraform_docs in CI**
   - Currently disabled in pre-commit (modifies files after staging)
   - Consider running in CI instead of locally
