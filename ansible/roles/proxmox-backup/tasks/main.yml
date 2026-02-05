@@ -1,0 +1,57 @@
+---
+# Main tasks for Proxmox Backup role
+
+- name: Include validation tasks
+  ansible.builtin.import_tasks: validate.yml
+  tags:
+    - proxmox-backup
+    - validate
+
+- name: Include SSH key tasks
+  ansible.builtin.import_tasks: ssh-key.yml
+  tags:
+    - proxmox-backup
+    - ssh-key
+
+- name: Include script deployment tasks
+  ansible.builtin.import_tasks: script.yml
+  tags:
+    - proxmox-backup
+    - script
+
+- name: Include cron job tasks
+  ansible.builtin.import_tasks: cron.yml
+  tags:
+    - proxmox-backup
+    - cron
+
+- name: Include logrotate tasks
+  ansible.builtin.import_tasks: logrotate.yml
+  when: pve_backup_logrotate_enabled | bool
+  tags:
+    - proxmox-backup
+    - logrotate
+
+- name: Display setup summary
+  ansible.builtin.debug:
+    msg:
+      - "=========================================="
+      - "Proxmox Backup Setup Complete!"
+      - "=========================================="
+      - ""
+      - "Configuration:"
+      - "  Remote: {{ pve_backup_remote_user }}@{{ pve_backup_remote_host }}:{{ pve_backup_remote_port }}"
+      - "  Path: {{ pve_backup_remote_path }}"
+      - "  Retention: {{ pve_backup_retention_days }} days"
+      - "  Schedule: {{ pve_backup_cron_minute }} {{ pve_backup_cron_hour }} {{ pve_backup_cron_day }} {{ pve_backup_cron_month }} {{ pve_backup_cron_weekday }}"
+      - ""
+      - "Files:"
+      - "  Script: {{ pve_backup_script_path }}"
+      - "  Log: {{ pve_backup_log_path }}"
+      - "  SSH Key: {{ pve_backup_ssh_key_path }}"
+      - ""
+      - "Test manually:"
+      - "  {{ pve_backup_script_path }}"
+      - "=========================================="
+  tags:
+    - proxmox-backup

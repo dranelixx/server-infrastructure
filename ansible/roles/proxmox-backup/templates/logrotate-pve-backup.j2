@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+{{ pve_backup_log_path }} {
+    {{ pve_backup_logrotate_frequency }}
+    rotate {{ pve_backup_logrotate_rotate }}
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 640 root root
+}

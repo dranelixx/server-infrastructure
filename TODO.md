@@ -63,11 +63,22 @@ Tracked improvements and planned work for this infrastructure.
 
 ## Priority 2 - Backups
 
-- [ ] **Proxmox vzdump → PBS**
+- [x] **Proxmox vzdump → Hetzner Storage Box** ✓ (2026-02-05)
+  - [x] CIFS storage configured (hetzner-vzdump)
+  - [x] vzdump job for critical VMs (1000, 1100, 3100, 4000, 5000, 6100)
+  - [x] rsync config backup script (Ansible role: proxmox-backup)
+  - [x] Daily schedule (vzdump 01:00, rsync 03:00)
+  - [ ] Restore test (verify VM boots after restore)
+
+- [ ] **Proxmox vzdump → PBS** (future)
   - Acquire budget tower server for PBS
   - Contact Coolhousing: Can tower join same internal network as rack?
-  - Configure vzdump for all VMs/LXCs
-  - Retention policy and scheduling
+  - On-site backup complement to off-site Hetzner
+
+- [ ] **Backup Notifications from Vault**
+  - [ ] Fetch ntfy token from Vault in proxmox-backup role
+  - [ ] Evaluate: direct Vault CLI vs. Ansible lookup
+  - Blocked by: Apprise migration (below)
 
 - [ ] **Backup Monitoring in Grafana**
   - Use Prometheus (already in stack) with borgmatic_exporter

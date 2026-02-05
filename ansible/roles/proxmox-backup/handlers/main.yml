@@ -1,0 +1,5 @@
+---
+# Handlers for Proxmox Backup role
+
+# Currently no handlers needed - cron and logrotate don't require restarts
+# Placeholder for future use (e.g., if we add systemd timer instead of cron)

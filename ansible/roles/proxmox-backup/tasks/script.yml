@@ -1,0 +1,21 @@
+---
+# Script deployment tasks for Proxmox Backup role
+
+- name: Deploy backup script from template
+  ansible.builtin.template:
+    src: backup-pve-configs.sh.j2
+    dest: "{{ pve_backup_script_path }}"
+    mode: "0750"
+    owner: root
+    group: root
+  diff: false  # Don't show diff (may contain paths)
+
+- name: Ensure log file exists with correct permissions
+  ansible.builtin.file:
+    path: "{{ pve_backup_log_path }}"
+    state: touch
+    mode: "0640"
+    owner: root
+    group: root
+    modification_time: preserve
+    access_time: preserve
