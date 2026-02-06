@@ -125,7 +125,14 @@ Bootstrap: GitHub Secrets for Vault credentials only (`VAULT_ADDR`, `VAULT_ROLE_
 
 ## Git Workflow
 
-**Never push directly to `main`.** Branch protection rules require:
+<!-- markdownlint-disable MD033 -->
+<rules>
+NEVER push directly to main. ALL changes require a branch + pull request.
+No exceptions, not even for single-line changes like TODO checkboxes or typo fixes.
+</rules>
+<!-- markdownlint-enable MD033 -->
+
+Branch protection rules enforce:
 
 - Create a new branch for all changes
 - Open a pull request
