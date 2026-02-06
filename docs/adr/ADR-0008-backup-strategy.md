@@ -1,10 +1,10 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-02-05 -->
 
 # ADR-0008: Backup Strategy
 
 ## Status
 
-Accepted
+Accepted (Implemented 2026-02-05)
 
 ## Context
 
@@ -18,15 +18,58 @@ Data protection requires multiple backup layers covering different scenarios:
 
 Implement a two-tier backup strategy:
 
-### Tier 1: VM-Level Backups (vzdump + PBS)
+### Tier 1: VM-Level Backups (vzdump)
 
-| Component             | Purpose                              |
-| --------------------- | ------------------------------------ |
-| vzdump                | Proxmox native backup tool           |
-| Proxmox Backup Server | Deduplication, verification, restore |
-| Location              | Local PBS in same colocation         |
+| Component             | Purpose                                 |
+| --------------------- | --------------------------------------- |
+| vzdump                | Proxmox native backup tool              |
+| Proxmox Backup Server | Deduplication, verification, restore    |
+| Location              | Off-site (Hetzner) + Local PBS (future) |
+
+#### Current Implementation (Interim)
+
+Until PBS hardware is acquired, vzdump backs up to Hetzner Storage Box via CIFS:
+
+| Setting     | Value                             |
+| ----------- | --------------------------------- |
+| Storage     | `hetzner-vzdump` (CIFS)           |
+| Target      | `u480474-sub1.your-storagebox.de` |
+| Schedule    | Daily 01:00                       |
+| Retention   | 7 days                            |
+| Bandwidth   | 15 MB/s limit                     |
+| Compression | zstd                              |
+
+**Critical VMs (daily):** 1000, 1100, 3100, 4000, 5000, 6100
+
+**Why CIFS over Borg for VMs:**
+
+- Direct restore from Proxmox UI (no extraction step)
+- No local temp space required
+- Native vzdump integration
+- Fast recovery in emergency
+
+#### Proxmox Config Backups (rsync)
+
+Separate from VM backups, Proxmox host configs are backed up via rsync:
+
+| Setting      | Value                                   |
+| ------------ | --------------------------------------- |
+| Script       | `/usr/local/bin/backup-pve-configs.sh`  |
+| Target       | Same Storage Box, `/configs/` directory |
+| Schedule     | Daily 03:00                             |
+| Retention    | 7 days                                  |
+| Ansible Role | `proxmox-backup`                        |
+
+**Paths backed up:** `/etc/pve`, `/etc/network`, `/etc/hosts`, `/etc/modprobe.d`, `/etc/systemd/system`, `/root`
+
+#### Future: Local PBS
 
 **TODO**: Acquire budget tower server for PBS, contact Coolhousing about internal network access.
+
+Once PBS is available:
+
+- Primary: Local PBS (fast restore)
+- Secondary: Hetzner CIFS (off-site DR)
 
 ### Tier 2: Application-Level Backups (Borgmatic)
 

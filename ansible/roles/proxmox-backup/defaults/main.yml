@@ -1,0 +1,53 @@
+---
+# Default variables for Proxmox Backup role
+
+# Remote storage configuration (Hetzner Storage Box)
+pve_backup_remote_user: ""
+pve_backup_remote_host: ""
+pve_backup_remote_port: 23
+pve_backup_remote_path: "configs"
+
+# SSH key configuration
+pve_backup_ssh_key_path: "/root/.ssh/backup-storage-box"
+pve_backup_ssh_key_generate: false
+pve_backup_ssh_key_bits: 4096
+
+# Backup retention (days)
+pve_backup_retention_days: 7
+
+# Cron schedule (default: 3 AM daily)
+pve_backup_cron_minute: "0"
+pve_backup_cron_hour: "3"
+pve_backup_cron_day: "*"
+pve_backup_cron_month: "*"
+pve_backup_cron_weekday: "*"
+
+# Script and log locations
+pve_backup_script_path: "/usr/local/bin/backup-pve-configs.sh"
+pve_backup_log_path: "/var/log/pve-backup.log"
+
+# Paths to backup
+pve_backup_paths:
+  - /etc/pve
+  - /etc/network
+  - /etc/hosts
+  - /etc/modprobe.d
+  - /etc/systemd/system
+  - /root
+
+# Paths/patterns to exclude from rsync
+pve_backup_excludes:
+  - ".ssh"
+  - ".bash_history"
+  - ".viminfo"
+  - ".lesshst"
+
+# ntfy notification (optional)
+pve_backup_ntfy_enabled: false
+pve_backup_ntfy_url: ""
+pve_backup_ntfy_token: ""
+
+# Logrotate configuration
+pve_backup_logrotate_enabled: true
+pve_backup_logrotate_rotate: 4
+pve_backup_logrotate_frequency: "weekly"
