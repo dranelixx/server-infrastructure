@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-04 -->
+<!-- LAST EDITED: 2026-02-06 -->
 
 # TODO
 
@@ -68,7 +68,7 @@ Tracked improvements and planned work for this infrastructure.
   - [x] vzdump job for critical VMs (1000, 1100, 3100, 4000, 5000, 6100)
   - [x] rsync config backup script (Ansible role: proxmox-backup)
   - [x] Daily schedule (vzdump 01:00, rsync 03:00)
-  - [ ] Restore test (verify VM boots after restore)
+  - [x] Restore test (verify VM boots after restore) ✓ (2026-02-06)
 
 - [ ] **Proxmox vzdump → PBS** (future)
   - Acquire budget tower server for PBS
