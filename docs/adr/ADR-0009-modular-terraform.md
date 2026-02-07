@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-02-07 -->
 
 # ADR-0009: Modular Terraform Structure
 
@@ -22,7 +22,7 @@ terraform/modules/
 │   ├── variables.tf
 │   └── outputs.tf
 ├── proxmox-lxc/      # LXC provisioning
-└── network-bridge/   # Network abstraction
+└── network-bridge/   # Network abstraction (deferred - not yet implemented)
 ```text
 
 ### Module Usage
@@ -61,26 +61,51 @@ module "webserver" {
 - Initial setup overhead
 - Module interface must be well-designed upfront
 
-### Versioning (TODO)
+### Versioning
 
-Currently, modules are referenced by relative path without versioning:
+Modules are referenced by relative path and versioned via annotated Git tags:
 
 ```hcl
-source = "../../modules/proxmox-vm"  # No version pinning!
+source = "../../modules/proxmox-vm"  # Relative path (no git:: source pinning)
 ```text
 
-**Planned improvement**: Introduce semantic versioning with Git tags:
+**Why relative paths instead of `git::` source refs:**
 
-- PATCH: Bug fixes
-- MINOR: New optional features
-- MAJOR: Breaking changes
+- No network dependency during `terraform init` (self-hosted runner in private network)
+- Instant feedback when developing modules locally
+- Single-user project: version pinning overhead not justified
+- Git tags serve as documented milestones for rollback and diffing
 
-This allows environments to pin stable versions and migrate independently.
+**Tag format:** `modules/<module-name>/v<MAJOR>.<MINOR>.<PATCH>`
+
+Examples:
+
+- `modules/proxmox-vm/v1.0.0`
+- `modules/proxmox-lxc/v1.0.0`
+
+**Semantic versioning rules:**
+
+- PATCH: Bug fixes (no interface changes)
+- MINOR: New optional features, deprecations
+- MAJOR: Breaking changes (removed variables, changed behavior)
+
+**Deprecation strategy:** Deprecate in MINOR, remove in next MAJOR.
+
+**Useful commands:**
+
+```bash
+# List all versions of a module
+git tag -l "modules/proxmox-vm/*"
+
+# Diff between two versions
+git diff modules/proxmox-vm/v1.0.0..modules/proxmox-vm/v2.0.0 -- terraform/modules/proxmox-vm/
+```text
 
 ### Registry Publishing (Future)
 
 Modules could be published to Terraform Registry for other Proxmox users, but currently they're
-too specific to this setup. Would need generalization first.
+too specific to this setup. Would need generalization first. Existing Git tags provide a migration
+path if registry publishing is pursued later.
 
 ## Alternatives Considered
 

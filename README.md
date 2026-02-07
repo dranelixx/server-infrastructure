@@ -103,9 +103,9 @@ server-infrastructure/
 │   │   ├── current-state/      # Current state (Dell Switch, Flat Network)
 │   │   └── target-state/       # Target state (HP Switch, VLANs)
 │   └── modules/
-│       ├── proxmox-vm/         # Reusable VM Module (Multi-NIC, VLAN Support)
-│       ├── proxmox-lxc/        # Reusable LXC Module
-│       └── network-bridge/     # Network Abstraction
+│       ├── proxmox-vm/         # Reusable VM Module (Multi-NIC, VLAN Support) [v1.0.0]
+│       ├── proxmox-lxc/        # Reusable LXC Module [v1.0.0]
+│       └── network-bridge/     # Network Abstraction (deferred)
 ├── ansible/
 │   ├── playbooks/              # Configuration Management
 │   ├── roles/                  # Proxmox, pfSense, TrueNAS, Monitoring
@@ -285,7 +285,7 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 
 - **[Architecture Decision Records](docs/adr/)**: Documented decisions with context and trade-offs
 - **[Architecture Documentation](docs/architecture/)**: Current/Target States, Migration Plan
-- **[Terraform Modules](terraform/modules/)**: Reusable Components (terraform-docs)
+- **[Terraform Modules](terraform/modules/)**: Reusable Components, versioned via Git tags ([ADR-0009](docs/adr/ADR-0009-modular-terraform.md))
 - **[Ansible Roles](ansible/roles/)**: Configuration Management Details
 - **[Runbooks](docs/runbooks/)**: Operational Procedures, Disaster Recovery
 - **[TODO.md](TODO.md)**: Current priorities and planned work
