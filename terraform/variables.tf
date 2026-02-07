@@ -33,7 +33,7 @@ variable "proxmox_api_token_secret" {
 }
 
 variable "proxmox_tls_insecure" {
-  description = "Skip TLS verification (use for self-signed certs)"
+  description = "Skip TLS verification (should be false when using HAProxy with valid certs)"
   type        = bool
-  default     = true
+  default     = false
 }

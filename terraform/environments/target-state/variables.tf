@@ -2,7 +2,7 @@
 # IMPORTANT: Never commit terraform.tfvars with real credentials!
 
 variable "proxmox_api_url" {
-  description = "Proxmox API endpoint (e.g., https://10.0.30.10:8006/ - NO /api2/json suffix!)"
+  description = "Proxmox API endpoint (e.g., https://pve.example.com/ - use HAProxy domain, NO /api2/json suffix!)"
   type        = string
 }
 
@@ -33,7 +33,7 @@ variable "proxmox_api_token_secret" {
 }
 
 variable "proxmox_tls_insecure" {
-  description = "Skip TLS verification (use for self-signed certs)"
+  description = "Skip TLS verification (should be false when using HAProxy with valid certs)"
   type        = bool
-  default     = true
+  default     = false
 }
