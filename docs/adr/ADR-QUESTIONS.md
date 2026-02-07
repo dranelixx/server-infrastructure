@@ -34,7 +34,7 @@ Das Risiko war mir vor dieser Recherche nicht bewusst. Das Problem ist, dass jed
 
 **Warum nutzt du Ansible um den Runner zu bauen, statt ein fertiges Docker-Image?**
 
-(Referenz: `ansible/roles/github-runner/tasks/main.yml`)
+(Referenz: `ansible/roles/github_runner/tasks/main.yml`)
 
 **Deine Antwort:**
 Für einen einzelnen persistenten Runner auf einer dedizierten VM ist Ansible der pragmatischere Ansatz. Der Runner behält seinen State zwischen Jobs (Build-Caches, vorinstallierte Tools) und ich kann bei Problemen direkt per SSH debuggen. Ein Docker-basierter ephemeral Runner wäre sinnvoll wenn ich horizontale Skalierung oder garantiert sauberen State pro Job bräuchte, aber für mein aktuelles Setup mit einem Runner ist der Mehraufwand nicht gerechtfertigt. Die Ansible-Rolle ist bereits geschrieben und dokumentiert das Setup reproduzierbar.

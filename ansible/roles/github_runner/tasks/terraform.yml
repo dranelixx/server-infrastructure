@@ -3,7 +3,7 @@
 
 - name: Add HashiCorp GPG key
   ansible.builtin.apt_key:
-    url: "{{ terraform_gpg_key_url }}"
+    url: "{{ github_runner_terraform_gpg_key_url }}"
     state: present
   become: true
   tags:
@@ -11,7 +11,7 @@
 
 - name: Add HashiCorp repository
   ansible.builtin.apt_repository:
-    repo: "deb [arch=amd64] {{ terraform_repo_url }} {{ ansible_distribution_release }} main"
+    repo: "deb [arch=amd64] {{ github_runner_terraform_repo_url }} {{ ansible_distribution_release }} main"
     state: present
     filename: hashicorp
   become: true
@@ -26,8 +26,13 @@
     - terraform
 
 - name: Check installed Terraform version
-  ansible.builtin.shell: terraform version -json 2>/dev/null | jq -r '.terraform_version' || echo "not_installed"
-  register: installed_terraform_version
+  ansible.builtin.shell:
+    cmd: >-
+      set -o pipefail &&
+      terraform version -json 2>/dev/null |
+      jq -r '.terraform_version' || echo "not_installed"
+    executable: /bin/bash
+  register: github_runner_installed_terraform_version
   changed_when: false
   failed_when: false
   tags:
@@ -39,40 +44,40 @@
     state: absent
   become: true
   when:
-    - terraform_version != "latest"
-    - installed_terraform_version.stdout != terraform_version
-    - installed_terraform_version.stdout != "not_installed"
+    - github_runner_terraform_version != "latest"
+    - github_runner_installed_terraform_version.stdout != github_runner_terraform_version
+    - github_runner_installed_terraform_version.stdout != "not_installed"
   tags:
     - terraform
 
 - name: Install Terraform
   ansible.builtin.apt:
-    name: "terraform={{ terraform_version }}-*"
+    name: "terraform={{ github_runner_terraform_version }}-*"
     state: present
     update_cache: true
   become: true
-  when: terraform_version != "latest"
+  when: github_runner_terraform_version != "latest"
   tags:
     - terraform
 
-- name: Install latest Terraform version
+- name: Install latest Terraform version  # noqa: package-latest
   ansible.builtin.apt:
     name: terraform
     state: latest
   become: true
-  when: terraform_version == "latest"
+  when: github_runner_terraform_version == "latest"
   tags:
     - terraform
 
 - name: Verify Terraform installation
   ansible.builtin.command: terraform version
-  register: terraform_version_output
+  register: github_runner_terraform_version_output
   changed_when: false
   tags:
     - terraform
 
 - name: Display Terraform version
   ansible.builtin.debug:
-    msg: "{{ terraform_version_output.stdout_lines }}"
+    msg: "{{ github_runner_terraform_version_output.stdout_lines }}"
   tags:
     - terraform

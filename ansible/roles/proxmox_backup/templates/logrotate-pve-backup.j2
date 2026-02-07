@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+{{ proxmox_backup_log_path }} {
+    {{ proxmox_backup_logrotate_frequency }}
+    rotate {{ proxmox_backup_logrotate_rotate }}
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 640 root root
+}

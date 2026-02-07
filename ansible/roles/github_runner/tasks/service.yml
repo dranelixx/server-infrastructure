@@ -1,0 +1,92 @@
+---
+# Systemd service setup tasks
+# Note: The runner must be configured before this task runs
+
+- name: Check if runner is configured
+  ansible.builtin.stat:
+    path: "{{ github_runner_home }}/.runner"
+  register: github_runner_configured
+  tags:
+    - service
+
+- name: Display configuration notice
+  ansible.builtin.debug:
+    msg:
+      - "Runner is not yet configured."
+      - "Service installation will be skipped."
+      - ""
+      - "Run playbook with github_runner_token to auto-configure:"
+      - "  ansible-playbook ... -e 'github_runner_token=ghp_xxx'"
+  when: not github_runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Gather service facts
+  ansible.builtin.service_facts:
+  become: true
+  when: github_runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Check if runner service is already installed
+  ansible.builtin.set_fact:
+    github_runner_service_installed: >-
+      {{ ansible_facts.services | default({}) | dict2items
+         | selectattr('key', 'match', 'actions\\.runner\\..*\\.service')
+         | list | length > 0 }}
+  when: github_runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Install runner service using svc.sh
+  ansible.builtin.command:
+    cmd: "{{ github_runner_home }}/svc.sh install {{ github_runner_user }}"
+  become: true
+  when:
+    - github_runner_configured.stat.exists
+    - not github_runner_service_installed
+  register: github_runner_service_installed_result
+  changed_when: github_runner_service_installed_result.rc == 0
+  tags:
+    - service
+
+- name: Start runner service
+  ansible.builtin.command:
+    cmd: "{{ github_runner_home }}/svc.sh start"
+  become: true
+  when:
+    - github_runner_configured.stat.exists
+    - github_runner_service_installed_result is defined and github_runner_service_installed_result.changed
+  changed_when: true
+  tags:
+    - service
+
+- name: Wait for service to start
+  ansible.builtin.wait_for:
+    timeout: 5
+  when:
+    - github_runner_configured.stat.exists
+    - github_runner_service_installed_result is defined and github_runner_service_installed_result.changed
+  tags:
+    - service
+
+- name: Get service status
+  ansible.builtin.shell:
+    cmd: set -o pipefail && systemctl status actions.runner.*.service | head -15
+    executable: /bin/bash
+  register: github_runner_service_status
+  changed_when: false
+  failed_when: false
+  become: true
+  when: github_runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Display service status
+  ansible.builtin.debug:
+    msg: "{{ github_runner_service_status.stdout_lines }}"
+  when:
+    - github_runner_configured.stat.exists
+    - github_runner_service_status is defined
+  tags:
+    - service

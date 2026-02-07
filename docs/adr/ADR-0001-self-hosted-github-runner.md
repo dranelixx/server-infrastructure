@@ -15,7 +15,7 @@ access to private infrastructure.
 ## Decision
 
 Deploy a self-hosted GitHub Actions runner (`github-runner-prod-cz-01`) as an LXC container within
-the private network. The runner is provisioned via Ansible (`ansible/roles/github-runner/`) for
+the private network. The runner is provisioned via Ansible (`ansible/roles/github_runner/`) for
 reproducibility and documentation.
 
 ### Why Ansible instead of Docker?

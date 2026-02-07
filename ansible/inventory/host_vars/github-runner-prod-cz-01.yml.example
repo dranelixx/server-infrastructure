@@ -4,4 +4,4 @@
 # The .yml file is gitignored and contains sensitive information
 
 ansible_host: <RUNNER_IP>  # Example: 10.0.1.184
-proxmox_api_host: <PROXMOX_HOST>  # Example: 10.0.1.10
+github_runner_proxmox_api_host: <PROXMOX_HOST>  # Example: 10.0.1.10

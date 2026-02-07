@@ -60,22 +60,22 @@
 
 - name: Setup GitHub Actions Self-Hosted Runner
   hosts: all
-  gather_facts: yes
-  become: no
+  gather_facts: true
+  become: false
 
   vars:
     # Override default variables if needed
     github_runner_version: "latest"
     github_runner_user: "github-runner"
     github_runner_home: "/opt/actions-runner"
-    terraform_version: "1.7.5"
-    tflint_enabled: true
+    github_runner_terraform_version: "1.7.5"
+    github_runner_tflint_enabled: true
 
     # GitHub repository configuration
-    github_repo_url: "https://github.com/dranelixx/server-infrastructure"
+    github_runner_repo_url: "https://github.com/dranelixx/server-infrastructure"
 
-    # Network connectivity (proxmox_api_host is in host_vars)
-    proxmox_api_port: 8006
+    # Network connectivity (github_runner_proxmox_api_host is in host_vars)
+    github_runner_proxmox_api_port: 8006
 
   pre_tasks:
     - name: Display playbook information
@@ -85,16 +85,16 @@
           - "GitHub Actions Runner Setup"
           - "=========================================="
           - "Target Host: {{ inventory_hostname }}"
-          - "GitHub Repo: {{ github_repo_url }}"
+          - "GitHub Repo: {{ github_runner_repo_url }}"
           - "Runner Home: {{ github_runner_home }}"
-          - "Terraform Version: {{ terraform_version }}"
-          - "TFLint Enabled: {{ tflint_enabled }}"
+          - "Terraform Version: {{ github_runner_terraform_version }}"
+          - "TFLint Enabled: {{ github_runner_tflint_enabled }}"
           - "=========================================="
       tags:
         - always
 
   roles:
-    - role: github-runner
+    - role: github_runner
       tags:
         - github-runner
 

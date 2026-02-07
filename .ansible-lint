@@ -1,0 +1,11 @@
+---
+profile: production
+
+project_dir: ansible/
+
+# Roles are in ansible/roles/ but ansible-lint resolves paths
+# relative to the playbook directory. Mock the roles so syntax-check
+# can validate the playbook without path issues.
+mock_roles:
+  - github_runner
+  - proxmox_backup
