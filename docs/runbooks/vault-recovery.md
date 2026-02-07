@@ -50,11 +50,8 @@ Vault uses Shamir's Secret Sharing. You need a threshold number of unseal keys.
 
 ### Where Unseal Keys Are Stored
 
-<!-- TODO: Fill in actual storage location -->
-
-> **PLACEHOLDER:** Document where your unseal keys and root token are stored.
-> Recommended: encrypted USB drive in a physical safe, or split across multiple secure locations.
-> NEVER store unseal keys on the same infrastructure as Vault.
+Keys are split across three independent storage locations (threshold: 3 of 5).
+No single location holds enough keys to unseal. You need access to at least two sources.
 
 ### Steps
 
