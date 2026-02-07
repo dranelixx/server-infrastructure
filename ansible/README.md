@@ -14,7 +14,7 @@ ansible/
 ├── playbooks/               # Playbooks
 │   └── github_runner_setup.yml  # GitHub Runner setup
 └── roles/                   # Roles
-    └── github-runner/       # GitHub Runner role
+    └── github_runner/       # GitHub Runner role
         ├── defaults/        # Default variables
         ├── handlers/        # Handlers
         ├── tasks/           # Tasks
@@ -104,7 +104,7 @@ Installation and configuration of a GitHub Actions self-hosted runner.
 - Security hardening
 - Pre-flight checks (Ubuntu version, network)
 
-**Documentation**: [roles/github-runner/README.md](roles/github-runner/README.md)
+**Documentation**: [roles/github_runner/README.md](roles/github_runner/README.md)
 
 ## Configuration
 
@@ -132,16 +132,16 @@ Variables can be overridden:
 ```yaml
 # In playbook
 vars:
-  terraform_version: "1.14.3"
-  tflint_enabled: false
+  github_runner_terraform_version: "1.14.3"
+  github_runner_tflint_enabled: false
 
 # In inventory
 github_runner_prod:
   vars:
-    terraform_version: "1.14.3"
+    github_runner_terraform_version: "1.14.3"
 
 # Via command line
-ansible-playbook playbooks/github_runner_setup.yml -e "terraform_version=1.14.3"
+ansible-playbook playbooks/github_runner_setup.yml -e "github_runner_terraform_version=1.14.3"
 ```
 
 ## Best Practices
@@ -302,7 +302,7 @@ jobs:
 
 - [Ansible Documentation](https://docs.ansible.com/)
 - [Best Practices](https://docs.ansible.com/ansible/latest/tips_tricks/ansible_tips_tricks.html)
-- [GitHub Runner Role](roles/github-runner/README.md)
+- [GitHub Runner Role](roles/github_runner/README.md)
 
 ## Support
 

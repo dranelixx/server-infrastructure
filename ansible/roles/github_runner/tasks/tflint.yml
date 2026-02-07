@@ -5,63 +5,69 @@
   ansible.builtin.uri:
     url: "https://api.github.com/repos/terraform-linters/tflint/releases/latest"
     return_content: true
-  register: tflint_latest_release
-  when: tflint_version == "latest"
+  register: github_runner_tflint_latest_release
+  when: github_runner_tflint_version == "latest"
   tags:
     - tflint
 
 - name: Set TFLint version variable
   ansible.builtin.set_fact:
-    tflint_install_version: "{{ tflint_latest_release.json.tag_name | regex_replace('^v', '') if tflint_version == 'latest' else tflint_version }}"
+    github_runner_tflint_install_version: >-
+      {{ github_runner_tflint_latest_release.json.tag_name | regex_replace('^v', '')
+         if github_runner_tflint_version == 'latest'
+         else github_runner_tflint_version }}
   tags:
     - tflint
 
 - name: Check if TFLint is already installed
   ansible.builtin.stat:
     path: /usr/local/bin/tflint
-  register: tflint_binary
+  register: github_runner_tflint_binary
   tags:
     - tflint
 
 - name: Get installed TFLint version
   ansible.builtin.command: /usr/local/bin/tflint --version
-  register: tflint_installed_version
+  register: github_runner_tflint_installed_version
   changed_when: false
   failed_when: false
-  when: tflint_binary.stat.exists
+  when: github_runner_tflint_binary.stat.exists
   tags:
     - tflint
 
 - name: Download and install TFLint
-  when: not tflint_binary.stat.exists or (tflint_binary.stat.exists and tflint_install_version not in tflint_installed_version.stdout)
+  when: >-
+    not github_runner_tflint_binary.stat.exists or
+    (github_runner_tflint_binary.stat.exists and
+     github_runner_tflint_install_version not in github_runner_tflint_installed_version.stdout)
   block:
     - name: Create temporary directory for TFLint
       ansible.builtin.tempfile:
         state: directory
         suffix: tflint
-      register: tflint_temp_dir
+      register: github_runner_tflint_temp_dir
       tags:
         - tflint
 
     - name: Download TFLint
       ansible.builtin.get_url:
-        url: "https://github.com/terraform-linters/tflint/releases/download/v{{ tflint_install_version }}/tflint_linux_amd64.zip"
-        dest: "{{ tflint_temp_dir.path }}/tflint.zip"
+        url: "https://github.com/terraform-linters/tflint/releases/download/v{{ github_runner_tflint_install_version }}/tflint_linux_amd64.zip"
+        dest: "{{ github_runner_tflint_temp_dir.path }}/tflint.zip"
         mode: '0644'
       tags:
         - tflint
 
     - name: Unzip TFLint
       ansible.builtin.unarchive:
-        src: "{{ tflint_temp_dir.path }}/tflint.zip"
-        dest: "{{ tflint_temp_dir.path }}"
+        src: "{{ github_runner_tflint_temp_dir.path }}/tflint.zip"
+        dest: "{{ github_runner_tflint_temp_dir.path }}"
         remote_src: true
       tags:
         - tflint
 
     - name: Install TFLint binary
       ansible.builtin.copy:
-        src: "{{ tflint_temp_dir.path }}/tflint"
+        src: "{{ github_runner_tflint_temp_dir.path }}/tflint"
         dest: /usr/local/bin/tflint
         mode: '0755'
         remote_src: true
@@ -71,20 +77,20 @@
 
     - name: Remove temporary directory
       ansible.builtin.file:
-        path: "{{ tflint_temp_dir.path }}"
+        path: "{{ github_runner_tflint_temp_dir.path }}"
         state: absent
       tags:
         - tflint
 
 - name: Verify TFLint installation
   ansible.builtin.command: tflint --version
-  register: tflint_version_output
+  register: github_runner_tflint_version_output
   changed_when: false
   tags:
     - tflint
 
 - name: Display TFLint version
   ansible.builtin.debug:
-    msg: "{{ tflint_version_output.stdout_lines }}"
+    msg: "{{ github_runner_tflint_version_output.stdout_lines }}"
   tags:
     - tflint

@@ -1,0 +1,14 @@
+---
+# Cron job tasks for Proxmox Backup role
+
+- name: Create cron job for Proxmox backup
+  ansible.builtin.cron:
+    name: "Proxmox config backup"
+    minute: "{{ proxmox_backup_cron_minute }}"
+    hour: "{{ proxmox_backup_cron_hour }}"
+    day: "{{ proxmox_backup_cron_day }}"
+    month: "{{ proxmox_backup_cron_month }}"
+    weekday: "{{ proxmox_backup_cron_weekday }}"
+    job: "{{ proxmox_backup_script_path }} >> {{ proxmox_backup_log_path }} 2>&1"
+    user: root
+    state: present

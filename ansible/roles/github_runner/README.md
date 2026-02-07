@@ -33,24 +33,24 @@ github_runner_group: "github-runner" # System group for runner
 github_runner_home: "/opt/actions-runner" # Runner installation directory
 github_runner_work_dir: "{{ github_runner_home }}/_work" # Work directory for jobs
 
-github_repo_url: "https://github.com/dranelixx/server-infrastructure"
-github_repo_owner: "dranelixx"
-github_repo_name: "server-infrastructure"
+github_runner_repo_url: "https://github.com/dranelixx/server-infrastructure"
+github_runner_repo_owner: "dranelixx"
+github_runner_repo_name: "server-infrastructure"
 ```
 
 ### Terraform Configuration
 
 ```yaml
-terraform_version: "1.7.5" # Specific version or "latest"
-terraform_gpg_key_url: "https://apt.releases.hashicorp.com/gpg"
-terraform_repo_url: "https://apt.releases.hashicorp.com"
+github_runner_terraform_version: "1.7.5" # Specific version or "latest"
+github_runner_terraform_gpg_key_url: "https://apt.releases.hashicorp.com/gpg"
+github_runner_terraform_repo_url: "https://apt.releases.hashicorp.com"
 ```
 
 ### TFLint Configuration
 
 ```yaml
-tflint_enabled: true # Enable/disable TFLint installation
-tflint_version: "latest" # TFLint version (or specific)
+github_runner_tflint_enabled: true # Enable/disable TFLint installation
+github_runner_tflint_version: "latest" # TFLint version (or specific)
 ```
 
 ### Service Configuration
@@ -64,8 +64,8 @@ github_runner_service_state: "stopped" # Don't start until configured
 ### Network Configuration
 
 ```yaml
-proxmox_api_host: "<PROXMOX_HOST>"
-proxmox_api_port: 8006
+github_runner_proxmox_api_host: "<PROXMOX_HOST>"
+github_runner_proxmox_api_port: 8006
 ```
 
 ## Dependencies
@@ -78,10 +78,10 @@ None.
 - hosts: github-runners
   become: no
   roles:
-    - role: github-runner
+    - role: github_runner
       vars:
-        terraform_version: "1.7.5"
-        tflint_enabled: true
+        github_runner_terraform_version: "1.7.5"
+        github_runner_tflint_enabled: true
 ```
 
 ## Usage

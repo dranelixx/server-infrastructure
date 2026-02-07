@@ -21,16 +21,16 @@ all:
 
       vars:
         # Common variables for all GitHub runners
-        github_repo_url: "https://github.com/dranelixx/server-infrastructure"
-        github_repo_owner: "dranelixx"
-        github_repo_name: "server-infrastructure"
+        github_runner_repo_url: "https://github.com/dranelixx/server-infrastructure"
+        github_runner_repo_owner: "dranelixx"
+        github_runner_repo_name: "server-infrastructure"
 
         # Terraform configuration
-        terraform_version: "1.7.5"
-        tflint_enabled: true
+        github_runner_terraform_version: "1.7.5"
+        github_runner_tflint_enabled: true
 
         # Network configuration (proxmox_api_host is in host_vars)
-        proxmox_api_port: 8006
+        github_runner_proxmox_api_port: 8006
 
         # Runner configuration
         github_runner_version: "latest"

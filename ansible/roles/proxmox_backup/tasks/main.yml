@@ -27,7 +27,7 @@
 
 - name: Include logrotate tasks
   ansible.builtin.import_tasks: logrotate.yml
-  when: pve_backup_logrotate_enabled | bool
+  when: proxmox_backup_logrotate_enabled | bool
   tags:
     - proxmox-backup
     - logrotate
@@ -40,18 +40,23 @@
       - "=========================================="
       - ""
       - "Configuration:"
-      - "  Remote: {{ pve_backup_remote_user }}@{{ pve_backup_remote_host }}:{{ pve_backup_remote_port }}"
-      - "  Path: {{ pve_backup_remote_path }}"
-      - "  Retention: {{ pve_backup_retention_days }} days"
-      - "  Schedule: {{ pve_backup_cron_minute }} {{ pve_backup_cron_hour }} {{ pve_backup_cron_day }} {{ pve_backup_cron_month }} {{ pve_backup_cron_weekday }}"
+      - "  Remote: {{ proxmox_backup_remote_user }}@{{ proxmox_backup_remote_host }}:{{ proxmox_backup_remote_port }}"
+      - "  Path: {{ proxmox_backup_remote_path }}"
+      - "  Retention: {{ proxmox_backup_retention_days }} days"
+      - >-
+        Schedule: {{ proxmox_backup_cron_minute }}
+        {{ proxmox_backup_cron_hour }}
+        {{ proxmox_backup_cron_day }}
+        {{ proxmox_backup_cron_month }}
+        {{ proxmox_backup_cron_weekday }}
       - ""
       - "Files:"
-      - "  Script: {{ pve_backup_script_path }}"
-      - "  Log: {{ pve_backup_log_path }}"
-      - "  SSH Key: {{ pve_backup_ssh_key_path }}"
+      - "  Script: {{ proxmox_backup_script_path }}"
+      - "  Log: {{ proxmox_backup_log_path }}"
+      - "  SSH Key: {{ proxmox_backup_ssh_key_path }}"
       - ""
       - "Test manually:"
-      - "  {{ pve_backup_script_path }}"
+      - "  {{ proxmox_backup_script_path }}"
       - "=========================================="
   tags:
     - proxmox-backup

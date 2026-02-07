@@ -12,7 +12,7 @@
 
 - name: Install required system packages
   ansible.builtin.apt:
-    name: "{{ required_packages }}"
+    name: "{{ github_runner_required_packages }}"
     state: present
   become: true
   tags:
@@ -56,7 +56,12 @@
 - name: Allow GitHub runner user to manage systemd service without password
   ansible.builtin.lineinfile:
     path: /etc/sudoers.d/github-runner
-    line: "{{ github_runner_user }} ALL=(ALL) NOPASSWD: /bin/systemctl start {{ github_runner_service_name }}, /bin/systemctl stop {{ github_runner_service_name }}, /bin/systemctl restart {{ github_runner_service_name }}, /bin/systemctl status {{ github_runner_service_name }}"
+    line: >-
+      {{ github_runner_user }} ALL=(ALL) NOPASSWD:
+      /bin/systemctl start {{ github_runner_service_name }},
+      /bin/systemctl stop {{ github_runner_service_name }},
+      /bin/systemctl restart {{ github_runner_service_name }},
+      /bin/systemctl status {{ github_runner_service_name }}
     create: true
     mode: '0440'
     validate: 'visudo -cf %s'

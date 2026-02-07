@@ -1,27 +1,27 @@
 #!/bin/bash
 # {{ ansible_managed }}
 # Proxmox configuration backup script
-# Deployed by Ansible role: proxmox-backup
+# Deployed by Ansible role: proxmox_backup
 set -euo pipefail
 
-REMOTE="{{ pve_backup_remote_user }}@{{ pve_backup_remote_host }}"
-REMOTE_PATH="{{ pve_backup_remote_path }}"
-SSH_KEY="{{ pve_backup_ssh_key_path }}"
-SSH_PORT="{{ pve_backup_remote_port }}"
+REMOTE="{{ proxmox_backup_remote_user }}@{{ proxmox_backup_remote_host }}"
+REMOTE_PATH="{{ proxmox_backup_remote_path }}"
+SSH_KEY="{{ proxmox_backup_ssh_key_path }}"
+SSH_PORT="{{ proxmox_backup_remote_port }}"
 DATE=$(date +%Y-%m-%d)
 HOSTNAME=$(hostname)
-RETENTION_DAYS={{ pve_backup_retention_days }}
+RETENTION_DAYS={{ proxmox_backup_retention_days }}
 
-{% if pve_backup_ntfy_enabled %}
+{% if proxmox_backup_ntfy_enabled %}
 # ntfy notification settings
-NTFY_URL="{{ pve_backup_ntfy_url }}"
-NTFY_TOKEN="{{ pve_backup_ntfy_token }}"
+NTFY_URL="{{ proxmox_backup_ntfy_url }}"
+NTFY_TOKEN="{{ proxmox_backup_ntfy_token }}"
 {% endif %}
 
 notify() {
   local msg="$1"
   local priority="${2:-default}"
-{% if pve_backup_ntfy_enabled %}
+{% if proxmox_backup_ntfy_enabled %}
   if [ -n "$NTFY_TOKEN" ] && [ -n "$NTFY_URL" ]; then
     curl -s -H "Authorization: Bearer $NTFY_TOKEN" \
          -H "Priority: $priority" \
@@ -35,10 +35,10 @@ notify() {
 
 # Sync configs to dated directory
 if rsync -az --delete \
-{% for exclude in pve_backup_excludes %}
+{% for exclude in proxmox_backup_excludes %}
   --exclude='{{ exclude }}' \
 {% endfor %}
-{% for path in pve_backup_paths %}
+{% for path in proxmox_backup_paths %}
   {{ path }} \
 {% endfor %}
   -e "ssh -p $SSH_PORT -i $SSH_KEY" \

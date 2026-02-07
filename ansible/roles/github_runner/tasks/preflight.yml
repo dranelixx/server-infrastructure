@@ -30,10 +30,10 @@
 
 - name: Test network connectivity to Proxmox API
   ansible.builtin.wait_for:
-    host: "{{ proxmox_api_host }}"
-    port: "{{ proxmox_api_port }}"
+    host: "{{ github_runner_proxmox_api_host }}"
+    port: "{{ github_runner_proxmox_api_port }}"
     timeout: 10
-    msg: "Cannot reach Proxmox API at {{ proxmox_api_host }}:{{ proxmox_api_port }}"
+    msg: "Cannot reach Proxmox API at {{ github_runner_proxmox_api_host }}:{{ github_runner_proxmox_api_port }}"
   tags:
     - preflight
     - network
@@ -43,7 +43,7 @@
     url: "https://api.github.com"
     method: GET
     timeout: 10
-  register: github_check
+  register: github_runner_github_check
   failed_when: false
   changed_when: false
   tags:
@@ -52,8 +52,8 @@
 
 - name: Warn if GitHub is unreachable
   ansible.builtin.debug:
-    msg: "WARNING: GitHub API unreachable (Status: {{ github_check.status | default('timeout') }}). Runner installation may fail."
-  when: github_check.status is not defined or github_check.status != 200
+    msg: "WARNING: GitHub API unreachable (Status: {{ github_runner_github_check.status | default('timeout') }}). Runner installation may fail."
+  when: github_runner_github_check.status is not defined or github_runner_github_check.status != 200
   tags:
     - preflight
     - network
@@ -64,7 +64,7 @@
       - "Pre-flight checks passed:"
       - "  - OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
       - "  - Architecture: {{ ansible_architecture }}"
-      - "  - Proxmox API: {{ proxmox_api_host }}:{{ proxmox_api_port }} ✓"
+      - "  - Proxmox API: {{ github_runner_proxmox_api_host }}:{{ github_runner_proxmox_api_port }} ✓"
       - "  - GitHub API: Reachable ✓"
   tags:
     - preflight
