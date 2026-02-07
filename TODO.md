@@ -39,7 +39,7 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Prometheus alert rules (VaultSealed, VaultDown, VaultTooManyAuthFailures)
   - [ ] Network isolation (blocked by VLAN migration)
   - [ ] Regular token/lease rotation
-  - [ ] User account created (currently root-only access)
+  - [x] User account created (no more root-only access)
 
 ### Standard Security Tasks
 
@@ -103,7 +103,7 @@ Tracked improvements and planned work for this infrastructure.
 
 - [ ] **Vault Backup Strategy** (instead of HA - see ADR)
   - [ ] Automated Vault snapshots (cron job documented in runbook)
-  - [ ] Unseal keys in secure location (not on same infra)
+  - [x] Unseal keys in secure location (split across 3 independent sources)
   - [x] Recovery runbook (docs/runbooks/vault-recovery.md)
 
 ## Priority 4 - IaC Continuation
