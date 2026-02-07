@@ -1,0 +1,31 @@
+groups:
+  - name: vault
+    rules:
+      - alert: VaultSealed
+        expr: vault_core_unsealed == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Vault is sealed"
+          description: "Vault instance {{ $labels.instance }} is sealed. All secret access is blocked. CI/CD pipelines will fail."
+
+      - alert: VaultDown
+        expr: up{job="vault"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Vault is not responding"
+          description: "Vault instance {{ $labels.instance }} has been unreachable for more than 2 minutes. Check service status and network connectivity."
+
+      - alert: VaultTooManyAuthFailures
+        expr: rate(vault_core_handle_login_request{error="true"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of Vault auth failures"
+          description: >-
+            Vault instance {{ $labels.instance }} is seeing more than 5 failed auth requests
+            per second over the last 5 minutes. Possible brute force or misconfigured client.
