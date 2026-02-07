@@ -33,11 +33,13 @@ Tracked improvements and planned work for this infrastructure.
 
 - [ ] **HashiCorp Vault Hardening** - Central secrets management
   - Same "Fort Knox" standard as Vaultwarden
-  - Audit logging enabled and monitored
-  - Seal/unseal procedures documented
-  - Network isolation (not accessible from everywhere)
-  - Regular token/lease rotation
-  - Alert on failed auth attempts
+  - [x] TLS verification enforced in CI/CD (removed tlsSkipVerify)
+  - [x] Audit logging enabled (/var/log/vault/audit.log + logrotate)
+  - [x] Seal/unseal procedures documented (docs/runbooks/vault-recovery.md)
+  - [x] Prometheus alert rules (VaultSealed, VaultDown, VaultTooManyAuthFailures)
+  - [ ] Network isolation (blocked by VLAN migration)
+  - [ ] Regular token/lease rotation
+  - [ ] User account created (currently root-only access)
 
 ### Standard Security Tasks
 
@@ -100,9 +102,9 @@ Tracked improvements and planned work for this infrastructure.
   - Document Vault paths
 
 - [ ] **Vault Backup Strategy** (instead of HA - see ADR)
-  - Automated Vault snapshots
-  - Unseal keys in secure location (not on same infra)
-  - Recovery runbook
+  - [ ] Automated Vault snapshots (cron job documented in runbook)
+  - [ ] Unseal keys in secure location (not on same infra)
+  - [x] Recovery runbook (docs/runbooks/vault-recovery.md)
 
 ## Priority 4 - IaC Continuation
 
@@ -145,6 +147,12 @@ Tracked improvements and planned work for this infrastructure.
   - Setup Renovate bot
   - Configure for Terraform providers
   - Auto-PR for updates
+
+- [ ] **Migrate deprecated proxmox-vm variables → v2.0.0**
+  - Migrate `pms`, `arr_stack`, `docker_prod`, `nextcloud` from `disk_size`/`storage_pool`/`emulate_ssd` to `disks` array
+  - Migrate same VMs in target-state
+  - Verify `terraform plan` shows "No changes" after migration
+  - Remove deprecated variables from module → tag `modules/proxmox-vm/v2.0.0`
 
 - [ ] **Tech Debt Cleanup**
   - Revisit `lifecycle { ignore_changes }` in VM module

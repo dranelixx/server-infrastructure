@@ -61,7 +61,6 @@ jobs:
           method: approle
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
-          tlsSkipVerify: true
           secrets: |
             secret/data/prod/infrastructure/proxmox api_endpoint | PROXMOX_API_ENDPOINT ;
             secret/data/prod/infrastructure/proxmox api_token_id | PROXMOX_API_TOKEN_ID ;
