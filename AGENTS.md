@@ -23,7 +23,7 @@ Before making changes that affect architecture, consult the relevant ADRs in [do
 | [ADR-0006](docs/adr/ADR-0006-environment-separation.md)    | Environments | Separate directories, not workspaces   |
 | [ADR-0007](docs/adr/ADR-0007-lxc-vs-vm-placement.md)       | Workloads    | VM for passthrough/isolation, LXC else |
 | [ADR-0008](docs/adr/ADR-0008-backup-strategy.md)           | Backups      | vzdump + PBS + Borgmatic               |
-| [ADR-0009](docs/adr/ADR-0009-modular-terraform.md)         | Modules      | Shared modules, versioning planned     |
+| [ADR-0009](docs/adr/ADR-0009-modular-terraform.md)         | Modules      | Shared modules, versioned via Git tags |
 | [ADR-0010](docs/adr/ADR-0010-cicd-strategy.md)             | CI/CD        | GitHub Actions, drift via Issues       |
 | [ADR-0011](docs/adr/ADR-0011-server-hardening-baseline.md) | Security     | CrowdSec, SSH hardening, auditd        |
 | [ADR-0012](docs/adr/ADR-0012-service-permissions-acl.md)   | Permissions  | ACLs for defense-in-depth secrets      |
@@ -108,7 +108,16 @@ Both use the same reusable modules in `terraform/modules/`:
 
 - `proxmox-vm`: VM provisioning with multi-NIC and VLAN support
 - `proxmox-lxc`: LXC container provisioning
-- `network-bridge`: Network abstraction layer
+- `network-bridge`: Network abstraction layer (deferred)
+
+Modules are versioned via annotated Git tags: `modules/<name>/v<MAJOR>.<MINOR>.<PATCH>`.
+Relative paths are used (no `git::` source pinning). See [ADR-0009](docs/adr/ADR-0009-modular-terraform.md).
+
+```bash
+# Tag a new module release (on main, after merge)
+git tag -a modules/proxmox-vm/v1.1.0 -m "Description of changes"
+git push origin modules/proxmox-vm/v1.1.0
+```
 
 ### CI/CD Pipeline
 
@@ -156,7 +165,7 @@ gh pr create
 
 - snake_case naming convention (enforced by TFLint)
 - All variables and outputs must be documented
-- Pin module sources
+- Tag module releases with `modules/<name>/v<semver>` after merging changes
 - Use `terraform fmt` before committing
 
 ### Commit Messages

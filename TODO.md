@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-06 -->
+<!-- LAST EDITED: 2026-02-07 -->
 
 # TODO
 
@@ -122,10 +122,11 @@ Tracked improvements and planned work for this infrastructure.
   - DR/Dev: MinIO on TrueNAS
   - Reason: TF Cloud Free Tier ends 2026-03-31, RUM pricing too expensive
 
-- [ ] **Module Versioning**
-  - Introduce semantic versioning with Git tags
-  - PATCH for bug fixes, MINOR for features, MAJOR for breaking changes
-  - Pin environments to stable versions
+- [x] **Module Versioning** ✓ (2026-02-07)
+  - [x] Semantic versioning with annotated Git tags (`modules/<name>/v<semver>`)
+  - [x] Versioning strategy documented in ADR-0009
+  - [x] Baseline tags: `proxmox-vm/v1.0.0`, `proxmox-lxc/v1.0.0`
+  - Relative paths kept (no `git::` pinning - pragmatic for single-user)
 
 ## Ongoing
 
