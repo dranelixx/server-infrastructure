@@ -98,7 +98,6 @@ jobs:
           TF_VAR_proxmox_api_url: ${{ env.PROXMOX_API_ENDPOINT }}
           TF_VAR_proxmox_api_token_id: ${{ env.PROXMOX_API_TOKEN_ID }}
           TF_VAR_proxmox_api_token_secret: ${{ env.PROXMOX_API_TOKEN_SECRET }}
-          TF_VAR_proxmox_tls_insecure: 'true'
           TF_VAR_ssh_public_keys: ${{ env.SSH_PUBLIC_KEYS }}
 
       - name: Generate Plan Summary

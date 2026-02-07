@@ -58,9 +58,10 @@ Tracked improvements and planned work for this infrastructure.
   - Review privileged vs unprivileged LXC configurations
   - Migrate Pterodactyl Wings to VM for better isolation
 
-- [ ] **TLS Hardening** - Fix insecure Proxmox API connection
-  - Change Vault API endpoint from IP to domain (HAProxy + Let's Encrypt)
-  - Set `proxmox_tls_insecure = false`
+- [x] **TLS Hardening** - Fix insecure Proxmox API connection ✓ (2026-02-07)
+  - [x] HAProxy backend for Proxmox API (Let's Encrypt wildcard cert via pfSense)
+  - [x] Vault API endpoint changed from IP to domain
+  - [x] Set `proxmox_tls_insecure = false` (variables + CI/CD workflows)
 
 ## Priority 2 - Backups
 

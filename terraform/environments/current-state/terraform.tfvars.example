@@ -3,9 +3,9 @@
 # IMPORTANT: Copy this file to terraform.tfvars and fill with real values
 # terraform.tfvars is gitignored and will NOT be committed to repository
 
-# Proxmox API Endpoint
-# Format: https://<IP_OR_HOSTNAME>:8006 (NO /api2/json suffix!)
-proxmox_api_url = "https://<PROXMOX_HOST>:8006"
+# Proxmox API Endpoint (via HAProxy with valid TLS cert)
+# Format: https://<HOSTNAME>/ (NO /api2/json suffix, NO port needed with HAProxy)
+proxmox_api_url = "https://<PROXMOX_HOST>.example.com/"
 
 # API Token Authentication (RECOMMENDED)
 # Format: user@realm!token-id
@@ -17,8 +17,8 @@ proxmox_api_token_secret = "<YOUR_TOKEN_SECRET>"
 # proxmox_user     = "root@pam"
 # proxmox_password = "<YOUR_PASSWORD>"
 
-# TLS Verification (set to false for self-signed certificates)
-proxmox_tls_insecure = true
+# TLS Verification (false = verify certs, requires valid CA-signed cert via HAProxy)
+# proxmox_tls_insecure = false
 
 # LXC Container SSH Access (Optional)
 # Add your SSH public keys for root access to new LXC containers
