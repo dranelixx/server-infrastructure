@@ -41,10 +41,11 @@ Tracked improvements and planned work for this infrastructure.
 
 ### Standard Security Tasks
 
-- [ ] **Flat Network Firewall Audit** - Review current-state network segmentation
-  - Check Proxmox firewall rules between VMs/LXCs
-  - Verify pfSense rules for internal traffic
-  - Document lateral movement risks
+- [x] **Flat Network Firewall Audit** - Review current-state network segmentation ✓ (2026-02-07)
+  - [x] Check Proxmox firewall rules between VMs/LXCs (disabled at all levels)
+  - [x] Verify pfSense rules for internal traffic (LAN allow-all, no east-west filtering)
+  - [x] Document lateral movement risks
+  - [x] Removed unnecessary Plex NAT rules (5353, 1900, 32469, 3005, 8324, 32410-32414)
 
 - [ ] **GitHub Runner Hardening** - Mitigate private network access risks
   - After VLAN migration: isolate runner in restricted segment
@@ -175,7 +176,7 @@ Tracked improvements and planned work for this infrastructure.
 
 - [ ] **Update Storage Upgrade Docs (P3500 Change)**
   - Only 1x Intel P3500 available instead of 2x
-  - Update `docs/private/04 - Storage Upgrade/` (README, 02-hardware, 03-pool-setup)
+  - Update `docs/private/plans/storage-upgrade/` (README, 02-hardware, 03-pool-setup)
   - Decide: TrueNAS cache vs. Proxmox nvme-fast vs. split single drive
   - Wait until hardware actually ships before updating
 
