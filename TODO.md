@@ -38,7 +38,7 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Seal/unseal procedures documented (docs/runbooks/vault-recovery.md)
   - [x] Prometheus alert rules (VaultSealed, VaultDown, VaultTooManyAuthFailures)
   - [ ] Network isolation (blocked by VLAN migration)
-  - [ ] Regular token/lease rotation
+  - [x] Automated Secret ID rotation (weekly workflow + 14d TTL)
   - [x] User account created (no more root-only access)
 
 ### Standard Security Tasks
