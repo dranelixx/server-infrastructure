@@ -87,14 +87,14 @@ All ports listen on both IPv4 and IPv6. No unexpected ports should be open.
 
 ## Security Stack
 
-| Component           | Status     | Config                              |
-| ------------------- | ---------- | ----------------------------------- |
-| CrowdSec            | Active     | postfix, dovecot, nginx collections |
-| CrowdSec Bouncer    | Active     | iptables mode, DOCKER-USER chain    |
-| auditd              | Active     | sudoers, SSH key, cron monitoring   |
-| AIDE                | Active     | Daily integrity check via cron      |
-| unattended-upgrades | Active     | Automatic security patches          |
-| SPF/DKIM/DMARC      | Configured | p=reject                            |
+| Component           | Status     | Config                                              |
+| ------------------- | ---------- | --------------------------------------------------- |
+| CrowdSec            | Active     | postfix, dovecot, nginx collections                 |
+| CrowdSec Bouncer    | Active     | iptables mode, DOCKER-USER chain                    |
+| auditd              | Active     | sudoers, SSH key, cron monitoring                   |
+| AIDE                | Active     | Daily integrity check via cron (see excludes below) |
+| unattended-upgrades | Active     | Automatic security patches                          |
+| SPF/DKIM/DMARC      | Configured | p=reject                                            |
 
 ## Backup Schedule
 
@@ -102,6 +102,17 @@ All ports listen on both IPv4 and IPv6. No unexpected ports should be open.
 | ----------- | --------- | --------- | ------------------------------ |
 | Mailcow     | Borgmatic | Automated | Hetzner Storage Box            |
 | Vaultwarden | Borgmatic | Automated | Hetzner Storage Box + BorgBase |
+
+## AIDE Excludes
+
+Configured in `/etc/aide/aide.conf.d/99_aide_local_excludes`. Excluded paths:
+
+- Docker/containerd runtime (`/var/lib/docker`, `/var/lib/containerd`, `/run/containerd`, `/run/docker/containerd`)
+- CrowdSec runtime DB (`/var/lib/crowdsec/data`)
+- Log files (`/var/log/{crowdsec*,audit,sudo-io,sudo.log,aide,vaultwarden}`)
+- Borgmatic logs, systemd timer stamps, shell history, `/tmp`
+
+Docker binaries (`/usr/bin/docker`, `/usr/bin/containerd`) are still monitored.
 
 ## How to Verify Baseline
 
