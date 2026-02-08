@@ -15,7 +15,7 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Security headers configured (X-Frame-Options, CSP, etc.)
   - [x] CrowdSec vaultwarden collection installed
   - [x] 2FA available (enforcement is user responsibility)
-  - [ ] Backup encryption verification
+  - [x] Backup encryption verification (repokey BLAKE2b + repokey AES-256)
 
 - [x] **Mailcow Hardening** - Clean since Feb 2025 rebuild ✓ (2026-01-28)
   - **Incident Response Readiness**
@@ -131,6 +131,11 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Versioning strategy documented in ADR-0009
   - [x] Baseline tags: `proxmox-vm/v1.0.0`, `proxmox-lxc/v1.0.0`
   - Relative paths kept (no `git::` pinning - pragmatic for single-user)
+
+- [ ] **Map Hetzner infrastructure in Terraform**
+  - Hetzner Cloud VPS and Storage Box
+  - Use [hetznercloud/hcloud provider](https://registry.terraform.io/providers/hetznercloud/hcloud/latest)
+  - Import existing resources into state
 
 ## Ongoing
 
