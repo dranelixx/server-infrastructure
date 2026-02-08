@@ -211,7 +211,17 @@ Tracked improvements and planned work for this infrastructure.
   - Currently disabled in pre-commit (modifies files after staging)
   - Consider running in CI instead of locally
 
+- [ ] **Add tfsec/Checkov Security Scanning**
+  - tfsec for Terraform security checks
+  - Checkov for policy-as-code validation
+  - Integrate as pre-commit hook or CI step
+
 ## Future / Nice-to-have
+
+- [ ] **Architecture Documentation (public version)**
+  - Create `docs/architecture/` with current-state and target-state overviews
+  - Network diagrams, VM/LXC placement, storage topology
+  - Keep sensitive details (IPs, hostnames) out of public docs
 
 - [ ] **Netcup Piko VPS Setup**
   - Uptime Kuma for external monitoring

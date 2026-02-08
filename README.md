@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-02-08 -->
 
 # Server Infrastructure - Multi-Location IaC
 
@@ -16,12 +16,12 @@
 
 This repository demonstrates **Enterprise-Level DevOps Skills** through:
 
-- **Multi-Environment Management** (Current/Target Terraform Workspaces)
+- **Multi-Environment Management** (Current/Target Terraform Environments)
 - **Advanced Networking** (VLANs, LACP Bonding, Multi-homed VMs)
 - **Full CI/CD Automation** (Terraform Plan on PR, Apply on Merge)
-- **Configuration Management** (Ansible Dynamic Inventory from Terraform)
+- **Configuration Management** (Ansible Roles for Proxmox, pfSense, TrueNAS)
 - **Monitoring-as-Code** (Prometheus/Grafana Dashboards)
-- **Security Best Practices** (HashiCorp Vault, tfsec/Checkov Scanning)
+- **Security Best Practices** (HashiCorp Vault, gitleaks, ansible-lint)
 - **Production Testing** (Live API Integration with Proxmox/pfSense)
 
 ---
@@ -33,8 +33,8 @@ This repository demonstrates **Enterprise-Level DevOps Skills** through:
 **Colocation Datacenter:**
 
 - **Thor** (HP DL320e Gen8 v2): Proxmox Host + pfSense VM
-- **Loki** (HP DL380 Gen9): Proxmox Compute (5 VMs + 13 LXCs)
-- **HP 1910-24G Switch**: LACP-capable, VLANs 10/20/30
+- **Loki** (HP DL380 Gen9): Proxmox Compute (5 VMs + 15 LXCs)
+- **Dell PowerConnect Switch** (current) / **HP 1910-24G** (target, LACP + VLANs 10/20/30)
 
 **External Services:**
 
@@ -100,24 +100,28 @@ flowchart TB
 server-infrastructure/
 ├── terraform/
 │   ├── environments/
-│   │   ├── current-state/      # Current state (Dell Switch, Flat Network)
-│   │   └── target-state/       # Target state (HP Switch, VLANs)
+│   │   ├── current-state/      # Production (Dell Switch, Flat Network)
+│   │   └── target-state/       # Future state (HP Switch, VLANs)
 │   └── modules/
 │       ├── proxmox-vm/         # Reusable VM Module (Multi-NIC, VLAN Support) [v1.0.0]
 │       ├── proxmox-lxc/        # Reusable LXC Module [v1.0.0]
 │       └── network-bridge/     # Network Abstraction (deferred)
 ├── ansible/
-│   ├── playbooks/              # Configuration Management
-│   ├── roles/                  # Proxmox, pfSense, TrueNAS, Monitoring
-│   └── inventory/scripts/      # Dynamic Inventory (Terraform Outputs)
+│   ├── playbooks/              # github_runner_setup.yml
+│   ├── roles/                  # borgmatic, github_runner, monitoring, pfsense, proxmox, proxmox_backup, truenas
+│   └── inventory/              # Static inventory (production)
 ├── monitoring/
-│   ├── prometheus/             # Metrics, Alerts, Recording Rules
-│   └── grafana/                # Dashboards (Infrastructure, Network, Storage)
+│   ├── prometheus/             # Alerts, Recording Rules
+│   └── grafana/                # Dashboards, Datasources
 ├── .github/workflows/
 │   ├── terraform-plan.yml      # PR: Plan only
 │   ├── terraform-apply.yml     # Merge: Apply with Manual Approval
-│   └── terraform-drift.yml     # Daily drift detection
-└── docs/architecture/          # Detailed Architecture Documentation
+│   ├── terraform-drift.yml     # Daily drift detection
+│   └── vault-rotate-secret-id.yml  # Weekly Secret ID rotation
+└── docs/
+    ├── adr/                    # 12 Architecture Decision Records
+    ├── guides/                 # borgmatic-vault-integration
+    └── runbooks/               # vault-recovery, mailcow-incident-response, mailcow-baseline
 ```
 
 ---
@@ -128,37 +132,20 @@ server-infrastructure/
 
 - **Terraform** >= 1.14.3
 - **Ansible** >= 2.16
-- **Proxmox API Token** (see [docs/setup/proxmox-api.md](docs/setup/proxmox-api.md))
+- **Proxmox API Token** (configured in HashiCorp Vault)
 - **Terraform Cloud Account** (Free Tier)
 - **HashiCorp Vault** (for secrets management)
 
-### 1. Terraform Workspace Setup
+### Terraform Environment Setup
 
 ```bash
 # Configure Terraform Cloud
 terraform login
 
-# Initialize Target State Workspace
-cd terraform/environments/target-state
+# Initialize Current State Environment
+cd terraform/environments/current-state
 terraform init
 terraform plan
-```
-
-### 2. Ansible Dynamic Inventory
-
-```bash
-# Terraform Outputs → Ansible Inventory
-cd ansible
-./inventory/scripts/terraform_inventory.py --list
-
-# Test Playbook
-ansible-playbook -i inventory/scripts/terraform_inventory.py playbooks/site.yml --check
-```
-
-### 3. Monitoring Stack Deployment
-
-```bash
-ansible-playbook playbooks/monitoring_stack.yml
 ```
 
 ---
@@ -185,10 +172,11 @@ pre-commit run --all-files
 - `terraform fmt` - Automatic Formatting
 - `terraform validate` - Syntax Validation
 - `tflint` - Terraform Best Practices Linting
-- `terraform-docs` - Auto-generated README Updates
-- `markdownlint` - Markdown Formatting
+- `prettier` - Markdown Formatting
+- `markdownlint` - Markdown Linting
+- `ansible-lint` - Ansible Best Practices
 - `gitleaks` - Secret Detection
-- Line-ending Normalization (CRLF → LF)
+- Standard file checks (trailing whitespace, line endings, YAML validation)
 
 ### GitHub Actions Workflows
 
@@ -234,18 +222,18 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 ### Pull Request Workflow
 
 1. **Create Branch**: `git checkout -b feature/add-vm`
-2. **Modify Terraform**: Add VM/LXC in `terraform/environments/target-state/`
+2. **Modify Terraform**: Add VM/LXC in `terraform/environments/current-state/`
 3. **Commit & Push**: GitHub Actions runs automatically
 4. **Terraform Plan**: Posted as PR comment
 5. **Review & Merge**: Manual approval required
 6. **Terraform Apply**: Automatically triggered after merge
 
-### Security Scanning
+### Security Tools
 
-- **tfsec**: Terraform Security Checks
-- **Checkov**: Policy-as-Code Validation
-- **Pre-commit Hooks**: terraform fmt, validate, tflint
-- **Vault Integration**: Centralized secrets management
+- **gitleaks**: Secret detection (pre-commit)
+- **ansible-lint**: Ansible best practices (pre-commit)
+- **Vault Integration**: Centralized secrets management (no hardcoded secrets)
+- **tfsec/Checkov**: Terraform security scanning (planned)
 
 ---
 
@@ -272,7 +260,7 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 | **IaC**                | Terraform (bpg/proxmox)           | VM/LXC Provisioning             |
 | **Config Management**  | Ansible                           | Server Configuration, API Calls |
 | **Virtualization**     | Proxmox VE 8.4                    | Hypervisor (KVM + LXC)          |
-| **Networking**         | pfSense 2.8, HP 1910-24G          | Firewall, VLAN Routing, LACP    |
+| **Networking**         | pfSense 2.8, Dell/HP Switch       | Firewall, VLAN Routing, LACP    |
 | **Storage**            | TrueNAS, ZFS                      | NFS/SMB Shares, Datasets        |
 | **Secrets Management** | HashiCorp Vault                   | Centralized Secret Storage      |
 | **Monitoring**         | Prometheus, Grafana, Alertmanager | Metrics, Dashboards, Alerts     |
@@ -283,8 +271,8 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 
 ## Documentation
 
-- **[Architecture Decision Records](docs/adr/)**: Documented decisions with context and trade-offs
-- **[Architecture Documentation](docs/architecture/)**: Current/Target States, Migration Plan
+- **[Architecture Decision Records](docs/adr/)**: Documented decisions with context and trade-offs (12 ADRs)
+- **[Guides](docs/guides/)**: Integration guides (borgmatic-vault)
 - **[Terraform Modules](terraform/modules/)**: Reusable Components, versioned via Git tags ([ADR-0009](docs/adr/ADR-0009-modular-terraform.md))
 - **[Ansible Roles](ansible/roles/)**: Configuration Management Details
 - **[Runbooks](docs/runbooks/)**: Operational Procedures, Disaster Recovery
@@ -298,8 +286,8 @@ This project demonstrates practical experience in:
 
 - **Infrastructure-as-Code**: Terraform Modules, Multi-Environment State Management
 - **Network Engineering**: VLANs, LACP Bonding, Multi-homed VMs
-- **Automation**: Ansible Dynamic Inventory, API Integration
-- **CI/CD**: GitHub Actions, Pre-commit Hooks, Security Scanning
+- **Automation**: Ansible Roles, CI/CD Pipeline Integration
+- **CI/CD**: GitHub Actions, Pre-commit Hooks, Automated Drift Detection
 - **Secrets Management**: HashiCorp Vault Integration, AppRole Authentication
 - **Observability**: Prometheus Metrics, Grafana Dashboards, Alert Rules
 - **Documentation**: ADRs, Runbooks, Architecture Diagrams
