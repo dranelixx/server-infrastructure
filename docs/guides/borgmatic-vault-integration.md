@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-02-08 -->
 
 # Borgmatic Backup with HashiCorp Vault Integration
 
@@ -85,7 +85,7 @@ secret/
             │   ├── db_user
             │   └── db_password
             └── monitoring/
-                └── ntfy_token
+                └── ntfy_token_borgmatic
 ```
 
 **Create secrets:**
@@ -108,7 +108,7 @@ vault kv put secret/prod/services/<service-name>/database \
 
 # Store monitoring secrets
 vault kv put secret/prod/services/<service-name>/monitoring \
-  ntfy_token="<NTFY_ACCESS_TOKEN>"
+  ntfy_token_borgmatic="<NTFY_ACCESS_TOKEN>"
 ```
 
 ### Policy
@@ -219,7 +219,7 @@ export BORG_PASSPHRASE=$(echo "$BACKUP" | jq -r '.data.data.borg_passphrase')
 export DB_NAME=$(echo "$DATABASE" | jq -r '.data.data.db_name')
 export DB_USER=$(echo "$DATABASE" | jq -r '.data.data.db_user')
 export DB_PASSWORD=$(echo "$DATABASE" | jq -r '.data.data.db_password')
-export NTFY_ACCESS_TOKEN=$(echo "$MONITORING" | jq -r '.data.data.ntfy_token')
+export NTFY_ACCESS_TOKEN=$(echo "$MONITORING" | jq -r '.data.data.ntfy_token_borgmatic')
 
 # Run borgmatic
 /usr/local/bin/borgmatic --verbosity 1 "$@"
@@ -281,7 +281,7 @@ export BORG_PASSPHRASE=$(echo "$BACKUP" | jq -r '.data.data.borg_passphrase')
 export DBNAME=$(echo "$DATABASE" | jq -r '.data.data.db_name')
 export DBUSER=$(echo "$DATABASE" | jq -r '.data.data.db_user')
 export DBPASS=$(echo "$DATABASE" | jq -r '.data.data.db_password')
-export NTFY_ACCESS_TOKEN=$(echo "$MONITORING" | jq -r '.data.data.ntfy_token')
+export NTFY_ACCESS_TOKEN=$(echo "$MONITORING" | jq -r '.data.data.ntfy_token_borgmatic')
 
 # Run borgmatic via docker-compose
 cd /path/to/docker-compose/directory

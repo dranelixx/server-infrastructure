@@ -15,16 +15,16 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Security headers configured (X-Frame-Options, CSP, etc.)
   - [x] CrowdSec vaultwarden collection installed
   - [x] 2FA available (enforcement is user responsibility)
-  - [ ] Backup encryption verification
+  - [x] Backup encryption verification (repokey BLAKE2b + repokey AES-256)
 
 - [x] **Mailcow Hardening** - Clean since Feb 2025 rebuild ✓ (2026-01-28)
   - **Incident Response Readiness**
     - [x] Centralized logging (auditd + sudo logging)
     - [x] Alert on sudoers file changes (auditd)
     - [x] Alert on new SSH keys added (auditd)
-    - [ ] File Integrity Monitoring (AIDE) - future consideration
-    - [ ] Baseline documentation (what is "normal")
-    - [ ] Incident response runbook
+    - [x] File Integrity Monitoring (AIDE) with daily cron check
+    - [x] Baseline documentation (docs/runbooks/mailcow-baseline.md)
+    - [x] Incident response runbook (docs/runbooks/mailcow-incident-response.md)
   - **Hardening**
     - [x] CrowdSec (replacing fail2ban) with postfix, dovecot, nginx collections
     - [x] SPF/DKIM/DMARC verified (p=reject)
@@ -132,6 +132,17 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Baseline tags: `proxmox-vm/v1.0.0`, `proxmox-lxc/v1.0.0`
   - Relative paths kept (no `git::` pinning - pragmatic for single-user)
 
+- [ ] **Map Hetzner infrastructure in Terraform**
+  - Hetzner Cloud VPS and Storage Box
+  - Use [hetznercloud/hcloud provider](https://registry.terraform.io/providers/hetznercloud/hcloud/latest)
+  - Import existing resources into state
+
+- [ ] **Map Netcup infrastructure in Terraform**
+  - Netcup VPS (Mailcow, Vaultwarden)
+  - SCP provider: [rincedd/netcup-scp](https://github.com/rincedd/terraform-provider-netcup-scp)
+  - CCP provider: [rincedd/netcup-ccp](https://github.com/rincedd/terraform-provider-netcup-ccp)
+  - Bonus: Netcup SCP MCP endpoint for direct management
+
 ## Ongoing
 
 - [x] **ADRs (Architecture Decision Records)** ✓
@@ -170,7 +181,10 @@ Tracked improvements and planned work for this infrastructure.
 - [ ] **Monitoring Stack Improvements**
   - node_exporter: Add collectors (`--collector.systemd`, `--collector.processes`, `--collector.tcpstat`)
   - node_exporter: Add `--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|run)($|/)`
+  - node_exporter: Add `--collector.ipmi` for hardware health (temps, fans, disks)
+  - snmp_exporter for pfSense/switches
   - Consider: cadvisor for container metrics
+  - Mailcow update check (cronjob + ntfy notification)
 
 - [ ] **Service Logs Refactoring**
   - Move logs from `/srv/*/config/logs/` to `/var/log/services/{service}/`
