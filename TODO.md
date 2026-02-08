@@ -182,9 +182,10 @@ Tracked improvements and planned work for this infrastructure.
   - Evaluate: keep centralized vs. decentralized with VPN to colo
   - Ship logs from all hosts to Graylog (rsyslog/filebeat/promtail)
 
-- [ ] **SSH Key Hardening**
-  - Add passphrase to existing SSH keys (`ssh-keygen -p`)
-  - Consider ssh-agent with timeout for convenience
+- [x] **SSH Key Hardening** ✓ (2026-02-08)
+  - [x] Passphrase on active key (id_ed25519)
+  - [x] ssh-agent with timeout (AddKeysToAgent in SSH config)
+  - [ ] Decommission old keys (id_ed25519_old, id_rsa) after migration on all servers
 
 - [ ] **Update Storage Upgrade Docs (P3500 Change)**
   - Only 1x Intel P3500 available instead of 2x
