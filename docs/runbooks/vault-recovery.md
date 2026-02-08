@@ -77,37 +77,43 @@ vault status
 3. Verify CI/CD works: trigger a test workflow
 4. If emergency seal was used: investigate the incident before resuming normal operations
 
-## Backup with Raft Snapshots
+## Backup (File Storage Backend)
 
-### Create Snapshot
+Vault uses file storage at `/opt/vault/data`. Backup is a compressed tar of this directory.
 
-```bash
-# From vault server (requires root/sudo token)
-vault operator raft snapshot save /tmp/vault-snapshot-$(date +%Y%m%d-%H%M%S).snap
-
-# Verify snapshot was created
-ls -lh /tmp/vault-snapshot-*.snap
-```
-
-### Automated Snapshot (recommended)
+### Manual Backup
 
 ```bash
-# Example cron job (add to root's crontab)
-# Daily at 02:00, keep 7 days
-0 2 * * * /usr/bin/vault operator raft snapshot save /var/backups/vault/vault-snapshot-$(date +\%Y\%m\%d).snap && find /var/backups/vault/ -name "vault-snapshot-*.snap" -mtime +7 -delete
+tar czf /var/backups/vault/vault-data-$(date +%Y%m%d-%H%M%S).tar.gz -C /opt/vault data
 ```
 
-### Restore from Snapshot
+### Automated Backup
+
+Daily cron job at 02:00, 7 days retention:
+
+```bash
+# In root's crontab
+0 2 * * * tar czf /var/backups/vault/vault-data-$(date +\%Y\%m\%d).tar.gz -C /opt/vault data && find /var/backups/vault/ -name "vault-data-*.tar.gz" -mtime +7 -delete
+```
+
+Additionally, Proxmox vzdump captures the entire LXC container daily.
+
+### Restore from Backup
 
 **WARNING:** This replaces ALL Vault data. Only use in disaster recovery.
 
 ```bash
-# Restore (Vault must be unsealed)
-vault operator raft snapshot restore /path/to/vault-snapshot-YYYYMMDD-HHMMSS.snap
+# Stop Vault
+systemctl stop vault
 
-# Verify
-vault status
-vault secrets list
+# Restore data directory
+tar xzf /var/backups/vault/vault-data-YYYYMMDD.tar.gz -C /opt/vault
+
+# Start and unseal
+systemctl start vault
+vault operator unseal <KEY_SHARE_1>
+vault operator unseal <KEY_SHARE_2>
+vault operator unseal <KEY_SHARE_3>
 ```
 
 ### Restore After Full Loss
@@ -115,12 +121,13 @@ vault secrets list
 If the Vault server is completely destroyed:
 
 1. Provision new Vault server (LXC or VM)
-2. Install Vault, configure with same settings
-3. Initialize: `vault operator init`
-4. Unseal with new keys
-5. Restore snapshot: `vault operator raft snapshot restore <snapshot>`
-6. Update `VAULT_ADDR` in GitHub Secrets if endpoint changed
-7. Verify CI/CD connectivity
+2. Install Vault, configure with same storage path
+3. Restore data directory from backup
+4. Start Vault and unseal with original unseal keys
+5. Update `VAULT_ADDR` in GitHub Secrets if endpoint changed
+6. Verify CI/CD connectivity
+
+> **Note:** After migration to VM, this will switch to Raft storage with snapshot API or borgmatic.
 
 ## Audit Log
 

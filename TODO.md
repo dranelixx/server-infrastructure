@@ -57,6 +57,8 @@ Tracked improvements and planned work for this infrastructure.
 
 - [ ] **LXC Security Review** - Audit workload placement
   - Migrate Vault from LXC to VM (secrets management needs max isolation)
+    - Switch file → Raft storage backend during migration
+    - Set up Vault backup via Raft snapshots or borgmatic (see docs/guides/borgmatic-vault-integration.md)
   - Review privileged vs unprivileged LXC configurations
   - Migrate Pterodactyl Wings to VM for better isolation
 
@@ -102,7 +104,7 @@ Tracked improvements and planned work for this infrastructure.
   - Document Vault paths
 
 - [ ] **Vault Backup Strategy** (instead of HA - see ADR)
-  - [ ] Automated Vault snapshots (cron job documented in runbook)
+  - [x] Automated Vault data backup (daily tar cron, borgmatic after VM migration)
   - [x] Unseal keys in secure location (split across 3 independent sources)
   - [x] Recovery runbook (docs/runbooks/vault-recovery.md)
 
