@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-07 -->
+<!-- LAST EDITED: 2026-02-09 -->
 
 # TODO
 
@@ -121,9 +121,9 @@ Tracked improvements and planned work for this infrastructure.
   - LACP bond configuration
   - Test with `terraform plan`
 
-- [ ] **Migrate Terraform Cloud → S3 Hybrid**
-  - Primary: S3 in Frankfurt (native locks with `use_lockfile = true`)
-  - DR/Dev: MinIO on TrueNAS
+- [x] **Migrate Terraform Cloud → S3 Hybrid** ✓ (2026-02-09)
+  - [x] Primary: S3 in Frankfurt (native locks with `use_lockfile = true`)
+  - [ ] DR/Dev: MinIO on TrueNAS (future)
   - Reason: TF Cloud Free Tier ends 2026-03-31, RUM pricing too expensive
 
 - [x] **Module Versioning** ✓ (2026-02-07)

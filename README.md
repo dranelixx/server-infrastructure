@@ -133,14 +133,14 @@ server-infrastructure/
 - **Terraform** >= 1.14.3
 - **Ansible** >= 2.16
 - **Proxmox API Token** (configured in HashiCorp Vault)
-- **Terraform Cloud Account** (Free Tier)
+- **AWS Account** (S3 state backend)
 - **HashiCorp Vault** (for secrets management)
 
 ### Terraform Environment Setup
 
 ```bash
-# Configure Terraform Cloud
-terraform login
+# Configure AWS credentials (for S3 state backend)
+aws configure
 
 # Initialize Current State Environment
 cd terraform/environments/current-state
@@ -265,7 +265,7 @@ See [.github/workflows/README.md](.github/workflows/README.md) for details.
 | **Secrets Management** | HashiCorp Vault                   | Centralized Secret Storage      |
 | **Monitoring**         | Prometheus, Grafana, Alertmanager | Metrics, Dashboards, Alerts     |
 | **CI/CD**              | GitHub Actions                    | Automated Testing, Deployment   |
-| **State Backend**      | Terraform Cloud                   | Remote State, Locking           |
+| **State Backend**      | AWS S3 (eu-central-1)             | Remote State, Native Locking    |
 
 ---
 

@@ -11,11 +11,12 @@ terraform {
     }
   }
 
-  cloud {
-    organization = "dranelixx"
-    workspaces {
-      name = "server-infrastructure"
-    }
+  backend "s3" {
+    bucket       = "getinn-terraform-state"
+    key          = "environments/current-state/terraform.tfstate"
+    region       = "eu-central-1"
+    encrypt      = true
+    use_lockfile = true
   }
 }
 

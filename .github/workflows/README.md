@@ -218,7 +218,7 @@ This prevents state locks and race conditions.
 - Secrets are never output in logs
 - Terraform outputs are deleted after 30/90 days
 - API access only via GitHub-hosted runners (secure IP range)
-- Terraform state local (or in Terraform Cloud, if configured)
+- Terraform state stored in S3 (eu-central-1) with native locking
 - **Vault Integration**: For enhanced security, production deployments should leverage HashiCorp Vault for dynamic secret generation, automatic rotation, and comprehensive audit trails. GitHub Secrets currently serve as the interim solution during initial infrastructure setup.
 
 ## Further Documentation
