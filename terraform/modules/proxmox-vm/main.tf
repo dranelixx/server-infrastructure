@@ -31,7 +31,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
     for_each = var.bios == "ovmf" ? [1] : []
 
     content {
-      datastore_id      = length(var.disks) > 0 ? var.disks[0].datastore_id : var.storage_pool
+      datastore_id      = var.disks[0].datastore_id
       file_format       = "raw"
       type              = "4m"
       pre_enrolled_keys = true
@@ -66,17 +66,7 @@ resource "proxmox_virtual_environment_vm" "vm" {
 
   # Disk Configuration (Multi-Disk Support)
   dynamic "disk" {
-    for_each = length(var.disks) > 0 ? var.disks : (var.disk_size != null ? [{
-      datastore_id = var.storage_pool
-      interface    = "scsi0"
-      size         = parseint(replace(var.disk_size, "/[GMK]/", ""), 10)
-      file_format  = "raw"
-      cache        = "none"
-      iothread     = true
-      ssd          = var.emulate_ssd
-      discard      = true
-      backup       = true
-    }] : [])
+    for_each = var.disks
 
     content {
       datastore_id = disk.value.datastore_id

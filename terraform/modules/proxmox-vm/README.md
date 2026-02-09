@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-10 -->
+<!-- LAST EDITED: 2026-02-09 -->
 
 # Proxmox VM Module
 
@@ -24,8 +24,15 @@ module "webserver" {
   target_node = "pve-prod-cz-loki"
 
   cores  = 2
-  memory = 4096  # 4GB
-  disk_size = "50G"
+  memory = 4096 # 4GB
+
+  disks = [
+    {
+      datastore_id = "local-zfs"
+      interface    = "scsi0"
+      size         = 50
+    }
+  ]
 
   network_interfaces = [
     {
@@ -53,8 +60,20 @@ module "truenas" {
   target_node = "pve-prod-cz-loki"
 
   cores  = 6
-  memory = 32768  # 32GB
-  disk_size = "100G"
+  memory = 32768 # 32GB
+
+  disks = [
+    {
+      datastore_id = "local-zfs"
+      interface    = "scsi0"
+      size         = 48
+    },
+    {
+      datastore_id = "local-hdd01"
+      interface    = "scsi1"
+      size         = 128
+    }
+  ]
 
   # Two network interfaces
   network_interfaces = [
@@ -86,7 +105,7 @@ module "truenas" {
 | `target_node`        | Proxmox node name          | `string`       | -         | yes      |
 | `cores`              | CPU cores                  | `number`       | `2`       | no       |
 | `memory`             | Memory in MB               | `number`       | `2048`    | no       |
-| `disk_size`          | Disk size (e.g., "32G")    | `string`       | `"32G"`   | no       |
+| `disks`              | List of disk objects       | `list(object)` | `[]`      | no       |
 | `network_interfaces` | List of network interfaces | `list(object)` | See below | no       |
 | `ip_address`         | Static IP (CIDR)           | `string`       | `null`    | no       |
 | `gateway`            | Default gateway            | `string`       | `null`    | no       |

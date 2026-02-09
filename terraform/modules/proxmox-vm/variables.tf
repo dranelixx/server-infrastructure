@@ -186,29 +186,6 @@ variable "disks" {
   }
 }
 
-# Legacy single-disk support (for backward compatibility)
-variable "disk_size" {
-  description = "DEPRECATED: Use 'disks' variable. Disk size (e.g. '32G', '100G')"
-  type        = string
-  default     = null
-
-  validation {
-    condition     = var.disk_size == null || can(regex("^\\d+[GMK]$", var.disk_size))
-    error_message = "Disk size must have format: number + G/M/K (e.g. '32G')."
-  }
-}
-
-variable "storage_pool" {
-  description = "DEPRECATED: Use 'disks' variable. Storage pool name (e.g. 'local-zfs')"
-  type        = string
-  default     = null
-}
-
-variable "emulate_ssd" {
-  description = "DEPRECATED: Use 'disks' variable. SSD emulation for better performance"
-  type        = bool
-  default     = false
-}
 
 # ============================================================================
 # TAB: CPU

@@ -161,14 +161,14 @@ Tracked improvements and planned work for this infrastructure.
   - Configure for Terraform providers
   - Auto-PR for updates
 
-- [ ] **Migrate deprecated proxmox-vm variables → v2.0.0**
-  - Migrate `pms`, `arr_stack`, `docker_prod`, `nextcloud` from `disk_size`/`storage_pool`/`emulate_ssd` to `disks` array
-  - Migrate same VMs in target-state
-  - Verify `terraform plan` shows "No changes" after migration
-  - Remove deprecated variables from module → tag `modules/proxmox-vm/v2.0.0`
+- [x] **Migrate deprecated proxmox-vm variables → v2.0.0** ✓ (2026-02-09)
+  - [x] Migrate VMs from `disk_size`/`storage_pool`/`emulate_ssd` to `disks` array
+  - [x] Migrate same VMs in target-state (incl. `truenas`, `plex`)
+  - [x] Remove `disk` from `lifecycle { ignore_changes }` (provider now stable)
+  - [x] Remove deprecated variables from module → tag `modules/proxmox-vm/v2.0.0`
 
 - [ ] **Tech Debt Cleanup**
-  - Revisit `lifecycle { ignore_changes }` in VM module
+  - [x] Revisit `lifecycle { ignore_changes }` in VM module (disk removed, provider stable)
   - Remove workarounds where provider is now stable
   - Bring more attributes back under Terraform management
 
