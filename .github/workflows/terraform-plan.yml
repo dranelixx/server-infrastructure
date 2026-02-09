@@ -1,12 +1,12 @@
 name: Terraform Plan
 
-# Führt Terraform Plan bei Pull Requests aus und postet das Ergebnis als Kommentar
+# Runs Terraform Plan on pull requests and posts the result as a PR comment
 on:
   pull_request:
     branches:
       - main
 
-# Nur ein Plan pro PR gleichzeitig, ältere Runs abbrechen
+# Only one plan per PR at a time, cancel older runs
 concurrency:
   group: terraform-plan-${{ github.head_ref }}
   cancel-in-progress: true
@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   # ============================================
-  # JOB 1: Prüfe welche Dateien geändert wurden
+  # JOB 1: Check which files were changed
   # ============================================
   detect-changes:
     name: Detect Changes
@@ -38,7 +38,7 @@ jobs:
               - '.github/workflows/terraform-plan.yml'
 
   # ============================================
-  # JOB 2: Der echte Plan (nur wenn Terraform geändert)
+  # JOB 2: The actual plan (only when Terraform changed)
   # ============================================
   plan-current-state:
     name: Plan - Current State
@@ -109,13 +109,10 @@ jobs:
         if: always()
         run: |
           terraform show -no-color tfplan > plan_output.txt 2>&1 || echo "Could not display plan"
-        env:
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
 
-          # Kurze Zusammenfassung extrahieren
+          # Extract short summary
           if grep -q "No changes" plan_output.txt; then
-            echo "summary=Keine Änderungen erforderlich" >> $GITHUB_OUTPUT
+            echo "summary=No changes required" >> $GITHUB_OUTPUT
             echo "changes=false" >> $GITHUB_OUTPUT
           elif grep -q "Plan:" plan_output.txt; then
             PLAN_SUMMARY=$(grep "Plan:" plan_output.txt | head -n 1)
@@ -125,6 +122,9 @@ jobs:
             echo "summary=Error during plan" >> $GITHUB_OUTPUT
             echo "changes=error" >> $GITHUB_OUTPUT
           fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
 
       - name: Post Plan Comment
         uses: actions/github-script@v7
@@ -175,7 +175,7 @@ jobs:
             **Workflow Run:** [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
             `;
 
-            // Finde existierenden Kommentar
+            // Find existing comment
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -218,8 +218,8 @@ jobs:
         run: exit 1
 
   # ============================================
-  # JOB 3: Skip-Job (wenn KEINE Terraform Änderungen)
-  # WICHTIG: Hat den GLEICHEN NAMEN wie Job 2!
+  # JOB 3: Skip job (when NO Terraform changes)
+  # IMPORTANT: Has the SAME NAME as Job 2!
   # ============================================
   plan-skip:
     name: Plan - Current State
