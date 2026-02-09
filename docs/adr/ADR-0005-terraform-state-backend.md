@@ -1,10 +1,10 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-02-09 -->
 
 # ADR-0005: Terraform State Backend Migration
 
 ## Status
 
-Accepted (migration planned)
+Implemented (2026-02-09)
 
 ## Context
 

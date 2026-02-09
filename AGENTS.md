@@ -7,7 +7,7 @@ Guidance for AI coding assistants working in this repository.
 See [TODO.md](TODO.md) for current priorities and planned work.
 
 Production-grade Infrastructure-as-Code repository for multi-location server infrastructure.
-Uses Proxmox, pfSense, TrueNAS, Terraform Cloud (state), and HashiCorp Vault (secrets).
+Uses Proxmox, pfSense, TrueNAS, AWS S3 (state), and HashiCorp Vault (secrets).
 
 ## Architecture Decision Records
 
@@ -96,7 +96,7 @@ gh run view --log
 
 ### Terraform Environments
 
-Two environments managed via Terraform Cloud workspaces for staged migration:
+Two environments managed via S3 backend for staged migration:
 
 - **current-state**: Production infrastructure (Dell Switch, flat network) - actively deployed
 - **target-state**: Prepared future state (HP Switch, VLANs 10/20/30, LACP bonding) - not yet deployed
