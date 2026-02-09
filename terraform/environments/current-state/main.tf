@@ -120,15 +120,23 @@ module "pms" {
   description = "Plex Media Server (Current: Single NIC)"
 
   # Resources
-  cores     = 6
-  sockets   = 1
-  cpu_type  = "host"
-  memory    = 20480 # 20 GB (10GB /dev/shm + overhead for 3-4 streams)
-  disk_size = "100G"
+  cores    = 6
+  sockets  = 1
+  cpu_type = "host"
+  memory   = 20480 # 20 GB (10GB /dev/shm + overhead for 3-4 streams)
 
   # Storage
-  storage_pool = "local-zfs"
-  emulate_ssd  = true
+  disks = [
+    {
+      datastore_id = "local-ssd01"
+      interface    = "scsi0"
+      size         = 200
+      cache        = "writethrough"
+      discard      = true
+      iothread     = true
+      ssd          = true
+    }
+  ]
 
   # PCI Passthrough - GPU
   hostpci_devices = [
@@ -177,15 +185,22 @@ module "arr_stack" {
   description = "https://the-arr-stack-prod-cz-01.getinn.top/"
 
   # Resources
-  cores     = 4
-  sockets   = 1
-  cpu_type  = "x86-64-v2-AES"
-  memory    = 8192 # 8 GB
-  disk_size = "64G"
+  cores    = 4
+  sockets  = 1
+  cpu_type = "x86-64-v2-AES"
+  memory   = 8192 # 8 GB
 
   # Storage
-  storage_pool = "local-zfs"
-  emulate_ssd  = true
+  disks = [
+    {
+      datastore_id = "local-hdd01"
+      interface    = "scsi0"
+      size         = 244
+      discard      = true
+      iothread     = true
+      ssd          = false
+    }
+  ]
 
   # Hardware Emulation
   bios       = "ovmf"
@@ -222,15 +237,22 @@ module "docker_prod" {
   description = "https://docker-prod-cz-01.getinn.top/"
 
   # Resources
-  cores     = 6
-  sockets   = 1
-  cpu_type  = "host"
-  memory    = 12288 # 12 GB
-  disk_size = "128G"
+  cores    = 6
+  sockets  = 1
+  cpu_type = "host"
+  memory   = 12288 # 12 GB
 
   # Storage
-  storage_pool = "local-zfs"
-  emulate_ssd  = true
+  disks = [
+    {
+      datastore_id = "local-hdd01"
+      interface    = "scsi0"
+      size         = 180
+      discard      = true
+      iothread     = true
+      ssd          = false
+    }
+  ]
 
   # Hardware Emulation
   bios       = "ovmf"
@@ -267,15 +289,33 @@ module "nextcloud" {
   description = "Nextcloud Instance (Current: Single NIC)"
 
   # Resources
-  cores     = 12
-  sockets   = 1
-  cpu_type  = "host"
-  memory    = 16384 # 16 GB (increased due to swapping)
-  disk_size = "100G"
+  cores    = 12
+  sockets  = 1
+  cpu_type = "host"
+  memory   = 16384 # 16 GB (increased due to swapping)
 
   # Storage
-  storage_pool = "local-zfs"
-  emulate_ssd  = true
+  disks = [
+    {
+      datastore_id = "local-ssd01"
+      interface    = "scsi0"
+      size         = 128
+      cache        = "writeback"
+      discard      = true
+      iothread     = true
+      ssd          = true
+    },
+    {
+      datastore_id = "local-hdd01"
+      interface    = "scsi1"
+      size         = 1000
+      cache        = "writeback"
+      discard      = true
+      iothread     = true
+      ssd          = false
+      backup       = false
+    }
+  ]
 
   # Hardware Emulation
   bios       = "ovmf"

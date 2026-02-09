@@ -166,7 +166,6 @@ resource "proxmox_virtual_environment_vm" "vm" {
   lifecycle {
     ignore_changes = [
       network_device, # NICs can be modified manually in Proxmox
-      disk,           # Disk size growth is ignored
       initialization, # Cloud-init changes ignored (VMs may not use cloud-init)
       efi_disk,       # EFI disk location may vary
       boot_order,     # Boot order can change
