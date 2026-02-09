@@ -37,14 +37,27 @@ module "truenas" {
   description = "TrueNAS Storage VM - Multi-homed (Compute VLAN + Storage Bridge)"
 
   # Resources (from live API data)
-  cores     = 6
-  sockets   = 1
-  memory    = 32768 # 32GB
-  disk_size = "100G"
+  cores   = 6
+  sockets = 1
+  memory  = 32768 # 32GB
 
-  # Storage Pool
-  storage_pool = "local-zfs"
-  emulate_ssd  = true
+  # Storage
+  disks = [
+    {
+      datastore_id = "local-zfs"
+      interface    = "scsi0"
+      size         = 48
+      iothread     = true
+      ssd          = false
+    },
+    {
+      datastore_id = "local-hdd01"
+      interface    = "scsi1"
+      size         = 128
+      iothread     = true
+      ssd          = false
+    }
+  ]
 
   # Multi-homed Network Configuration
   network_interfaces = [
@@ -95,12 +108,22 @@ module "plex" {
   description = "Plex Media Server - Multi-homed (Production VLAN + Storage Bridge), GPU Passthrough"
 
   # Resources
-  cores     = 10
-  sockets   = 1
-  memory    = 24576 # 24GB
-  disk_size = "200G"
+  cores   = 10
+  sockets = 1
+  memory  = 24576 # 24GB
 
-  storage_pool = "local-zfs"
+  # Storage
+  disks = [
+    {
+      datastore_id = "local-ssd01"
+      interface    = "scsi0"
+      size         = 200
+      cache        = "writethrough"
+      discard      = true
+      iothread     = true
+      ssd          = true
+    }
+  ]
 
   # Multi-homed Network
   network_interfaces = [
@@ -146,11 +169,20 @@ module "arr_stack" {
   target_node = "pve-prod-cz-loki"
   description = "Sonarr, Radarr, etc. - Multi-homed (Compute VLAN + Storage Bridge)"
 
-  cores     = 8
-  memory    = 8192
-  disk_size = "250G"
+  cores  = 8
+  memory = 8192
 
-  storage_pool = "local-zfs"
+  # Storage
+  disks = [
+    {
+      datastore_id = "local-hdd01"
+      interface    = "scsi0"
+      size         = 244
+      discard      = true
+      iothread     = true
+      ssd          = false
+    }
+  ]
 
   network_interfaces = [
     # net0: Compute VLAN (Internet access, Reverse Proxy)
@@ -194,11 +226,31 @@ module "nextcloud" {
   target_node = "pve-prod-cz-loki"
   description = "Nextcloud File Sync & Collaboration - Production VLAN"
 
-  cores     = 12
-  memory    = 8192
-  disk_size = "130G"
+  cores  = 12
+  memory = 8192
 
-  storage_pool = "local-hdd01" # Using HDD pool
+  # Storage
+  disks = [
+    {
+      datastore_id = "local-ssd01"
+      interface    = "scsi0"
+      size         = 128
+      cache        = "writeback"
+      discard      = true
+      iothread     = true
+      ssd          = true
+    },
+    {
+      datastore_id = "local-hdd01"
+      interface    = "scsi1"
+      size         = 1000
+      cache        = "writeback"
+      discard      = true
+      iothread     = true
+      ssd          = false
+      backup       = false
+    }
+  ]
 
   network_interfaces = [
     {
@@ -234,11 +286,20 @@ module "docker_prod" {
   target_node = "pve-prod-cz-loki"
   description = "Docker Host - General Purpose Workloads (Compute VLAN)"
 
-  cores     = 12
-  memory    = 12288
-  disk_size = "180G"
+  cores  = 12
+  memory = 12288
 
-  storage_pool = "local-hdd01"
+  # Storage
+  disks = [
+    {
+      datastore_id = "local-hdd01"
+      interface    = "scsi0"
+      size         = 180
+      discard      = true
+      iothread     = true
+      ssd          = false
+    }
+  ]
 
   network_interfaces = [
     {
