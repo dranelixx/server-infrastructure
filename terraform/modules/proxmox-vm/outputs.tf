@@ -41,6 +41,6 @@ output "resource_specs" {
     cores   = var.cores
     sockets = var.sockets
     memory  = var.memory
-    disk    = var.disk_size
+    disks   = var.disks
   }
 }
