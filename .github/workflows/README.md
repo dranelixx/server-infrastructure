@@ -72,15 +72,18 @@ PROXMOX_API_TOKEN_SECRET   # Secret of the API token
 
 ### 2. Create Proxmox API Token
 
+See [ADR-0013](../../docs/adr/ADR-0013-least-privilege-api-token.md) for the full privilege rationale.
+
 ```bash
 # On Proxmox host:
-pveum role add TerraformAutomation -privs "VM.Allocate VM.Clone VM.Config.CDROM VM.Config.CPU VM.Config.Cloudinit VM.Config.Disk VM.Config.HWType VM.Config.Memory VM.Config.Network VM.Config.Options VM.Monitor VM.Audit VM.PowerMgmt Datastore.AllocateSpace Datastore.Audit Sys.Audit Sys.Console Sys.Modify Pool.Allocate"
+pveum role add TerraformCI -privs "VM.Allocate,VM.Config.CPU,VM.Config.Memory,VM.Config.Disk,VM.Config.Network,VM.Config.Options,VM.Config.Cloudinit,VM.Config.HWType,VM.Audit,VM.PowerMgmt,VM.Monitor,Datastore.AllocateSpace,Datastore.Audit,Sys.Audit,SDN.Audit"
 
 pveum user add terraform@pve
-pveum aclmod / -user terraform@pve -role TerraformAutomation
-pveum user token add terraform@pve tf-automation --privsep 0
+pveum user token add terraform@pve tf-ci-least-priv --privsep 1
+pveum aclmod / -token 'terraform@pve!tf-ci-least-priv' -role TerraformCI
 
-# Copy token ID and secret and save as GitHub Secrets
+# Save token secret in Vault:
+# vault kv put secret/prod/infrastructure/proxmox api_token_id="terraform@pve!tf-ci-least-priv" ...
 ```
 
 ### 3. Configure GitHub Environment
