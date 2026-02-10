@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-09 -->
+<!-- LAST EDITED: 2026-02-10 -->
 
 # TODO
 
@@ -52,6 +52,10 @@ Tracked improvements and planned work for this infrastructure.
 - [ ] **GitHub Runner Hardening** - Mitigate private network access risks
   - After VLAN migration: isolate runner in restricted segment
   - [x] Create dedicated API token with minimal permissions (ADR-0013, 2026-02-10)
+  - [x] Remove sudo group membership, scoped sudoers (systemctl only)
+  - [x] Systemd hardening (19 directives via drop-in override)
+  - [x] Fix Terraform version pinning (1.7.5 → 1.14.3)
+  - [x] Bootstrap: dedicated users (akonopcz + ansible), SSH key-only, root disabled
   - Restrict workflows to protected branches with PR approval only
   - Evaluate migration to Docker-based ephemeral runner
 
@@ -102,6 +106,7 @@ Tracked improvements and planned work for this infrastructure.
   - Audit remaining hardcoded secrets
   - Migrate Ansible secrets to Vault
   - Document Vault paths
+  - Migrate `secret/shared/ssh` → `secret/shared/akonopcz` (public_keys), then delete old path
 
 - [ ] **Vault Backup Strategy** (instead of HA - see ADR)
   - [x] Automated Vault data backup (daily tar cron, borgmatic after VM migration)
