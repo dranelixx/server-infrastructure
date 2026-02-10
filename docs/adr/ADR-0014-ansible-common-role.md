@@ -174,6 +174,39 @@ Directives in `sshd_config.d/` take precedence — Common role wins automaticall
 - Bootstrap remains a separate, manual process (by design — safety over automation)
 - CI integration comes later (lint first, then dry-run, then auto-deploy)
 
+## Open: Eliminating Bootstrap via Prepared Templates
+
+The bootstrap playbook exists because fresh hosts have no users. This could be eliminated
+by baking users into the base images so Terraform handles Day 0:
+
+| Host Type    | Approach                                        | Result                      |
+| ------------ | ----------------------------------------------- | --------------------------- |
+| Proxmox VMs  | Cloud-Init image (~300-500MB) + cloud-init YAML | Users created on first boot |
+| Proxmox LXCs | Custom LXC template (based on Ubuntu, ~141MB)   | Users pre-configured        |
+| Hetzner VPS  | Cloud-Init via `user_data`                      | Users created on first boot |
+| Netcup       | No cloud-init support                           | Bootstrap still needed      |
+
+**Cloud-Init (VMs + Hetzner):** Small cloud image that applies a config on first boot.
+Terraform reads SSH keys from Vault, passes them via cloud-init config. VM boots ready.
+
+**Custom LXC Template:** Take standard Ubuntu LXC template → create container →
+configure users, SSH, sudo → export as custom template. Terraform references this
+template for all new LXCs.
+
+**If implemented:** The bootstrap playbook becomes a fallback for hosts where
+Terraform can't handle Day 0 (Netcup, manually provisioned hosts). For Proxmox
+and Hetzner, the flow simplifies to:
+
+```text
+Terraform creates host (users from template/cloud-init)
+  → Ansible Common Role runs directly as ansible user
+  → No bootstrap needed
+```
+
+**TODO:** Learn cloud-init, create Proxmox VM cloud-init image, create custom
+LXC template with pre-configured users. Evaluate if bootstrap playbook can be
+fully retired.
+
 ## Alternatives Considered
 
 | Alternative                     | Rejected Because                                               |
