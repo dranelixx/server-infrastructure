@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-28 -->
+<!-- LAST EDITED: 2026-02-10 -->
 
 # Architecture Decision Records (ADRs)
 
@@ -24,6 +24,9 @@ and its consequences. ADRs help future maintainers understand why certain choice
 | [ADR-0009](ADR-0009-modular-terraform.md)         | Modular Terraform Structure       | Accepted | 2026-01-27 |
 | [ADR-0010](ADR-0010-cicd-strategy.md)             | CI/CD Strategy                    | Accepted | 2026-01-27 |
 | [ADR-0011](ADR-0011-server-hardening-baseline.md) | Server Hardening Baseline         | Accepted | 2026-01-28 |
+| [ADR-0012](ADR-0012-service-permissions-acl.md)   | Service Permissions & ACLs        | Accepted | 2026-01-28 |
+| [ADR-0013](ADR-0013-least-privilege-api-token.md) | Least-Privilege API Token         | Accepted | 2026-02-10 |
+| [ADR-0014](ADR-0014-ansible-common-role.md)       | Ansible Common Role & Bootstrap   | Draft    | 2026-02-10 |
 
 ## ADR Template
 
