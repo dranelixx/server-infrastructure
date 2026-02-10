@@ -24,7 +24,6 @@ jobs:
   drift-current-state:
     name: Current State Drift Detection
     runs-on: self-hosted
-    environment: production
 
     defaults:
       run:
