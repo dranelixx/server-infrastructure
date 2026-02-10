@@ -50,6 +50,52 @@
   tags:
     - service
 
+- name: Find runner service unit file
+  ansible.builtin.find:
+    paths: /etc/systemd/system
+    patterns: "actions.runner.*.service"
+    file_type: file
+  register: github_runner_service_unit_files
+  become: true
+  when: github_runner_configured.stat.exists
+  tags:
+    - service
+
+- name: Set runner service name fact
+  ansible.builtin.set_fact:
+    github_runner_service_unit_name: "{{ github_runner_service_unit_files.files[0].path | basename }}"
+  when:
+    - github_runner_configured.stat.exists
+    - github_runner_service_unit_files.files | default([]) | length > 0
+  tags:
+    - service
+
+- name: Deploy systemd hardening override
+  when:
+    - github_runner_configured.stat.exists
+    - github_runner_service_unit_name is defined
+  tags:
+    - service
+  block:
+    - name: Create systemd override directory
+      ansible.builtin.file:
+        path: "/etc/systemd/system/{{ github_runner_service_unit_name }}.d"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      become: true
+
+    - name: Deploy hardening override
+      ansible.builtin.template:
+        src: github-runner.service.j2
+        dest: "/etc/systemd/system/{{ github_runner_service_unit_name }}.d/hardening.conf"
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+      notify: Reload and restart runner
+
 - name: Start runner service
   ansible.builtin.command:
     cmd: "{{ github_runner_home }}/svc.sh start"

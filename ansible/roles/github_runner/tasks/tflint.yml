@@ -5,6 +5,7 @@
   ansible.builtin.uri:
     url: "https://api.github.com/repos/terraform-linters/tflint/releases/latest"
     return_content: true
+  check_mode: false
   register: github_runner_tflint_latest_release
   when: github_runner_tflint_version == "latest"
   tags:
@@ -36,10 +37,12 @@
     - tflint
 
 - name: Download and install TFLint
-  when: >-
-    not github_runner_tflint_binary.stat.exists or
-    (github_runner_tflint_binary.stat.exists and
-     github_runner_tflint_install_version not in github_runner_tflint_installed_version.stdout)
+  when:
+    - not ansible_check_mode
+    - >-
+      not github_runner_tflint_binary.stat.exists or
+      (github_runner_tflint_binary.stat.exists and
+       github_runner_tflint_install_version not in github_runner_tflint_installed_version.stdout)
   block:
     - name: Create temporary directory for TFLint
       ansible.builtin.tempfile:

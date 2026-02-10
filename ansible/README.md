@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-10 -->
+<!-- LAST EDITED: 2026-02-10 -->
 
 # Ansible Automation
 
@@ -9,10 +9,15 @@ Ansible playbooks and roles for managing the server infrastructure.
 ```text
 ansible/
 ├── ansible.cfg              # Ansible configuration
+├── requirements.yml         # Galaxy collection dependencies
 ├── inventory/               # Inventory files
-│   └── github-runners.yml   # GitHub Runner hosts
+│   ├── github-runners.yml   # GitHub Runner hosts
+│   └── host_vars/           # Per-host variables (gitignored)
 ├── playbooks/               # Playbooks
-│   └── github_runner_setup.yml  # GitHub Runner setup
+│   ├── bootstrap.yml        # Host bootstrap (users, SSH hardening)
+│   ├── github_runner_setup.yml  # GitHub Runner setup
+│   └── templates/           # Playbook templates
+│       └── authorized_keys.j2
 └── roles/                   # Roles
     └── github_runner/       # GitHub Runner role
         ├── defaults/        # Default variables
@@ -27,47 +32,68 @@ ansible/
 ### Prerequisites
 
 ```bash
-# Install Ansible
+# Install Ansible and dependencies
 pip install ansible
 
-# Ensure SSH access to target hosts
-ssh root@<RUNNER_IP>
+# Install Galaxy collections
+ansible-galaxy install -r requirements.yml
+
+# Ensure python-hvac is installed (for Vault lookups)
+# Arch: sudo pacman -S python-hvac
+# Debian: pip install hvac
+
+# Vault must be accessible with valid token
+export VAULT_ADDR="https://vault.example.com:8443"
+# Either export VAULT_TOKEN or run: vault login
 ```
 
-### GitHub Runner Setup
+### New Host Setup
 
-1. **Adjust inventory**:
+1. **Add host to inventory** (`inventory/github-runners.yml`) with `ansible_user: root`
 
-   ```bash
-   vim inventory/github-runners.yml
-   # Adjust the container IP address
-   ```
+2. **Create host_vars** file (gitignored) with `ansible_host` and `ansible_port`
 
-2. **Run playbook**:
+3. **Bootstrap the host** (creates users, deploys SSH keys from Vault):
 
    ```bash
    cd ansible
-   ansible-playbook playbooks/github_runner_setup.yml
+
+   # Phase 1: Create users
+   ANSIBLE_HOST_KEY_CHECKING=false \
+   ansible-playbook playbooks/bootstrap.yml --tags bootstrap \
+     -i inventory/github-runners.yml -l <hostname>
+
+   # Verify SSH access as BOTH users before continuing!
+   ssh -p <port> akonopcz@<host-ip>       # sudo with password
+   ssh -p <port> -i ~/.ssh/ansible_ed25519 ansible@<host-ip>  # passwordless sudo
+
+   # Phase 2: Harden SSH (disables root, password auth, sets AllowUsers)
+   ansible-playbook playbooks/bootstrap.yml --tags harden-ssh \
+     -i inventory/github-runners.yml -l <hostname>
    ```
 
-3. **Configure runner** (manual steps):
+4. **Update inventory**: Change `ansible_user: root` to `ansible_user: ansible`
+
+5. **Run role playbook** (e.g., GitHub Runner):
 
    ```bash
-   # SSH to container
-   ssh github-runner@<RUNNER_IP>
-
-   # Configure runner
-   cd /opt/actions-runner
-   ./config.sh --url https://github.com/dranelixx/server-infrastructure --token <TOKEN>
-
-   # Start service
-   sudo systemctl start github-runner
-   sudo systemctl status github-runner
+   ansible-playbook playbooks/github_runner_setup.yml \
+     -i inventory/github-runners.yml -l <hostname>
    ```
 
 ## Available Playbooks
 
-### GitHub Runner Setup
+### Bootstrap (`bootstrap.yml`)
+
+Two-phase host provisioning with user creation and SSH hardening.
+Uses HashiCorp Vault for SSH keys and password hashes.
+
+| Tag          | Description                                            |
+| ------------ | ------------------------------------------------------ |
+| `bootstrap`  | Phase 1: Create users, deploy SSH keys, configure sudo |
+| `harden-ssh` | Phase 2: Disable root/password auth, apply ADR-0011    |
+
+### GitHub Runner Setup (`github_runner_setup.yml`)
 
 ```bash
 # Full installation
@@ -84,9 +110,6 @@ ansible-playbook playbooks/github_runner_setup.yml --skip-tags tflint
 
 # Dry-run (test)
 ansible-playbook playbooks/github_runner_setup.yml --check
-
-# Verbose mode
-ansible-playbook playbooks/github_runner_setup.yml -vvv
 ```
 
 ## Available Roles
@@ -112,9 +135,11 @@ Installation and configuration of a GitHub Actions self-hosted runner.
 
 The Ansible configuration is pre-configured with:
 
+- Host key checking enabled (override with `ANSIBLE_HOST_KEY_CHECKING=false` for bootstrap)
 - YAML output for better readability
-- Fact caching for performance
+- Fact caching in `~/.ansible/fact_cache/`
 - SSH optimizations (pipelining, ControlMaster)
+- Default `remote_user: ansible` (overridden per-host in inventory)
 - Logging to `ansible.log`
 
 ### Inventory
@@ -195,9 +220,10 @@ ansible-playbook playbooks/github_runner_setup.yml
 ansible all -m ping
 
 # SSH debug
-ssh -vvv root@<RUNNER_IP>
+ssh -vvv -i ~/.ssh/ansible_ed25519 ansible@<RUNNER_IP>
 
-# ansible.cfg: disable host_key_checking
+# For new hosts (unknown host key):
+ANSIBLE_HOST_KEY_CHECKING=false ansible all -m ping
 ```
 
 ### Runner doesn't start
@@ -268,7 +294,7 @@ vim new_playbook.yml
 ---
 - name: New Playbook
   hosts: all
-  become: no
+  become: false
   roles:
     - role: new-role
 ```

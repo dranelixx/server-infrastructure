@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-10 -->
+<!-- LAST EDITED: 2026-02-10 -->
 
 # GitHub Actions Runner Role
 
@@ -41,7 +41,7 @@ github_runner_repo_name: "server-infrastructure"
 ### Terraform Configuration
 
 ```yaml
-github_runner_terraform_version: "1.7.5" # Specific version or "latest"
+github_runner_terraform_version: "1.14.3" # Specific version or "latest"
 github_runner_terraform_gpg_key_url: "https://apt.releases.hashicorp.com/gpg"
 github_runner_terraform_repo_url: "https://apt.releases.hashicorp.com"
 ```
@@ -76,11 +76,11 @@ None.
 
 ```yaml
 - hosts: github-runners
-  become: no
+  become: false
   roles:
     - role: github_runner
       vars:
-        github_runner_terraform_version: "1.7.5"
+        github_runner_terraform_version: "1.14.3"
         github_runner_tflint_enabled: true
 ```
 
@@ -149,9 +149,10 @@ github-runner/
 │   ├── terraform.yml      # Terraform installation
 │   ├── tflint.yml         # TFLint installation
 │   ├── runner.yml         # GitHub runner installation
-│   └── service.yml        # Systemd service setup
+│   ├── runner-config.yml  # Runner auto-registration
+│   └── service.yml        # Systemd service setup + hardening override
 ├── templates/
-│   └── github-runner.service.j2  # Systemd service template
+│   └── github-runner.service.j2  # Systemd hardening drop-in override
 └── README.md              # This file
 ```
 
@@ -186,13 +187,14 @@ ansible-playbook playbooks/github_runner_setup.yml --tags system,runner
 
 ## Security Features
 
-- Dedicated system user and group
-- Restricted sudo access (only for service management)
+- Dedicated system user and group (no sudo group membership)
+- Scoped sudo access via `/etc/sudoers.d/github-runner` (service management only)
 - Systemd service hardening:
-  - `NoNewPrivileges=true`
-  - `PrivateTmp=true`
-  - `ProtectSystem=strict`
-  - `ProtectHome=read-only`
+  - **Filesystem**: `NoNewPrivileges`, `PrivateTmp`, `PrivateDevices`, `ProtectSystem=strict`, `ProtectHome=read-only`
+  - **Kernel**: `ProtectKernelTunables`, `ProtectKernelModules`, `ProtectKernelLogs`, `ProtectControlGroups`, `ProtectClock`,
+    `ProtectHostname`
+  - **Capabilities**: `CapabilityBoundingSet=` (all dropped), `RestrictRealtime`, `RestrictSUIDSGID`, `LockPersonality`,
+    `RemoveIPC`, `SystemCallArchitectures=native`
   - Read-write access only to runner directories
 
 ## Troubleshooting
