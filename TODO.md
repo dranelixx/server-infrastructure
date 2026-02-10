@@ -156,10 +156,10 @@ Tracked improvements and planned work for this infrastructure.
   - Test borgmatic restore
   - Test Vault recovery
 
-- [ ] **Renovate for Dependency Updates**
-  - Setup Renovate bot
-  - Configure for Terraform providers
-  - Auto-PR for updates
+- [x] **Renovate for Dependency Updates** (2026-02-10)
+  - [x] Setup Renovate bot (GitHub App)
+  - [x] Configure for Terraform providers, GitHub Actions, pre-commit hooks
+  - [x] Auto-PR for updates (schedule: Mondays before 9am)
 
 - [x] **Migrate deprecated proxmox-vm variables → v2.0.0** ✓ (2026-02-09)
   - [x] Migrate VMs from `disk_size`/`storage_pool`/`emulate_ssd` to `disks` array
