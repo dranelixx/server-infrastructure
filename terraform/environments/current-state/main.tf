@@ -64,6 +64,7 @@ module "truenas" {
       size         = 128
       iothread     = true
       ssd          = false
+      backup       = false
     }
   ]
 
