@@ -43,28 +43,32 @@
     - system
     - user
 
-- name: Add GitHub runner user to sudo group (for service management)
-  ansible.builtin.user:
-    name: "{{ github_runner_user }}"
-    groups: sudo
-    append: true
+- name: Ensure GitHub runner user is NOT in sudo group
+  ansible.builtin.command:
+    cmd: gpasswd -d "{{ github_runner_user }}" sudo
   become: true
+  register: github_runner_gpasswd_result
+  changed_when: "'removed' in github_runner_gpasswd_result.stderr"
+  failed_when:
+    - github_runner_gpasswd_result.rc != 0
+    - "'is not a member of' not in github_runner_gpasswd_result.stderr"
   tags:
     - system
     - user
 
-- name: Allow GitHub runner user to manage systemd service without password
-  ansible.builtin.lineinfile:
-    path: /etc/sudoers.d/github-runner
-    line: >-
-      {{ github_runner_user }} ALL=(ALL) NOPASSWD:
-      /bin/systemctl start {{ github_runner_service_name }},
-      /bin/systemctl stop {{ github_runner_service_name }},
-      /bin/systemctl restart {{ github_runner_service_name }},
-      /bin/systemctl status {{ github_runner_service_name }}
-    create: true
-    mode: '0440'
-    validate: 'visudo -cf %s'
+- name: Configure sudoers for runner service management
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/github-runner
+    content: |
+      # Allow github-runner to manage its own systemd service
+      {{ github_runner_user }} ALL=(ALL) NOPASSWD: /bin/systemctl start actions.runner.*
+      {{ github_runner_user }} ALL=(ALL) NOPASSWD: /bin/systemctl stop actions.runner.*
+      {{ github_runner_user }} ALL=(ALL) NOPASSWD: /bin/systemctl restart actions.runner.*
+      {{ github_runner_user }} ALL=(ALL) NOPASSWD: /bin/systemctl status actions.runner.*
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"
   become: true
   tags:
     - system

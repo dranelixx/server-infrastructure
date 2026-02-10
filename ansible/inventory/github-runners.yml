@@ -26,7 +26,7 @@ all:
         github_runner_repo_name: "server-infrastructure"
 
         # Terraform configuration
-        github_runner_terraform_version: "1.7.5"
+        github_runner_terraform_version: "1.14.3"
         github_runner_tflint_enabled: true
 
         # Network configuration (proxmox_api_host is in host_vars)
