@@ -27,6 +27,7 @@ Before making changes that affect architecture, consult the relevant ADRs in [do
 | [ADR-0010](docs/adr/ADR-0010-cicd-strategy.md)             | CI/CD        | GitHub Actions, drift via Issues       |
 | [ADR-0011](docs/adr/ADR-0011-server-hardening-baseline.md) | Security     | CrowdSec, SSH hardening, auditd        |
 | [ADR-0012](docs/adr/ADR-0012-service-permissions-acl.md)   | Permissions  | ACLs for defense-in-depth secrets      |
+| [ADR-0013](docs/adr/ADR-0013-least-privilege-api-token.md) | Security     | Least-privilege API token, privsep 1   |
 
 ## Common Commands
 

@@ -51,7 +51,7 @@ Tracked improvements and planned work for this infrastructure.
 
 - [ ] **GitHub Runner Hardening** - Mitigate private network access risks
   - After VLAN migration: isolate runner in restricted segment
-  - Create dedicated API token with minimal permissions (not root)
+  - [x] Create dedicated API token with minimal permissions (ADR-0013, 2026-02-10)
   - Restrict workflows to protected branches with PR approval only
   - Evaluate migration to Docker-based ephemeral runner
 
