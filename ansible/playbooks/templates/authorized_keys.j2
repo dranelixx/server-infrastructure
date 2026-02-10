@@ -1,0 +1,6 @@
+# Managed by Ansible - bootstrap playbook
+# User: {{ authorized_keys_user }}
+# Do not edit manually. Keys are sourced from HashiCorp Vault.
+{% for key in authorized_keys_list %}
+{{ key }}
+{% endfor %}

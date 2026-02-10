@@ -1,0 +1,520 @@
+---
+##############################################################################
+# Host Bootstrap Playbook
+##############################################################################
+#
+# Bootstraps a fresh host with two users:
+#   - akonopcz: Interactive admin (SSH keys + password, sudo WITH password)
+#   - ansible:  Automation user (SSH key only, passwordless sudo)
+#
+# This is a ONE-TIME playbook for initial host setup. After bootstrap,
+# all subsequent Ansible runs use the automation user (ansible).
+#
+# TWO-PHASE APPROACH (for safety):
+# =================================
+#
+# Phase 1 - Create users and deploy keys (new host, unknown SSH key):
+#   ANSIBLE_HOST_KEY_CHECKING=false \
+#   ansible-playbook playbooks/bootstrap.yml --tags bootstrap \
+#     -i inventory/github-runners.yml \
+#     -l github-runner-prod-cz-01
+#
+# Phase 2 - AFTER verifying SSH as both users works:
+#   ssh -p 2222 akonopcz@<host-ip>    # TEST THIS FIRST!
+#   ssh -p 2222 -i ~/.ssh/ansible_ed25519 ansible@<host-ip>
+#   ansible-playbook playbooks/bootstrap.yml --tags harden-ssh \
+#     -i inventory/github-runners.yml \
+#     -l github-runner-prod-cz-01
+#
+# PREREQUISITES:
+# - Root SSH access to the target host
+# - VAULT_ADDR environment variable set
+# - VAULT_TOKEN env var OR ~/.vault-token (via 'vault login')
+# - Vault secrets:
+#     secret/shared/akonopcz — ssh_* fields (public keys), password_hash
+#     secret/shared/ansible  — ssh_public_key
+# - community.hashi_vault collection installed:
+#     ansible-galaxy collection install -r requirements.yml
+#
+# IMPORTANT:
+# - NEVER run Phase 2 without verifying Phase 1 worked!
+# - If you lock yourself out, you need console access to fix it.
+#
+##############################################################################
+
+- name: Bootstrap Host with Admin and Automation Users
+  hosts: all
+  gather_facts: true
+  become: true
+
+  vars:
+    # Admin user (interactive)
+    admin_user: akonopcz
+    admin_user_comment: "Admin user (managed by Ansible)"
+    admin_user_shell: /bin/bash
+    admin_vault_path: shared/akonopcz
+
+    # Automation user (Ansible)
+    automation_user: ansible
+    automation_user_comment: "Automation user (managed by Ansible)"
+    automation_user_shell: /bin/bash
+    automation_vault_path: shared/ansible
+
+  # ========================================================================
+  # Phase 1: Create users, deploy SSH keys, configure sudo
+  # ========================================================================
+
+  tasks:
+    - name: Display bootstrap information
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "Host Bootstrap"
+          - "=========================================="
+          - "Target Host:      {{ inventory_hostname }}"
+          - "Admin User:       {{ admin_user }}"
+          - "Automation User:  {{ automation_user }}"
+          - "Vault Addr:       {{ lookup('ansible.builtin.env', 'VAULT_ADDR') | default('NOT SET', true) }}"
+          - "=========================================="
+          - ""
+          - "Phase 1 (--tags bootstrap): Create users, deploy keys, configure sudo"
+          - "Phase 2 (--tags harden-ssh): Disable root SSH (run AFTER verifying Phase 1)"
+          - "=========================================="
+      tags:
+        - always
+
+    # ------------------------------------------------------------------
+    # Vault Token Resolution (env var > ~/.vault-token file)
+    # ------------------------------------------------------------------
+
+    - name: Resolve Vault token
+      ansible.builtin.set_fact:
+        _vault_token: >-
+          {{ lookup('ansible.builtin.env', 'VAULT_TOKEN')
+             | default(lookup('ansible.builtin.file', '~/.vault-token', errors='ignore'), true) }}
+      no_log: true
+      tags:
+        - bootstrap
+
+    - name: Validate Vault token is available
+      ansible.builtin.assert:
+        that:
+          - _vault_token | length > 0
+        fail_msg: >-
+          No Vault token found. Set VAULT_TOKEN env var or run 'vault login'.
+      no_log: true
+      tags:
+        - bootstrap
+
+    # ------------------------------------------------------------------
+    # Vault Lookups
+    # ------------------------------------------------------------------
+
+    - name: Fetch admin secrets from Vault
+      ansible.builtin.set_fact:
+        _admin_vault_data: >-
+          {{ lookup('community.hashi_vault.vault_kv2_get',
+              admin_vault_path,
+              engine_mount_point='secret',
+              url=lookup('ansible.builtin.env', 'VAULT_ADDR'),
+              auth_method='token',
+              token=_vault_token
+          ).secret }}
+      no_log: true
+      tags:
+        - bootstrap
+
+    - name: Extract admin SSH keys from Vault data
+      ansible.builtin.set_fact:
+        admin_ssh_keys: >-
+          {{ _admin_vault_data | dict2items
+             | selectattr('key', 'match', '^ssh_')
+             | map(attribute='value')
+             | list }}
+        admin_password_hash: "{{ _admin_vault_data['password_hash'] }}"
+      no_log: true
+      tags:
+        - bootstrap
+
+    - name: Fetch automation user SSH key from Vault
+      ansible.builtin.set_fact:
+        automation_ssh_keys: >-
+          {{ [lookup('community.hashi_vault.vault_kv2_get',
+              automation_vault_path,
+              engine_mount_point='secret',
+              url=lookup('ansible.builtin.env', 'VAULT_ADDR'),
+              auth_method='token',
+              token=_vault_token
+          ).secret['ssh_public_key']] }}
+      no_log: true
+      tags:
+        - bootstrap
+
+    # ------------------------------------------------------------------
+    # Validation
+    # ------------------------------------------------------------------
+
+    - name: Validate admin SSH keys were retrieved
+      ansible.builtin.assert:
+        that:
+          - admin_ssh_keys is defined
+          - admin_ssh_keys | length > 0
+        fail_msg: >-
+          No SSH keys retrieved from Vault at {{ admin_vault_path }}.
+          Verify VAULT_ADDR and VAULT_TOKEN are set and the path contains ssh_* fields.
+        success_msg: "Retrieved {{ admin_ssh_keys | length }} SSH public key(s) for {{ admin_user }}."
+      tags:
+        - bootstrap
+
+    - name: Validate automation SSH key was retrieved
+      ansible.builtin.assert:
+        that:
+          - automation_ssh_keys is defined
+          - automation_ssh_keys | length > 0
+        fail_msg: >-
+          No SSH key retrieved from Vault at {{ automation_vault_path }}.
+          Verify VAULT_ADDR and VAULT_TOKEN are set and the path contains ssh_public_key.
+        success_msg: "Retrieved SSH public key for {{ automation_user }}."
+      tags:
+        - bootstrap
+
+    # ------------------------------------------------------------------
+    # Admin User (akonopcz)
+    # ------------------------------------------------------------------
+
+    - name: Create admin user
+      ansible.builtin.user:
+        name: "{{ admin_user }}"
+        comment: "{{ admin_user_comment }}"
+        shell: "{{ admin_user_shell }}"
+        password: "{{ admin_password_hash }}"
+        update_password: on_create
+        create_home: true
+        state: present
+      no_log: true
+      tags:
+        - bootstrap
+
+    - name: Ensure admin .ssh directory exists
+      ansible.builtin.file:
+        path: "/home/{{ admin_user }}/.ssh"
+        state: directory
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0700"
+      tags:
+        - bootstrap
+
+    - name: Deploy authorized_keys for admin user
+      ansible.builtin.template:
+        dest: "/home/{{ admin_user }}/.ssh/authorized_keys"
+        src: authorized_keys.j2
+        owner: "{{ admin_user }}"
+        group: "{{ admin_user }}"
+        mode: "0600"
+      vars:
+        authorized_keys_list: "{{ admin_ssh_keys }}"
+        authorized_keys_user: "{{ admin_user }}"
+      tags:
+        - bootstrap
+
+    - name: Configure sudo WITH password for admin user
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ admin_user }}"
+        content: |
+          # Managed by Ansible - bootstrap playbook
+          {{ admin_user }} ALL=(ALL:ALL) ALL
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+      tags:
+        - bootstrap
+
+    # ------------------------------------------------------------------
+    # Automation User (ansible)
+    # ------------------------------------------------------------------
+
+    - name: Create automation user
+      ansible.builtin.user:
+        name: "{{ automation_user }}"
+        comment: "{{ automation_user_comment }}"
+        shell: "{{ automation_user_shell }}"
+        password: "!"
+        create_home: true
+        state: present
+      tags:
+        - bootstrap
+
+    - name: Ensure automation .ssh directory exists
+      ansible.builtin.file:
+        path: "/home/{{ automation_user }}/.ssh"
+        state: directory
+        owner: "{{ automation_user }}"
+        group: "{{ automation_user }}"
+        mode: "0700"
+      tags:
+        - bootstrap
+
+    - name: Deploy authorized_keys for automation user
+      ansible.builtin.template:
+        dest: "/home/{{ automation_user }}/.ssh/authorized_keys"
+        src: authorized_keys.j2
+        owner: "{{ automation_user }}"
+        group: "{{ automation_user }}"
+        mode: "0600"
+      vars:
+        authorized_keys_list: "{{ automation_ssh_keys }}"
+        authorized_keys_user: "{{ automation_user }}"
+      tags:
+        - bootstrap
+
+    - name: Configure passwordless sudo for automation user
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ automation_user }}"
+        content: |
+          # Managed by Ansible - bootstrap playbook
+          {{ automation_user }} ALL=(ALL:ALL) NOPASSWD: ALL
+        owner: root
+        group: root
+        mode: "0440"
+        validate: "visudo -cf %s"
+      tags:
+        - bootstrap
+
+    # ------------------------------------------------------------------
+    # Phase 1 Completion
+    # ------------------------------------------------------------------
+
+    - name: Display Phase 1 completion instructions
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "Phase 1 Complete!"
+          - "=========================================="
+          - ""
+          - "BEFORE running Phase 2, verify SSH access as BOTH users:"
+          - ""
+          - "  1. Admin user:"
+          - "     ssh -p {{ ansible_port | default(22) }} {{ admin_user }}@{{ ansible_host | default(inventory_hostname) }}"
+          - "     sudo whoami    # enter password, should print 'root'"
+          - ""
+          - "  2. Automation user:"
+          - "     ssh -p {{ ansible_port | default(22) }} -i ~/.ssh/ansible_ed25519 {{ automation_user }}@{{ ansible_host | default(inventory_hostname) }}"
+          - "     sudo whoami    # no password needed, should print 'root'"
+          - ""
+          - "Only after ALL checks pass, run Phase 2:"
+          - ""
+          - "  ansible-playbook playbooks/bootstrap.yml --tags harden-ssh \\"
+          - "    -i inventory/github-runners.yml \\"
+          - "    -l {{ inventory_hostname }}"
+          - ""
+          - "WARNING: If you skip verification, you may lock yourself out!"
+          - "=========================================="
+      tags:
+        - bootstrap
+
+    # ========================================================================
+    # Phase 2: Harden SSH (disable root login)
+    # ========================================================================
+
+    - name: Display SSH hardening warning
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "WARNING: SSH Hardening"
+          - "=========================================="
+          - "This will disable root SSH login."
+          - "Make sure you have verified SSH access as both"
+          - "'{{ admin_user }}' and '{{ automation_user }}' first!"
+          - "=========================================="
+      tags:
+        - never
+        - harden-ssh
+
+    # --- Safety checks for both users ---
+
+    - name: Verify admin user exists before hardening
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ admin_user }}"
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Verify admin user has authorized_keys
+      ansible.builtin.stat:
+        path: "/home/{{ admin_user }}/.ssh/authorized_keys"
+      register: _admin_authkeys_stat
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Fail if admin authorized_keys missing
+      ansible.builtin.assert:
+        that:
+          - _admin_authkeys_stat.stat.exists
+          - _admin_authkeys_stat.stat.size > 0
+        fail_msg: >-
+          authorized_keys for {{ admin_user }} is missing or empty.
+          Run Phase 1 first (--tags bootstrap).
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Verify admin user has sudoers file
+      ansible.builtin.stat:
+        path: "/etc/sudoers.d/{{ admin_user }}"
+      register: _admin_sudoers_stat
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Fail if admin sudoers file missing
+      ansible.builtin.assert:
+        that:
+          - _admin_sudoers_stat.stat.exists
+        fail_msg: >-
+          Sudoers file for {{ admin_user }} is missing.
+          Run Phase 1 first (--tags bootstrap).
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Verify automation user exists before hardening
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ automation_user }}"
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Verify automation user has authorized_keys
+      ansible.builtin.stat:
+        path: "/home/{{ automation_user }}/.ssh/authorized_keys"
+      register: _automation_authkeys_stat
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Fail if automation authorized_keys missing
+      ansible.builtin.assert:
+        that:
+          - _automation_authkeys_stat.stat.exists
+          - _automation_authkeys_stat.stat.size > 0
+        fail_msg: >-
+          authorized_keys for {{ automation_user }} is missing or empty.
+          Run Phase 1 first (--tags bootstrap).
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Verify automation user has sudoers file
+      ansible.builtin.stat:
+        path: "/etc/sudoers.d/{{ automation_user }}"
+      register: _automation_sudoers_stat
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Fail if automation sudoers file missing
+      ansible.builtin.assert:
+        that:
+          - _automation_sudoers_stat.stat.exists
+        fail_msg: >-
+          Sudoers file for {{ automation_user }} is missing.
+          Run Phase 1 first (--tags bootstrap).
+      tags:
+        - never
+        - harden-ssh
+
+    # --- Harden SSH ---
+
+    - name: Disable root SSH login
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin'
+        line: 'PermitRootLogin no'
+        validate: 'sshd -t -f %s'
+      notify: Restart sshd
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Disable password authentication (key-only SSH)
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PasswordAuthentication'
+        line: 'PasswordAuthentication no'
+        validate: 'sshd -t -f %s'
+      notify: Restart sshd
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Restrict SSH access to allowed users only
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?AllowUsers'
+        line: 'AllowUsers {{ admin_user }} {{ automation_user }}'
+        validate: 'sshd -t -f %s'
+      notify: Restart sshd
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Apply SSH hardening directives (ADR-0011)
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        validate: 'sshd -t -f %s'
+      loop:
+        - { regexp: '^#?ChallengeResponseAuthentication', line: 'ChallengeResponseAuthentication no' }
+        - { regexp: '^#?KbdInteractiveAuthentication', line: 'KbdInteractiveAuthentication no' }
+        - { regexp: '^#?PermitEmptyPasswords', line: 'PermitEmptyPasswords no' }
+        - { regexp: '^#?X11Forwarding', line: 'X11Forwarding no' }
+        - { regexp: '^#?AllowTcpForwarding', line: 'AllowTcpForwarding no' }
+        - { regexp: '^#?AllowAgentForwarding', line: 'AllowAgentForwarding no' }
+        - { regexp: '^#?MaxAuthTries', line: 'MaxAuthTries 3' }
+        - { regexp: '^#?MaxSessions', line: 'MaxSessions 3' }
+        - { regexp: '^#?LoginGraceTime', line: 'LoginGraceTime 30' }
+        - { regexp: '^#?ClientAliveInterval', line: 'ClientAliveInterval 300' }
+        - { regexp: '^#?ClientAliveCountMax', line: 'ClientAliveCountMax 2' }
+      loop_control:
+        label: "{{ item.line }}"
+      notify: Restart sshd
+      tags:
+        - never
+        - harden-ssh
+
+    - name: Display Phase 2 completion summary
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "Phase 2 Complete - SSH Hardened"
+          - "=========================================="
+          - ""
+          - "Changes applied:"
+          - "  - PermitRootLogin no"
+          - "  - PasswordAuthentication no (key-only SSH)"
+          - "  - AllowUsers {{ admin_user }} {{ automation_user }}"
+          - "  - ADR-0011 hardening (11 directives)"
+          - ""
+          - "The host is now ready for regular Ansible runs:"
+          - "  ansible -m ping -i inventory/github-runners.yml {{ inventory_hostname }}"
+          - ""
+          - "NEXT STEPS:"
+          - "  1. Update inventory: ansible_user: root → ansible"
+          - "  2. Add ansible_ssh_private_key_file: ~/.ssh/ansible_ed25519"
+          - "  3. Add ansible_become: true"
+          - "=========================================="
+      tags:
+        - never
+        - harden-ssh
+
+  handlers:
+    - name: Restart sshd
+      ansible.builtin.service:
+        name: sshd
+        state: restarted

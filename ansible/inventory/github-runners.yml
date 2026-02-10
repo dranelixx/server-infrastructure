@@ -8,7 +8,9 @@ all:
       hosts:
         github-runner-prod-cz-01:
           # Connection settings are in host_vars/github-runner-prod-cz-01.yml (gitignored)
-          ansible_user: root
+          ansible_user: ansible
+          ansible_ssh_private_key_file: ~/.ssh/ansible_ed25519
+          ansible_become: true
           ansible_python_interpreter: /usr/bin/python3
 
           # Runner-specific configuration
@@ -39,6 +41,6 @@ all:
 # Example: Add more runners
 #     github-runner-dev-cz-01:
 #       ansible_host: 10.0.1.101
-#       ansible_user: root
+#       ansible_user: ansible
 #       environment: development
 #       location: cz
