@@ -205,6 +205,10 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Passphrase on active key (id_ed25519)
   - [x] ssh-agent with timeout (AddKeysToAgent in SSH config)
   - [ ] Decommission old keys (id_ed25519_old, id_rsa) after migration on all servers
+  - [ ] Ansible SSH key via direnv + Vault (no key on disk, consistent with Terraform `.envrc` pattern)
+    - `ansible/.envrc`: `vault kv get -field=ssh_private_key secret/shared/ansible | ssh-add -`
+    - Remove `ansible_ssh_private_key_file` from inventory (ssh-agent handles it)
+    - Delete `~/.ssh/ansible_ed25519` from disk
 
 - [ ] **Update Storage Upgrade Docs (P3500 Change)**
   - Only 1x Intel P3500 available instead of 2x
