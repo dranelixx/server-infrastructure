@@ -46,9 +46,9 @@ cloud-config YAML. No secrets baked into images — keys stay rotatable without 
 Wait for `cloud-init status --wait` before running Ansible (Terraform provisioner or `depends_on`).
 
 **Custom LXC Template:** Standard Ubuntu template with pre-configured users, groups (`ssh-users`),
-sudo rules, and SSH keys. For key rotation on existing LXCs, the Common Role updates
-`authorized_keys` from Vault. Only new LXCs created between key rotation and template rebuild
-would need attention — acceptable risk at this fleet size (~15 LXCs).
+and sudo rules. SSH keys are NOT baked into the template — they are deployed by the first
+Common Role run (reading from Vault). Only user structure is pre-configured, keeping keys
+rotatable without rebuilding the template.
 
 **Bootstrap playbook** remains in the repository as reference/documentation and fallback for
 edge cases (Netcup, manually provisioned hosts). Not part of the standard provisioning flow.
@@ -230,7 +230,7 @@ Fleet-wide changes are deployed incrementally to limit blast radius:
 Ansible configuration drift is detected via scheduled CI (analogous to the Terraform drift
 workflow in ADR-0010):
 
-- Scheduled GitHub Actions run: `ansible-playbook site.yml --check --diff`
+- Scheduled GitHub Actions run (daily): `ansible-playbook site.yml --check --diff`
 - Creates a GitHub Issue when drift is detected
 - Ensures manual changes are caught and corrected
 
