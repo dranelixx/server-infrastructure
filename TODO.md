@@ -151,9 +151,18 @@ Tracked improvements and planned work for this infrastructure.
 ## Ongoing
 
 - [x] **ADRs (Architecture Decision Records)** ✓
-  - Created `docs/adr/` structure with 10 ADRs
+  - Created `docs/adr/` structure with 14 ADRs
   - See `docs/adr/README.md` for index
   - See `docs/adr/ADR-QUESTIONS.md` for original Q&A
+
+- [ ] **Ansible Common Role** (ADR-0014)
+  - [x] Review ADR-0014 with Ansible expert
+  - [ ] Create Cloud-Init image for Proxmox VMs (users, qemu-guest-agent)
+  - [ ] Create custom LXC template (users, ssh-users group, sudo)
+  - [ ] Build Common role: packages, SSH, security, sudo, monitoring, time, banner
+  - [ ] Deploy Common role to all hosts (canary first, then fleet)
+  - [ ] Ansible CI: Phase 1 lint, Phase 2 dry-run, Phase 3 auto-deploy
+  - [ ] Ansible drift detection workflow (scheduled `--check --diff`)
 
 - [ ] **Disaster Recovery Testing**
   - Schedule quarterly DR test
@@ -171,6 +180,11 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Migrate same VMs in target-state (incl. `truenas`, `plex`)
   - [x] Remove `disk` from `lifecycle { ignore_changes }` (provider now stable)
   - [x] Remove deprecated variables from module → tag `modules/proxmox-vm/v2.0.0`
+
+- [ ] **Migrate prometheus-prod-cz-01 from Alpine to Debian**
+  - Only Alpine host in fleet, blocks unified Ansible Common role
+  - Recreate LXC with Debian-Minimal, reinstall Prometheus + node_exporter
+  - Minimal RAM difference (~50MB), not worth multi-OS role maintenance
 
 - [ ] **Tech Debt Cleanup**
   - [x] Revisit `lifecycle { ignore_changes }` in VM module (disk removed, provider stable)
