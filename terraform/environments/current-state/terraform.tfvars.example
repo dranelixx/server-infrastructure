@@ -7,15 +7,11 @@
 # Format: https://<HOSTNAME>/ (NO /api2/json suffix, NO port needed with HAProxy)
 proxmox_api_url = "https://<PROXMOX_HOST>.example.com/"
 
-# API Token Authentication (RECOMMENDED)
+# API Token Authentication (REQUIRED)
 # Format: user@realm!token-id
 # Example: terraform@pve!github-actions
 proxmox_api_token_id     = "<USER>@<REALM>!<TOKEN_ID>"
 proxmox_api_token_secret = "<YOUR_TOKEN_SECRET>"
-
-# Legacy Password Authentication (OPTIONAL - only if not using tokens)
-# proxmox_user     = "root@pam"
-# proxmox_password = "<YOUR_PASSWORD>"
 
 # TLS Verification (false = verify certs, requires valid CA-signed cert via HAProxy)
 # proxmox_tls_insecure = false

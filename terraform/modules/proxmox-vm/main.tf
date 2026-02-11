@@ -155,11 +155,10 @@ resource "proxmox_virtual_environment_vm" "vm" {
   # Lifecycle Management
   lifecycle {
     ignore_changes = [
-      network_device, # NICs can be modified manually in Proxmox
-      initialization, # Cloud-init changes ignored (VMs may not use cloud-init)
-      efi_disk,       # EFI disk location may vary
-      boot_order,     # Boot order can change
-      hostpci,        # PCI passthrough can be modified manually
+      initialization, # Cloud-init is one-shot, changes after first boot are irrelevant
+      efi_disk,       # EFI disk is created once, provider may detect false-positive drift
+      boot_order,     # Proxmox UI changes boot order on any VM edit
+      hostpci,        # PCI passthrough id field requires root auth, incompatible with API token (ADR-0013)
     ]
   }
 }

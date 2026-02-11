@@ -101,11 +101,10 @@ resource "proxmox_virtual_environment_container" "container" {
   # Lifecycle Management
   lifecycle {
     ignore_changes = [
-      description,       # Keep Proxmox Helper Scripts descriptions
       network_interface, # Network can be modified manually in Proxmox
-      initialization,    # Hostname/DNS changes ignored
-      console,           # Console settings can be modified
-      operating_system,  # OS type is set during creation
+      initialization,    # Hostname is set once during creation
+      console,           # Console settings can be modified via Proxmox UI
+      operating_system,  # OS template is only relevant during creation
       clone,             # Clone settings are immutable after creation
     ]
   }
