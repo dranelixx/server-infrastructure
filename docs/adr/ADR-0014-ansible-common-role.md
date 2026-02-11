@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-10 -->
+<!-- LAST EDITED: 2026-02-11 -->
 
 # ADR-0014: Ansible Common Role & Bootstrap Strategy
 
@@ -22,24 +22,36 @@ Key requirements:
 
 ## Decision
 
-### Two-Layer Approach: Bootstrap + Common Role
+### Two-Layer Approach: Provisioning + Common Role
 
-#### Bootstrap Playbook (Day 0 — one-time, per host)
+#### Day 0 Provisioning (one-time, per host)
 
-Runs as `root` on a fresh host. Creates the two standard users and applies minimal SSH hardening.
-Requires manual verification between phases (prevents lockout).
+Users are created during host provisioning — not by a bootstrap playbook. The method depends on host type:
+
+| Host Type    | Method                                           | User Creation              |
+| ------------ | ------------------------------------------------ | -------------------------- |
+| Proxmox VMs  | Cloud-Init image + cloud-init YAML via Terraform | Users + keys on first boot |
+| Proxmox LXCs | Custom LXC template (based on Ubuntu)            | Users baked into template  |
+| Hetzner VPS  | Cloud-Init via `user_data`                       | Users + keys on first boot |
+| Netcup VPS   | Manual setup (no cloud-init support)             | Create users by hand       |
 
 **Users on every host:**
 
-- `akonopcz` — Interactive admin (SSH keys from Vault, sudo WITH password)
-- `ansible` — Automation user (SSH key from Vault, passwordless sudo)
-- `root` — Locked after bootstrap (`PermitRootLogin no`)
+- `akonopcz` — Interactive admin (SSH keys from Vault, sudo WITH password, member of `ssh-users`)
+- `ansible` — Automation user (SSH key from Vault, passwordless sudo, member of `ssh-users`)
+- `root` — Disabled for SSH access (`PermitRootLogin no`)
 
-**Separation rationale:** Bootstrap is fundamentally different from ongoing management:
+**Cloud-Init (VMs + Hetzner):** Terraform reads SSH keys from Vault at apply time, passes them via
+cloud-config YAML. No secrets baked into images — keys stay rotatable without rebuilding.
+Wait for `cloud-init status --wait` before running Ansible (Terraform provisioner or `depends_on`).
 
-- Runs as root (ansible user doesn't exist yet — chicken-and-egg)
-- Requires interactive verification (SSH test between Phase 1 and 2)
-- Cannot be automated in CI (manual step by design)
+**Custom LXC Template:** Standard Ubuntu template with pre-configured users, groups (`ssh-users`),
+sudo rules, and SSH keys. For key rotation on existing LXCs, the Common Role updates
+`authorized_keys` from Vault. Only new LXCs created between key rotation and template rebuild
+would need attention — acceptable risk at this fleet size (~15 LXCs).
+
+**Bootstrap playbook** remains in the repository as reference/documentation and fallback for
+edge cases (Netcup, manually provisioned hosts). Not part of the standard provisioning flow.
 
 #### Common Role (Day 1+ — repeatable, all hosts)
 
@@ -73,14 +85,27 @@ Base packages for all hosts:
 
 - `curl`, `jq`, `btop`, `wget`, `gnupg`, `ca-certificates`
 - `unattended-upgrades` (security updates auto, reboots manual)
+- `qemu-guest-agent` (VMs only, conditional on `ansible_virtualization_type != 'lxc'`)
 
 #### ssh.yml
 
-Deploys `/etc/ssh/sshd_config.d/hardening.conf` as a template (single file, single source of truth).
-Supersedes the individual `lineinfile` directives from bootstrap Phase 2.
+Manages SSH configuration as a clean two-file approach:
+
+1. **Reset `sshd_config` to stock values** and add a comment header directing edits to
+   `sshd_config.d/hardening.conf`. This ensures package updates to `sshd_config` don't conflict.
+2. **Deploy `/etc/ssh/sshd_config.d/hardening.conf`** as a template — single source of truth for
+   all custom SSH settings.
+3. **Clean up legacy bootstrap directives** from `sshd_config` (remove `lineinfile` entries from
+   Phase 2 via `state: absent`) to prevent dead entries that confuse debugging.
+4. **Validate** with `sshd -t` before every sshd restart.
+
+Uses `AllowGroups ssh-users` instead of `AllowUsers` — more flexible when adding users later.
 
 Directives from ADR-0011: `LoginGraceTime`, `MaxAuthTries`, `MaxSessions`, `ClientAliveInterval`,
 `X11Forwarding no`, `AllowTcpForwarding no`, `AllowAgentForwarding no`, strong ciphers, etc.
+
+Also manages `authorized_keys` for both users (keys from Vault) — enables key rotation as a
+Day 2 operation without re-provisioning hosts.
 
 #### security.yml
 
@@ -90,17 +115,22 @@ Directives from ADR-0011: `LoginGraceTime`, `MaxAuthTries`, `MaxSessions`, `Clie
 - Base collections: `crowdsecurity/linux`, `crowdsecurity/sshd` (always)
 - Service-specific collections via variable (e.g., `crowdsecurity/nginx`, `crowdsecurity/postfix`)
 - Docker hosts: `DOCKER-USER` chain in bouncer config via `common_crowdsec_docker_host` variable
+- Optional enrollment key from Vault (via `common_crowdsec_enroll` toggle)
 
-**auditd:**
+**auditd (VMs only):**
 
 - Install `auditd` + `audispd-plugins`
 - Deploy ADR-0011 rules: sudoers, sshd_config, authorized_keys, passwd/shadow, cron, systemd
 - Logrotate configuration
+- Skipped on LXC containers (`when: ansible_virtualization_type != 'lxc'`) — auditd requires
+  kernel-level access not available in unprivileged LXCs
 
 **sysctl:**
 
 - Deploy `/etc/sysctl.d/99-hardening.conf` from ADR-0011
 - IP spoofing, ICMP redirects, SYN flood, source routing, martian logging
+- LXC-aware: some network sysctls are ignored in unprivileged LXCs. The template includes
+  conditionals to skip unsupported settings (`ansible_virtualization_type == 'lxc'`)
 
 #### sudo.yml
 
@@ -111,6 +141,7 @@ Directives from ADR-0011: `LoginGraceTime`, `MaxAuthTries`, `MaxSessions`, `Clie
 #### monitoring.yml
 
 - `node_exporter`: install, systemd unit, configurable collectors via variable
+- Optional TLS/auth for node_exporter (credentials from Vault when enabled)
 - `promtail`: optional (disabled by default, enable when Loki/Graylog is ready)
 
 #### time.yml
@@ -141,17 +172,67 @@ common_node_exporter_collectors:
 
 ### What Does NOT Belong in Common
 
-- **User management** — stays in bootstrap (one-time, runs as root)
+- **User creation** — handled by provisioning (Cloud-Init, LXC template, or manual)
 - **Firewall rules** — too host-specific, comes with VLAN migration (ADR-0002)
 - **Docker installation** — separate role
 - **Service configuration** — separate roles (mailcow, vaultwarden, pterodactyl, etc.)
-- **Vault secrets** — Common role needs no secrets, only configuration values
 
-### SSH Hardening Overlap (Bootstrap vs. Common)
+### Vault Integration
 
-Bootstrap Phase 2 sets individual directives via `lineinfile` in `sshd_config`.
-Common role deploys a complete template to `sshd_config.d/hardening.conf`.
-Directives in `sshd_config.d/` take precedence — Common role wins automatically. No conflict.
+The Common role uses Vault for **optional** secrets with sensible defaults:
+
+| Secret                     | Used When                        | Default (no Vault)            |
+| -------------------------- | -------------------------------- | ----------------------------- |
+| SSH keys (authorized_keys) | Always (key rotation)            | Keys from provisioning remain |
+| CrowdSec enrollment key    | `common_crowdsec_enroll: true`   | Skip enrollment               |
+| node_exporter TLS/auth     | `common_node_exporter_tls: true` | No TLS, local only            |
+
+Core functionality (packages, SSH hardening config, sysctl, auditd rules, sudo, time, banner)
+works without Vault access. Secret-dependent features are opt-in via variables.
+
+### LXC vs VM Considerations
+
+LXC containers share the host kernel, which limits certain hardening measures:
+
+| Feature          | VMs          | LXCs (unprivileged)                         |
+| ---------------- | ------------ | ------------------------------------------- |
+| auditd           | Full support | Not available (needs kernel access)         |
+| sysctl           | Full support | Restricted (network sysctls mostly ignored) |
+| CrowdSec         | Full support | Works, but iptables needs configuration     |
+| qemu-guest-agent | Required     | Not applicable                              |
+
+The Common role uses `ansible_virtualization_type` to conditionally skip or adapt tasks for LXCs.
+This affects ~75% of the fleet (15 LXCs vs 5 VMs).
+
+### Rollout Strategy
+
+Fleet-wide changes are deployed incrementally to limit blast radius:
+
+```yaml
+# site.yml — canary deployment pattern
+- name: Deploy common role (canary)
+  hosts: canary
+  roles: [common]
+
+- name: Deploy common role (fleet)
+  hosts: all:!canary
+  serial: 5
+  max_fail_percentage: 0
+  roles: [common]
+```
+
+- **Canary host** receives changes first (lowest-impact host, e.g., a test LXC)
+- **`serial: 5`** processes remaining hosts in batches of 5
+- **`max_fail_percentage: 0`** stops immediately on any failure (no cascading breakage)
+
+### Drift Detection
+
+Ansible configuration drift is detected via scheduled CI (analogous to the Terraform drift
+workflow in ADR-0010):
+
+- Scheduled GitHub Actions run: `ansible-playbook site.yml --check --diff`
+- Creates a GitHub Issue when drift is detected
+- Ensures manual changes are caught and corrected
 
 ## Consequences
 
@@ -161,70 +242,43 @@ Directives in `sshd_config.d/` take precedence — Common role wins automaticall
 - ADR-0011 implemented as code (not just documentation)
 - Idempotent — safe to run repeatedly, detects and fixes drift
 - Tag-based selective execution (`--tags ssh`, `--tags security`, etc.)
-- New host provisioning: Bootstrap → Common → Service role (predictable flow)
+- New host provisioning: Terraform (Day 0) → Common Role (Day 1) → Service role (predictable flow)
+- No bootstrap needed for Proxmox hosts (Cloud-Init/templates handle Day 0)
+- LXC-aware: graceful handling of kernel-level restrictions
 
 ### Negative
 
 - Initial effort to build and test the role (~2-3 sessions)
 - All hosts must be Debian/Ubuntu (Alpine migration required for prometheus)
 - CrowdSec setup has learning curve (collections, bouncer configuration)
+- Custom LXC template requires occasional rebuilds (user changes, key rotation)
 
 ### Neutral
 
-- Bootstrap remains a separate, manual process (by design — safety over automation)
+- Bootstrap playbook kept as fallback for Netcup and edge cases
 - CI integration comes later (lint first, then dry-run, then auto-deploy)
-
-## Open: Eliminating Bootstrap via Prepared Templates
-
-The bootstrap playbook exists because fresh hosts have no users. This could be eliminated
-by baking users into the base images so Terraform handles Day 0:
-
-| Host Type    | Approach                                        | Result                      |
-| ------------ | ----------------------------------------------- | --------------------------- |
-| Proxmox VMs  | Cloud-Init image (~300-500MB) + cloud-init YAML | Users created on first boot |
-| Proxmox LXCs | Custom LXC template (based on Ubuntu, ~141MB)   | Users pre-configured        |
-| Hetzner VPS  | Cloud-Init via `user_data`                      | Users created on first boot |
-| Netcup       | No cloud-init support                           | Bootstrap still needed      |
-
-**Cloud-Init (VMs + Hetzner):** Small cloud image that applies a config on first boot.
-Terraform reads SSH keys from Vault, passes them via cloud-init config. VM boots ready.
-
-**Custom LXC Template:** Take standard Ubuntu LXC template → create container →
-configure users, SSH, sudo → export as custom template. Terraform references this
-template for all new LXCs.
-
-**If implemented:** The bootstrap playbook becomes a fallback for hosts where
-Terraform can't handle Day 0 (Netcup, manually provisioned hosts). For Proxmox
-and Hetzner, the flow simplifies to:
-
-```text
-Terraform creates host (users from template/cloud-init)
-  → Ansible Common Role runs directly as ansible user
-  → No bootstrap needed
-```
-
-**TODO:** Learn cloud-init, create Proxmox VM cloud-init image, create custom
-LXC template with pre-configured users. Evaluate if bootstrap playbook can be
-fully retired.
 
 ## Alternatives Considered
 
-| Alternative                     | Rejected Because                                               |
-| ------------------------------- | -------------------------------------------------------------- |
-| Multi-OS role (Debian + Alpine) | 90% Debian, Alpine maintenance cost not worth it for 1 host    |
-| User management in Common role  | Chicken-and-egg: ansible user must exist before Common can run |
-| All-in-one playbook (no role)   | Not reusable, not testable, doesn't scale to 20+ hosts         |
-| Skip Common, only service roles | Duplicated security config in every service role               |
+| Alternative                     | Rejected Because                                            |
+| ------------------------------- | ----------------------------------------------------------- |
+| Multi-OS role (Debian + Alpine) | 90% Debian, Alpine maintenance cost not worth it for 1 host |
+| All-in-one playbook (no role)   | Not reusable, not testable, doesn't scale to 20+ hosts      |
+| Skip Common, only service roles | Duplicated security config in every service role            |
+| Bootstrap for all hosts         | Cloud-Init/templates eliminate the chicken-and-egg problem  |
+| Separate with/without Vault     | Overengineering — opt-in features with defaults are simpler |
 
 ## References
 
 - [ADR-0011: Server Hardening Baseline](ADR-0011-server-hardening-baseline.md) — security directives
   implemented by this role
-- [ADR-0003: HashiCorp Vault](ADR-0003-hashicorp-vault-secrets.md) — bootstrap uses Vault for SSH keys
-- [ADR-0013: Least-Privilege API Token](ADR-0013-least-privilege-api-token.md) — principle applied to user permissions
+- [ADR-0003: HashiCorp Vault](ADR-0003-hashicorp-vault-secrets.md) — secrets for SSH keys, CrowdSec, monitoring
+- [ADR-0013: Least-Privilege API Token](ADR-0013-least-privilege-api-token.md) — principle applied to
+  user permissions
 
 ## Changelog
 
-| Date       | Change        |
-| ---------- | ------------- |
-| 2026-02-10 | Initial draft |
+| Date       | Change                                                                       |
+| ---------- | ---------------------------------------------------------------------------- |
+| 2026-02-10 | Initial draft                                                                |
+| 2026-02-11 | Revised: Cloud-Init/template strategy, LXC constraints, rollout, SSH cleanup |
