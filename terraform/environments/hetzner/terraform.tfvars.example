@@ -1,0 +1,15 @@
+# Hetzner Cloud Provider Configuration Example
+#
+# IMPORTANT: Copy this file to terraform.tfvars and fill with real values
+# terraform.tfvars is gitignored and will NOT be committed to repository
+#
+# Recommended: Use .envrc with Vault instead of terraform.tfvars
+# See .envrc for the Vault integration pattern
+
+# Hetzner Cloud API Token
+# Generate at: https://console.hetzner.cloud -> Project -> Security -> API Tokens
+hcloud_token = "<YOUR_HCLOUD_API_TOKEN>"
+
+# Hetzner Storage Box Password (CIFS/SSH access)
+# Found in: Hetzner Robot Panel -> Storage Box -> Settings
+storage_box_password = "<YOUR_STORAGE_BOX_PASSWORD>"
