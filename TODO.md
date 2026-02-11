@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-10 -->
+<!-- LAST EDITED: 2026-02-11 -->
 
 # TODO
 
@@ -137,10 +137,12 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Baseline tags: `proxmox-vm/v1.0.0`, `proxmox-lxc/v1.0.0`
   - Relative paths kept (no `git::` pinning - pragmatic for single-user)
 
-- [ ] **Map Hetzner infrastructure in Terraform**
-  - Hetzner Cloud VPS and Storage Box
-  - Use [hetznercloud/hcloud provider](https://registry.terraform.io/providers/hetznercloud/hcloud/latest)
-  - Import existing resources into state
+- [x] **Map Hetzner infrastructure in Terraform** ✓ (2026-02-11)
+  - [x] Hetzner Cloud VPS (cx23, fsn1) + Firewall imported
+  - [x] Hetzner Storage Box (bx21, fsn1) imported
+  - [x] Provider: [hetznercloud/hcloud v1.60.0](https://registry.terraform.io/providers/hetznercloud/hcloud/latest)
+  - [x] delete_protection + prevent_destroy on all resources
+  - [ ] CI/CD integration (terraform-plan.yml job for Hetzner)
 
 - [ ] **Map Netcup infrastructure in Terraform**
   - Netcup VPS (Mailcow, Vaultwarden)
