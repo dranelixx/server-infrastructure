@@ -155,12 +155,14 @@ Tracked improvements and planned work for this infrastructure.
   - See `docs/adr/README.md` for index
   - See `docs/adr/ADR-QUESTIONS.md` for original Q&A
 
-- [ ] **Ansible Common Role** (ADR-0014 — Draft, needs review)
-  - [ ] Review ADR-0014 with Ansible expert (CrowdSec, auditd, sysctl details)
+- [ ] **Ansible Common Role** (ADR-0014)
+  - [x] Review ADR-0014 with Ansible expert
+  - [ ] Create Cloud-Init image for Proxmox VMs (users, qemu-guest-agent)
+  - [ ] Create custom LXC template (users, ssh-users group, sudo)
   - [ ] Build Common role: packages, SSH, security, sudo, monitoring, time, banner
-  - [ ] Bootstrap all hosts (Proxmox, Netcup, Hetzner)
-  - [ ] Deploy Common role to all hosts
+  - [ ] Deploy Common role to all hosts (canary first, then fleet)
   - [ ] Ansible CI: Phase 1 lint, Phase 2 dry-run, Phase 3 auto-deploy
+  - [ ] Ansible drift detection workflow (scheduled `--check --diff`)
 
 - [ ] **Disaster Recovery Testing**
   - Schedule quarterly DR test
