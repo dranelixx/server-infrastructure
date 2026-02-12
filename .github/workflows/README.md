@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-10 -->
+<!-- LAST EDITED: 2026-02-12 -->
 
 # GitHub Actions Workflows for Terraform
 
@@ -220,9 +220,14 @@ This prevents state locks and race conditions.
 
 - Secrets are never output in logs
 - Terraform outputs are deleted after 30/90 days
-- API access only via GitHub-hosted runners (secure IP range)
+- API access only via self-hosted runner within private network
 - Terraform state stored in S3 (eu-central-1) with native locking
-- **Vault Integration**: For enhanced security, production deployments should leverage HashiCorp Vault for dynamic secret generation, automatic rotation, and comprehensive audit trails. GitHub Secrets currently serve as the interim solution during initial infrastructure setup.
+- **Vault Integration**: All secrets (Proxmox credentials, SSH keys, AWS Role ARN) are stored in
+  HashiCorp Vault and fetched at runtime via AppRole authentication. GitHub Secrets only store Vault
+  bootstrap credentials (`VAULT_ADDR`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID`).
+- **AWS OIDC Federation**: S3 state backend uses GitHub OIDC federation instead of static IAM
+  access keys. Workflows obtain temporary STS credentials via `aws-actions/configure-aws-credentials@v4`,
+  eliminating long-lived AWS secrets.
 
 ## Further Documentation
 

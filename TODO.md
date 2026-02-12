@@ -43,12 +43,12 @@ Tracked improvements and planned work for this infrastructure.
 
 ### AWS Security
 
-- [x] **Migrate CI/CD from IAM Access Keys to OIDC Federation** ✓
-  - [x] OIDC Identity Provider in AWS IAM erstellt
+- [x] **Migrate CI/CD from IAM Access Keys to OIDC Federation** ✓ (2026-02-12)
+  - [x] OIDC Identity Provider created in AWS IAM
   - [x] IAM Role `GitHubActions-TerraformState` with S3 trust policy
   - [x] Workflows updated: `aws-actions/configure-aws-credentials@v4` with OIDC
   - [x] Role ARN stored in Vault (`secret/shared/ci-cd/aws role_arn`)
-  - [ ] Delete `terraform-state-manager` IAM user (after successful verification)
+  - [x] IAM user `terraform-state-manager` deleted
 
 ### Standard Security Tasks
 
