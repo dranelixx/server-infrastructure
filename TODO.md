@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-11 -->
+<!-- LAST EDITED: 2026-02-12 -->
 
 # TODO
 
@@ -56,7 +56,7 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Systemd hardening (19 directives via drop-in override)
   - [x] Fix Terraform version pinning (1.7.5 → 1.14.3)
   - [x] Bootstrap: dedicated users (akonopcz + ansible), SSH key-only, root disabled
-  - Restrict workflows to protected branches with PR approval only
+  - [x] Restrict workflows to protected branches with PR approval only (Environment protection rules)
   - Evaluate migration to Docker-based ephemeral runner
 
 - [ ] **LXC Security Review** - Audit workload placement
@@ -115,10 +115,12 @@ Tracked improvements and planned work for this infrastructure.
 
 ## Priority 4 - IaC Continuation
 
-- [ ] **Complete current-state mapping**
-  - All VMs in Terraform
-  - All LXCs in Terraform
-  - Network configuration
+- [x] **Complete current-state mapping** ✓ (2026-02-12)
+  - [x] All VMs in Terraform (5 VMs, `terraform plan` = no changes)
+  - [x] All LXCs in Terraform (15 LXCs)
+  - [x] Network configuration (flat network, dual NICs on truenas/pms/arr_stack)
+  - [x] Cleanup: remove legacy auth fallback, dead root-level TF files, fix lifecycle ignore_changes
+  - [x] Add LXC inventory output with dynamic resource counts
 
 - [ ] **Prepare target-state**
   - Copy from current-state
@@ -190,8 +192,11 @@ Tracked improvements and planned work for this infrastructure.
 
 - [ ] **Tech Debt Cleanup**
   - [x] Revisit `lifecycle { ignore_changes }` in VM module (disk removed, provider stable)
+  - [x] Tighten VM ignore_changes: removed `network_device`, kept `hostpci` (API token limitation)
+  - [x] Tighten LXC ignore_changes: removed `description`
+  - [x] Delete dead root-level TF files (legacy telmate provider remnant)
+  - [ ] Investigate PCI passthrough Resource Mappings (alternative to `hostpci` ignore)
   - Remove workarounds where provider is now stable
-  - Bring more attributes back under Terraform management
 
 - [ ] **Varken Fork Updates** (dranelixx/varken:influxdb2)
   - Update `structures.py` for new Sonarr/Radarr API fields (`runtime`, `customFormatScore`, `lastSearchTime`, `releaseDate`)
@@ -226,11 +231,10 @@ Tracked improvements and planned work for this infrastructure.
     - Remove `ansible_ssh_private_key_file` from inventory (ssh-agent handles it)
     - Delete `~/.ssh/ansible_ed25519` from disk
 
-- [ ] **Update Storage Upgrade Docs (P3500 Change)**
-  - Only 1x Intel P3500 available instead of 2x
-  - Update `docs/private/plans/storage-upgrade/` (README, 02-hardware, 03-pool-setup)
-  - Decide: TrueNAS cache vs. Proxmox nvme-fast vs. split single drive
-  - Wait until hardware actually ships before updating
+- [ ] **Storage Upgrade (Loki)**
+  - Hardware arrived (P3500, H240ar, 2x SM883) — SM863a pending separate shipment
+  - [x] Docs updated for 1x P3500 layout (TrueNAS passthrough, Lexar → nvme-pool)
+  - [ ] Execute upgrade once SM863a arrives (see `docs/private/plans/storage-upgrade/`)
 
 - [ ] **Evaluate terraform_docs in CI**
   - Currently disabled in pre-commit (modifies files after staging)
