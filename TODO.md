@@ -43,12 +43,12 @@ Tracked improvements and planned work for this infrastructure.
 
 ### AWS Security
 
-- [ ] **Migrate CI/CD from IAM Access Keys to OIDC Federation**
-  - Replace long-lived `terraform-state-manager` IAM keys with GitHub OIDC
-  - GitHub Actions gets temporary credentials via STS (no secrets to store/rotate)
-  - Steps: Create OIDC provider in IAM → IAM Role with S3/DynamoDB trust → Update workflows
-  - Remove `secret/data/shared/ci-cd/aws` from Vault after migration
-  - Delete `terraform-state-manager` IAM user
+- [x] **Migrate CI/CD from IAM Access Keys to OIDC Federation** ✓
+  - [x] OIDC Identity Provider in AWS IAM erstellt
+  - [x] IAM Role `GitHubActions-TerraformState` with S3 trust policy
+  - [x] Workflows updated: `aws-actions/configure-aws-credentials@v4` with OIDC
+  - [x] Role ARN stored in Vault (`secret/shared/ci-cd/aws role_arn`)
+  - [ ] Delete `terraform-state-manager` IAM user (after successful verification)
 
 ### Standard Security Tasks
 

@@ -26,6 +26,7 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  id-token: write
 
 jobs:
   detect-changes:
@@ -85,8 +86,13 @@ jobs:
             secret/data/prod/infrastructure/proxmox api_token_id | PROXMOX_API_TOKEN_ID ;
             secret/data/prod/infrastructure/proxmox api_token_secret | PROXMOX_API_TOKEN_SECRET ;
             secret/data/shared/ssh public_keys | SSH_PUBLIC_KEYS ;
-            secret/data/shared/ci-cd/aws access_key_id | AWS_ACCESS_KEY_ID ;
-            secret/data/shared/ci-cd/aws secret_access_key | AWS_SECRET_ACCESS_KEY
+            secret/data/shared/ci-cd/aws role_arn | AWS_ROLE_ARN
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: eu-central-1
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -96,9 +102,6 @@ jobs:
       - name: Terraform Init
         id: init
         run: terraform init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
 
       - name: Terraform Plan
         id: plan
@@ -110,8 +113,6 @@ jobs:
           TF_VAR_proxmox_api_token_id: ${{ env.PROXMOX_API_TOKEN_ID }}
           TF_VAR_proxmox_api_token_secret: ${{ env.PROXMOX_API_TOKEN_SECRET }}
           TF_VAR_ssh_public_keys: ${{ env.SSH_PUBLIC_KEYS }}
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
 
       - name: Check for Changes
         id: check
@@ -135,8 +136,6 @@ jobs:
           TF_VAR_proxmox_api_token_id: ${{ env.PROXMOX_API_TOKEN_ID }}
           TF_VAR_proxmox_api_token_secret: ${{ env.PROXMOX_API_TOKEN_SECRET }}
           TF_VAR_ssh_public_keys: ${{ env.SSH_PUBLIC_KEYS }}
-          AWS_ACCESS_KEY_ID: ${{ env.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ env.AWS_SECRET_ACCESS_KEY }}
 
       - name: Create Apply Summary
         if: always()
