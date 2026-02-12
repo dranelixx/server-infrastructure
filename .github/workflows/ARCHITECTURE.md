@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-10 -->
+<!-- LAST EDITED: 2026-02-12 -->
 
 # Terraform Workflows - Architecture
 
@@ -174,20 +174,31 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph "GitHub Secrets (Encrypted)"
-        S1[PROXMOX_API_ENDPOINT]
-        S2[PROXMOX_API_TOKEN_ID]
-        S3[PROXMOX_API_TOKEN_SECRET]
+    subgraph "GitHub Secrets (Bootstrap)"
+        GS1[VAULT_ADDR]
+        GS2[VAULT_ROLE_ID]
+        GS3[VAULT_SECRET_ID]
     end
 
-    subgraph "GitHub Runner (Ephemeral)"
+    subgraph "HashiCorp Vault (Primary Secrets)"
+        V1[Proxmox API Credentials]
+        V2[SSH Public Keys]
+        V3[AWS OIDC Role ARN]
+    end
+
+    subgraph "AWS IAM (OIDC Federation)"
+        OIDC[GitHub OIDC Provider]
+        STS[Temporary STS Credentials]
+    end
+
+    subgraph "GitHub Runner (Self-hosted)"
         R1[Terraform CLI]
         R2[Environment Variables]
     end
 
-    subgraph "Proxmox API"
-        P1[API Gateway :8006]
-        P2[Resource Manager]
+    subgraph "External Services"
+        P1[Proxmox API :8006]
+        S3[S3 State Backend]
     end
 
     subgraph "Protection Layers"
@@ -197,20 +208,30 @@ graph TB
         L4[CODEOWNERS]
     end
 
-    S1 --> R2
-    S2 --> R2
-    S3 --> R2
+    GS1 --> V1
+    GS2 --> V1
+    GS3 --> V1
+    V1 --> R2
+    V2 --> R2
+    V3 -->|Role ARN| OIDC
+    OIDC -->|OIDC Token| STS
+    STS --> R2
     R2 --> R1
     R1 -->|HTTPS + TLS| P1
-    P1 --> P2
+    R1 -->|HTTPS + STS| S3
 
     L1 -.enforces.-> L2
     L2 -.enforces.-> L3
     L3 -.enforces.-> L4
 
-    style S1 fill:#868e96
-    style S2 fill:#868e96
-    style S3 fill:#868e96
+    style GS1 fill:#868e96
+    style GS2 fill:#868e96
+    style GS3 fill:#868e96
+    style V1 fill:#be4bdb
+    style V2 fill:#be4bdb
+    style V3 fill:#be4bdb
+    style OIDC fill:#4dabf7
+    style STS fill:#4dabf7
     style L1 fill:#51cf66
     style L2 fill:#51cf66
     style L3 fill:#51cf66
@@ -363,18 +384,21 @@ mindmap
 permissions:
   contents: read      # Checkout code
   issues: write       # Create/update drift issues
+  id-token: write     # AWS OIDC federation
 
 # terraform-plan.yml
 permissions:
   contents: read      # Checkout code
   pull-requests: write # Post plan comments
   issues: write       # Create issues on errors
+  id-token: write     # AWS OIDC federation
 
 # terraform-apply.yml
 permissions:
   contents: read      # Checkout code
   pull-requests: write # Post results
   issues: write       # Create failure issues
+  id-token: write     # AWS OIDC federation
 ```
 
 ## Error Handling Strategy

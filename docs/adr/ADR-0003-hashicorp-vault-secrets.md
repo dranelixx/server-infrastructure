@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-02-12 -->
 
 # ADR-0003: HashiCorp Vault for Secrets Management
 
@@ -21,6 +21,11 @@ for CI/CD pipelines.
 
 GitHub Secrets store only Vault credentials (`VAULT_ADDR`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID`).
 All other secrets are fetched from Vault at runtime.
+
+> **Note (2026-02-12):** AWS S3 backend authentication was migrated from IAM access keys stored in
+> Vault to GitHub OIDC federation. Vault now stores only the IAM Role ARN
+> (`secret/shared/ci-cd/aws role_arn`) instead of static credentials. Workflows use
+> `aws-actions/configure-aws-credentials@v4` to obtain temporary STS tokens via OIDC.
 
 ### Why not store everything in GitHub Secrets?
 

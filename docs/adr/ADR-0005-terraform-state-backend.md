@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-09 -->
+<!-- LAST EDITED: 2026-02-12 -->
 
 # ADR-0005: Terraform State Backend Migration
 
@@ -57,6 +57,14 @@ Migrate to a hybrid S3 backend:
 - Lose Terraform Cloud features (run history UI, cost estimation, Sentinel)
 - Must manage S3 bucket and permissions
 - No built-in run approval workflow (use GitHub Environment protection instead)
+
+### Authentication Update (2026-02-12)
+
+S3 backend authentication was migrated from long-lived IAM access keys (`terraform-state-manager`
+user) to GitHub OIDC federation. CI/CD workflows now obtain temporary STS credentials via
+`aws-actions/configure-aws-credentials@v4`, eliminating static AWS secrets. The IAM Role ARN is
+stored in Vault (`secret/shared/ci-cd/aws role_arn`) for consistency with the existing secrets
+management pattern (see [ADR-0003](ADR-0003-hashicorp-vault-secrets.md)).
 
 ## Alternatives Considered
 

@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-10 -->
+<!-- LAST EDITED: 2026-02-12 -->
 
 # Terraform Workflows - Quick Start Guide
 
@@ -195,7 +195,6 @@ curl -k -H "Authorization: PVEAPIToken=terraform@pve!tf-automation=<SECRET>" \
 5. Rotate API tokens regularly (or use Vault for automatic rotation)
 6. Keep apply logs for audits (90 days)
 7. Don't bypass environment protection
-8. Migrate to Vault for production secret management
 
 ## Useful Aliases
 
