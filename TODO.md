@@ -41,6 +41,15 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Automated Secret ID rotation (weekly workflow + 14d TTL)
   - [x] User account created (no more root-only access)
 
+### AWS Security
+
+- [ ] **Migrate CI/CD from IAM Access Keys to OIDC Federation**
+  - Replace long-lived `terraform-state-manager` IAM keys with GitHub OIDC
+  - GitHub Actions gets temporary credentials via STS (no secrets to store/rotate)
+  - Steps: Create OIDC provider in IAM → IAM Role with S3/DynamoDB trust → Update workflows
+  - Remove `secret/data/shared/ci-cd/aws` from Vault after migration
+  - Delete `terraform-state-manager` IAM user
+
 ### Standard Security Tasks
 
 - [x] **Flat Network Firewall Audit** - Review current-state network segmentation ✓ (2026-02-07)
