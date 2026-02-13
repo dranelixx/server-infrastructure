@@ -87,6 +87,9 @@ jobs:
         working-directory: terraform/environments/current-state
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Terraform Setup
         id: setup
         uses: ./.github/actions/terraform-setup
@@ -234,6 +237,9 @@ jobs:
         working-directory: terraform/environments/hetzner
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
       - name: Terraform Setup
         id: setup
         uses: ./.github/actions/terraform-setup

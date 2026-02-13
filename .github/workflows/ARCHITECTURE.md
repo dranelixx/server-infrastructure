@@ -174,13 +174,15 @@ graph LR
 
 All Terraform jobs use the shared Composite Action `.github/actions/terraform-setup/` which handles:
 
-1. **Checkout Code** — `actions/checkout@v4`
-2. **Import Secrets from Vault** — `hashicorp/vault-action@v3` (environment-specific secrets passed as input)
-3. **Configure AWS Credentials** — `aws-actions/configure-aws-credentials@v4` (OIDC federation)
-4. **Setup Terraform** — `hashicorp/setup-terraform@v3` (version centralized in action default)
-5. **Terraform fmt** — optional (`run-fmt` input, default: `true`)
-6. **Terraform init** — always runs
-7. **Terraform validate** — optional (`run-validate` input, default: `true`)
+1. **Import Secrets from Vault** — `hashicorp/vault-action@v3` (environment-specific secrets passed as input)
+2. **Configure AWS Credentials** — `aws-actions/configure-aws-credentials@v4` (OIDC federation)
+3. **Setup Terraform** — `hashicorp/setup-terraform@v3` (version centralized in action default)
+4. **Terraform fmt** — optional (`run-fmt` input, default: `true`)
+5. **Terraform init** — always runs
+6. **Terraform validate** — optional (`run-validate` input, default: `true`)
+
+**Note:** `actions/checkout@v4` must run **before** the composite action call (GitHub needs the
+repo checked out to find local actions).
 
 Apply workflows set `run-fmt: 'false'`, `run-validate: 'false'`, and `terraform-wrapper: 'false'`.
 

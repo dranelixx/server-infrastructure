@@ -48,9 +48,6 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
     - name: Import Secrets from Vault
       uses: hashicorp/vault-action@v3
       with:
