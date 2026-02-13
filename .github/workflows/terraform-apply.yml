@@ -32,7 +32,7 @@ permissions:
 jobs:
   detect-changes:
     name: Detect Changed Environments
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       current-state: ${{ steps.changes.outputs.current-state }}
       hetzner: ${{ steps.changes.outputs.hetzner }}
@@ -40,7 +40,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Detect Changes
         id: changes
@@ -57,14 +57,16 @@ jobs:
             fi
           else
             # Automatic trigger - check changed files
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
 
-            if echo "$CHANGED_FILES" | grep -q "terraform/environments/current-state/"; then
+            # current-state: environment files OR shared modules
+            if echo "$CHANGED_FILES" | grep -q "terraform/environments/current-state/\|terraform/modules/"; then
               echo "current-state=true" >> $GITHUB_OUTPUT
             else
               echo "current-state=false" >> $GITHUB_OUTPUT
             fi
 
+            # hetzner: environment files only (no shared modules used)
             if echo "$CHANGED_FILES" | grep -q "terraform/environments/hetzner/"; then
               echo "hetzner=true" >> $GITHUB_OUTPUT
             else
@@ -121,8 +123,9 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
+          set -o pipefail
           terraform plan -out=tfplan -no-color | tee plan_output.txt
-          echo "exitcode=$?" >> $GITHUB_OUTPUT
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         env:
           TF_VAR_proxmox_api_url: ${{ env.PROXMOX_API_ENDPOINT }}
           TF_VAR_proxmox_api_token_id: ${{ env.PROXMOX_API_TOKEN_ID }}
@@ -144,8 +147,9 @@ jobs:
         id: apply
         if: steps.check.outputs.changes == 'true'
         run: |
+          set -o pipefail
           terraform apply -auto-approve tfplan | tee apply_output.txt
-          echo "exitcode=$?" >> $GITHUB_OUTPUT
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         env:
           TF_VAR_proxmox_api_url: ${{ env.PROXMOX_API_ENDPOINT }}
           TF_VAR_proxmox_api_token_id: ${{ env.PROXMOX_API_TOKEN_ID }}
@@ -278,8 +282,9 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
+          set -o pipefail
           terraform plan -out=tfplan -no-color | tee plan_output.txt
-          echo "exitcode=$?" >> $GITHUB_OUTPUT
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         env:
           TF_VAR_hcloud_token: ${{ env.HCLOUD_TOKEN }}
           TF_VAR_storage_box_password: ${{ env.STORAGE_BOX_PASSWORD }}
@@ -299,8 +304,9 @@ jobs:
         id: apply
         if: steps.check.outputs.changes == 'true'
         run: |
+          set -o pipefail
           terraform apply -auto-approve tfplan | tee apply_output.txt
-          echo "exitcode=$?" >> $GITHUB_OUTPUT
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         env:
           TF_VAR_hcloud_token: ${{ env.HCLOUD_TOKEN }}
           TF_VAR_storage_box_password: ${{ env.STORAGE_BOX_PASSWORD }}
@@ -389,7 +395,7 @@ jobs:
     name: Notify Completion
     needs: [apply-current-state, apply-hetzner]
     if: always()
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Check Results
         run: |

@@ -77,8 +77,9 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
+          set -o pipefail
           terraform plan -detailed-exitcode -no-color -out=tfplan 2>&1 | tee plan_output.txt
-          echo "exitcode=$?" >> $GITHUB_OUTPUT
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         continue-on-error: true
         env:
           TF_VAR_proxmox_api_url: ${{ env.PROXMOX_API_ENDPOINT }}
@@ -123,7 +124,7 @@ jobs:
 
             const body = `## Drift Detection Report
 
-            **Environment:**
+            **Environment:** current-state
             **Detected:** ${new Date().toISOString()}
             **Workflow Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
 
@@ -258,8 +259,9 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
+          set -o pipefail
           terraform plan -detailed-exitcode -no-color -out=tfplan 2>&1 | tee plan_output.txt
-          echo "exitcode=$?" >> $GITHUB_OUTPUT
+          echo "exitcode=${PIPESTATUS[0]}" >> $GITHUB_OUTPUT
         continue-on-error: true
         env:
           TF_VAR_hcloud_token: ${{ env.HCLOUD_TOKEN }}
