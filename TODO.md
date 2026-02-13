@@ -254,6 +254,12 @@ Tracked improvements and planned work for this infrastructure.
   - Checkov for policy-as-code validation
   - Integrate as pre-commit hook or CI step
 
+- [ ] **CI/CD Workflow DRY Refactoring**
+  - Extract Vault + AWS OIDC + Terraform setup into Composite Action (`.github/actions/terraform-setup/`)
+  - Centralizes Terraform version (currently hardcoded 6x across workflows)
+  - Single place to update Vault paths, AWS region, setup steps
+  - Remove unused `pull-requests: write` permission from `terraform-apply.yml`
+
 ## Future / Nice-to-have
 
 - [ ] **Architecture Documentation (public version)**
