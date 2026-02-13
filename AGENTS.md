@@ -127,6 +127,10 @@ git push origin modules/proxmox-vm/v1.1.0
 - **terraform-apply.yml**: Runs on merge to `main`, requires manual approval via GitHub Environment protection
 - **terraform-drift.yml**: Daily at 06:00 UTC, creates GitHub Issues on drift detection
 
+All workflows use the shared Composite Action `.github/actions/terraform-setup/` for:
+Vault secrets import, AWS OIDC credentials, Terraform setup, and optional fmt/init/validate.
+Terraform version is centralized in the action's default input (`terraform-version`).
+
 Workflows use self-hosted runner (`github-runner-prod-cz-01`) for private Proxmox network access.
 
 ### Secrets Management

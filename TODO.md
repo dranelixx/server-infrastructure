@@ -155,12 +155,6 @@ Tracked improvements and planned work for this infrastructure.
   - [x] delete_protection + prevent_destroy on all resources
   - [x] CI/CD integration (terraform-plan.yml job for Hetzner)
 
-- [ ] **Map Netcup infrastructure in Terraform**
-  - Netcup VPS (Mailcow, Vaultwarden)
-  - SCP provider: [rincedd/netcup-scp](https://github.com/rincedd/terraform-provider-netcup-scp)
-  - CCP provider: [rincedd/netcup-ccp](https://github.com/rincedd/terraform-provider-netcup-ccp)
-  - Bonus: Netcup SCP MCP endpoint for direct management
-
 ## Ongoing
 
 - [x] **ADRs (Architecture Decision Records)** ✓
@@ -254,11 +248,12 @@ Tracked improvements and planned work for this infrastructure.
   - Checkov for policy-as-code validation
   - Integrate as pre-commit hook or CI step
 
-- [ ] **CI/CD Workflow DRY Refactoring**
-  - Extract Vault + AWS OIDC + Terraform setup into Composite Action (`.github/actions/terraform-setup/`)
-  - Centralizes Terraform version (currently hardcoded 6x across workflows)
-  - Single place to update Vault paths, AWS region, setup steps
-  - Remove unused `pull-requests: write` permission from `terraform-apply.yml`
+- [x] **CI/CD Workflow DRY Refactoring** ✓ (2026-02-13)
+  - [x] Composite Action `.github/actions/terraform-setup/` (Vault + AWS OIDC + Terraform + fmt/init/validate)
+  - [x] Terraform version centralized (single default in action.yml, was 6x hardcoded)
+  - [x] All 3 workflows refactored (plan, apply, drift — 6 jobs total)
+  - [x] Removed unused `pull-requests: write` permission from `terraform-apply.yml`
+  - [x] Change detection paths updated to include composite action
 
 ## Future / Nice-to-have
 
