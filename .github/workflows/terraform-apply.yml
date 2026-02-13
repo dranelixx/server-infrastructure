@@ -16,6 +16,7 @@ on:
         default: current-state
         options:
           - current-state
+          - hetzner
 
 # Only one apply at a time
 concurrency:
@@ -34,6 +35,7 @@ jobs:
     runs-on: self-hosted
     outputs:
       current-state: ${{ steps.changes.outputs.current-state }}
+      hetzner: ${{ steps.changes.outputs.hetzner }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -44,8 +46,15 @@ jobs:
         id: changes
         run: |
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            # Manual trigger - always run current-state
-            echo "current-state=true" >> $GITHUB_OUTPUT
+            # Manual trigger - run selected environment
+            SELECTED="${{ github.event.inputs.environment }}"
+            if [ "$SELECTED" == "current-state" ]; then
+              echo "current-state=true" >> $GITHUB_OUTPUT
+              echo "hetzner=false" >> $GITHUB_OUTPUT
+            elif [ "$SELECTED" == "hetzner" ]; then
+              echo "current-state=false" >> $GITHUB_OUTPUT
+              echo "hetzner=true" >> $GITHUB_OUTPUT
+            fi
           else
             # Automatic trigger - check changed files
             CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
@@ -54,6 +63,12 @@ jobs:
               echo "current-state=true" >> $GITHUB_OUTPUT
             else
               echo "current-state=false" >> $GITHUB_OUTPUT
+            fi
+
+            if echo "$CHANGED_FILES" | grep -q "terraform/environments/hetzner/"; then
+              echo "hetzner=true" >> $GITHUB_OUTPUT
+            else
+              echo "hetzner=false" >> $GITHUB_OUTPUT
             fi
           fi
 
@@ -216,10 +231,163 @@ jobs:
         if: steps.apply.outcome == 'failure'
         run: exit 1
 
+  apply-hetzner:
+    name: Apply - Hetzner
+    needs: detect-changes
+    if: needs.detect-changes.outputs.hetzner == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: hetzner-production
+      url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    defaults:
+      run:
+        working-directory: terraform/environments/hetzner
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Import Secrets from Vault
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: |
+            secret/data/prod/infrastructure/hetzner api_token | HCLOUD_TOKEN ;
+            secret/data/shared/backup/hetzner-storagebox-main password | STORAGE_BOX_PASSWORD ;
+            secret/data/shared/ci-cd/aws role_arn | AWS_ROLE_ARN
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14.3'
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -out=tfplan -no-color | tee plan_output.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        env:
+          TF_VAR_hcloud_token: ${{ env.HCLOUD_TOKEN }}
+          TF_VAR_storage_box_password: ${{ env.STORAGE_BOX_PASSWORD }}
+
+      - name: Check for Changes
+        id: check
+        run: |
+          if grep -q "No changes" plan_output.txt; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to apply"
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Changes found, executing apply"
+          fi
+
+      - name: Terraform Apply
+        id: apply
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          terraform apply -auto-approve tfplan | tee apply_output.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        env:
+          TF_VAR_hcloud_token: ${{ env.HCLOUD_TOKEN }}
+          TF_VAR_storage_box_password: ${{ env.STORAGE_BOX_PASSWORD }}
+
+      - name: Create Apply Summary
+        if: always()
+        run: |
+          echo "### Terraform Apply - Hetzner" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** hetzner" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.apply.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Changes:** ${{ steps.check.outputs.changes }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f apply_output.txt ]; then
+            echo "<details><summary>Apply Output</summary>" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            cat apply_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "</details>" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload Apply Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hetzner-apply-${{ github.run_number }}
+          path: |
+            terraform/environments/hetzner/plan_output.txt
+            terraform/environments/hetzner/apply_output.txt
+          retention-days: 90
+
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let applyOutput = 'Apply output not available';
+            try {
+              applyOutput = fs.readFileSync('terraform/environments/hetzner/apply_output.txt', 'utf8');
+            } catch (error) {
+              console.log('Apply output could not be read');
+            }
+
+            const body = `## Terraform Apply Failed - Hetzner
+
+            **Environment:** hetzner
+
+            **Workflow:** [Run #${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            **Commit:** ${context.sha.substring(0, 7)}
+            **Triggered by:** @${context.actor}
+
+            ### Error Output
+
+            \`\`\`
+            ${applyOutput.length > 60000 ? applyOutput.substring(0, 60000) + '\n\n... (Output truncated)' : applyOutput}
+            \`\`\`
+
+            ### Action Required
+
+            Terraform Apply failed. Please check:
+            1. Logs in the Workflow Run
+            2. Terraform State Status
+            3. Hetzner Cloud API Accessibility
+            4. Resource Configuration
+
+            **IMPORTANT:** Manual intervention required!`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Terraform Apply failed - hetzner',
+              body: body,
+              labels: ['terraform', 'apply-failure', 'hetzner', 'urgent']
+            });
+
+      - name: Fail Job if Apply Failed
+        if: steps.apply.outcome == 'failure'
+        run: exit 1
+
 
   notify-completion:
     name: Notify Completion
-    needs: [apply-current-state]
+    needs: [apply-current-state, apply-hetzner]
     if: always()
     runs-on: self-hosted
     steps:
@@ -227,8 +395,18 @@ jobs:
         run: |
           echo "Apply workflow completed"
           echo "Current State: ${{ needs.apply-current-state.result }}"
+          echo "Hetzner: ${{ needs.apply-hetzner.result }}"
 
+          FAILED=false
           if [ "${{ needs.apply-current-state.result }}" == "failure" ]; then
-            echo "Apply failed"
+            echo "Current State apply failed"
+            FAILED=true
+          fi
+          if [ "${{ needs.apply-hetzner.result }}" == "failure" ]; then
+            echo "Hetzner apply failed"
+            FAILED=true
+          fi
+
+          if [ "$FAILED" == "true" ]; then
             exit 1
           fi

@@ -25,7 +25,8 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      terraform: ${{ steps.filter.outputs.terraform }}
+      current-state: ${{ steps.filter.outputs.current-state }}
+      hetzner: ${{ steps.filter.outputs.hetzner }}
     steps:
       - uses: actions/checkout@v4
 
@@ -34,17 +35,21 @@ jobs:
         id: filter
         with:
           filters: |
-            terraform:
-              - 'terraform/**'
+            current-state:
+              - 'terraform/environments/current-state/**'
+              - 'terraform/modules/**'
+              - '.github/workflows/terraform-plan.yml'
+            hetzner:
+              - 'terraform/environments/hetzner/**'
               - '.github/workflows/terraform-plan.yml'
 
   # ============================================
-  # JOB 2: The actual plan (only when Terraform changed)
+  # JOB 2: Plan current-state (only when relevant files changed)
   # ============================================
   plan-current-state:
     name: Plan - Current State
     needs: detect-changes
-    if: needs.detect-changes.outputs.terraform == 'true'
+    if: needs.detect-changes.outputs.current-state == 'true'
     runs-on: self-hosted
 
     defaults:
@@ -217,17 +222,207 @@ jobs:
         run: exit 1
 
   # ============================================
-  # JOB 3: Skip job (when NO Terraform changes)
-  # IMPORTANT: Has the SAME NAME as Job 2!
+  # JOB 3: Plan Hetzner (only when relevant files changed)
   # ============================================
-  plan-skip:
+  plan-hetzner:
+    name: Plan - Hetzner
+    needs: detect-changes
+    if: needs.detect-changes.outputs.hetzner == 'true'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform/environments/hetzner
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Import Secrets from Vault
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: |
+            secret/data/prod/infrastructure/hetzner api_token | HCLOUD_TOKEN ;
+            secret/data/shared/backup/hetzner-storagebox-main password | STORAGE_BOX_PASSWORD ;
+            secret/data/shared/ci-cd/aws role_arn | AWS_ROLE_ARN
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14.3'
+          terraform_wrapper: true
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        env:
+          TF_CLI_ARGS: '-no-color'
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        continue-on-error: true
+        env:
+          TF_VAR_hcloud_token: ${{ env.HCLOUD_TOKEN }}
+          TF_VAR_storage_box_password: ${{ env.STORAGE_BOX_PASSWORD }}
+
+      - name: Generate Plan Summary
+        id: summary
+        if: always()
+        run: |
+          terraform show -no-color tfplan > plan_output.txt 2>&1 || echo "Could not display plan"
+
+          # Extract short summary
+          if grep -q "No changes" plan_output.txt; then
+            echo "summary=No changes required" >> $GITHUB_OUTPUT
+            echo "changes=false" >> $GITHUB_OUTPUT
+          elif grep -q "Plan:" plan_output.txt; then
+            PLAN_SUMMARY=$(grep "Plan:" plan_output.txt | head -n 1)
+            echo "summary=${PLAN_SUMMARY}" >> $GITHUB_OUTPUT
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "summary=Error during plan" >> $GITHUB_OUTPUT
+            echo "changes=error" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post Plan Comment
+        uses: actions/github-script@v7
+        if: always()
+        env:
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          FMT_OUTCOME: ${{ steps.fmt.outcome }}
+          INIT_OUTCOME: ${{ steps.init.outcome }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          SUMMARY: ${{ steps.summary.outputs.summary }}
+        with:
+          script: |
+            const fs = require('fs');
+
+            let planOutput = '';
+            try {
+              planOutput = fs.readFileSync('terraform/environments/hetzner/plan_output.txt', 'utf8');
+            } catch (error) {
+              planOutput = 'Could not read plan output';
+            }
+
+            // Truncate for GitHub Comment (max 65536 characters)
+            const maxLength = 60000;
+            if (planOutput.length > maxLength) {
+              planOutput = planOutput.substring(0, maxLength) + '\n\n... (Output truncated, see Artifacts for full plan)';
+            }
+
+            const output = `### Terraform Plan - Hetzner
+
+            **Environment:** \`hetzner\`
+            **Status:** ${process.env.PLAN_OUTCOME === 'success' ? '✅ Success' : '❌ Failed'}
+
+            #### Format Check: \`${process.env.FMT_OUTCOME}\`
+            #### Init: \`${process.env.INIT_OUTCOME}\`
+            #### Validate: \`${process.env.VALIDATE_OUTCOME}\`
+            #### Plan: \`${process.env.PLAN_OUTCOME}\`
+
+            **Summary:** ${process.env.SUMMARY}
+
+            <details><summary>Show Plan Output</summary>
+
+            \`\`\`hcl
+            ${planOutput}
+            \`\`\`
+
+            </details>
+
+            **Workflow Run:** [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            `;
+
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' &&
+              comment.body.includes('Terraform Plan - Hetzner')
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: output
+              });
+            }
+
+      - name: Upload Plan
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hetzner-plan-pr-${{ github.event.pull_request.number }}
+          path: |
+            terraform/environments/hetzner/tfplan
+            terraform/environments/hetzner/plan_output.txt
+          retention-days: 30
+
+      - name: Check Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  # ============================================
+  # JOB 4: Skip current-state (when NO relevant changes)
+  # IMPORTANT: Has the SAME NAME as the real plan job!
+  # ============================================
+  plan-current-state-skip:
     name: Plan - Current State
     needs: detect-changes
-    if: needs.detect-changes.outputs.terraform == 'false'
+    if: needs.detect-changes.outputs.current-state == 'false'
     runs-on: ubuntu-latest
     steps:
       - name: Skip Terraform Plan
         run: |
-          echo "::notice::No Terraform changes detected, skipping plan"
-          echo "Changed files in this PR don't affect Terraform configuration."
+          echo "::notice::No current-state Terraform changes detected, skipping plan"
+          echo "Changed files in this PR don't affect current-state Terraform configuration."
+          echo "Plan step is not required."
+
+  # ============================================
+  # JOB 5: Skip Hetzner (when NO relevant changes)
+  # IMPORTANT: Has the SAME NAME as the real plan job!
+  # ============================================
+  plan-hetzner-skip:
+    name: Plan - Hetzner
+    needs: detect-changes
+    if: needs.detect-changes.outputs.hetzner == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip Terraform Plan
+        run: |
+          echo "::notice::No Hetzner Terraform changes detected, skipping plan"
+          echo "Changed files in this PR don't affect Hetzner Terraform configuration."
           echo "Plan step is not required."

@@ -204,3 +204,182 @@ jobs:
           name: current-state-plan
           path: terraform/environments/current-state/plan_output.txt
           retention-days: 30
+
+  drift-hetzner:
+    name: Hetzner Drift Detection
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform/environments/hetzner
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Import Secrets from Vault
+        uses: hashicorp/vault-action@v3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: |
+            secret/data/prod/infrastructure/hetzner api_token | HCLOUD_TOKEN ;
+            secret/data/shared/backup/hetzner-storagebox-main password | STORAGE_BOX_PASSWORD ;
+            secret/data/shared/ci-cd/aws role_arn | AWS_ROLE_ARN
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: eu-central-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.14.3'
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+        env:
+          TF_CLI_ARGS: '-no-color'
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -detailed-exitcode -no-color -out=tfplan 2>&1 | tee plan_output.txt
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+        env:
+          TF_VAR_hcloud_token: ${{ env.HCLOUD_TOKEN }}
+          TF_VAR_storage_box_password: ${{ env.STORAGE_BOX_PASSWORD }}
+
+      - name: Check Drift Status
+        id: drift
+        run: |
+          if [ "${{ steps.plan.outputs.exitcode }}" == "2" ]; then
+            echo "drift=true" >> $GITHUB_OUTPUT
+            echo "Drift detected in hetzner environment"
+          elif [ "${{ steps.plan.outputs.exitcode }}" == "0" ]; then
+            echo "drift=false" >> $GITHUB_OUTPUT
+            echo "No drift - Infrastructure matches Terraform state"
+          else
+            echo "drift=error" >> $GITHUB_OUTPUT
+            echo "Error during plan check"
+            exit 1
+          fi
+
+      - name: Create Issue on Drift
+        if: steps.drift.outputs.drift == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const planOutput = fs.readFileSync('terraform/environments/hetzner/plan_output.txt', 'utf8');
+
+            // Search for already open drift issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'drift-detection,hetzner'
+            });
+
+            const existingIssue = issues.data.find(issue =>
+              issue.title.includes('Drift detected in hetzner')
+            );
+
+            const body = `## Drift Detection Report
+
+            **Environment:** hetzner
+            **Detected:** ${new Date().toISOString()}
+            **Workflow Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+
+            ### Detected Changes
+
+
+            ${planOutput.length > 60000 ? planOutput.substring(0, 60000) + '\n\n... (Output truncated)' : planOutput}
+
+
+            ### Action Required
+
+            The infrastructure differs from the Terraform state. Please check if:
+            1. Manual changes were made in Hetzner Cloud
+            2. The Terraform state needs to be updated
+            3. The Terraform configuration needs to be adjusted
+
+            **Note:** This issue will be automatically closed when no more drift is detected.`;
+
+            if (existingIssue) {
+              // Update existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `### Update: Drift still present\n\n${body}`
+              });
+              console.log(`Updated existing issue #${existingIssue.number}`);
+            } else {
+              // Create new issue
+              const issue = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '⚠️ Drift detected in hetzner',
+                body: body,
+                labels: ['drift-detection', 'terraform', 'hetzner']
+              });
+              console.log(`Created issue #${issue.data.number}`);
+            }
+
+      - name: Close Issue if No Drift
+        if: steps.drift.outputs.drift == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'drift-detection,hetzner'
+            });
+
+            const driftIssue = issues.data.find(issue =>
+              issue.title.includes('Drift detected in hetzner')
+            );
+
+            if (driftIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: driftIssue.number,
+                body: '✅ Drift resolved. The infrastructure matches the Terraform state again.'
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: driftIssue.number,
+                state: 'closed'
+              });
+
+              console.log(`Closed issue #${driftIssue.number}`);
+            }
+
+      - name: Upload Plan for Review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hetzner-plan
+          path: terraform/environments/hetzner/plan_output.txt
+          retention-days: 30
