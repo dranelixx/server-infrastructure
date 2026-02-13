@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-12 -->
+<!-- LAST EDITED: 2026-02-13 -->
 
 # TODO
 
@@ -153,7 +153,7 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Hetzner Storage Box (bx21, fsn1) imported
   - [x] Provider: [hetznercloud/hcloud v1.60.0](https://registry.terraform.io/providers/hetznercloud/hcloud/latest)
   - [x] delete_protection + prevent_destroy on all resources
-  - [ ] CI/CD integration (terraform-plan.yml job for Hetzner)
+  - [x] CI/CD integration (terraform-plan.yml job for Hetzner)
 
 - [ ] **Map Netcup infrastructure in Terraform**
   - Netcup VPS (Mailcow, Vaultwarden)
@@ -253,6 +253,12 @@ Tracked improvements and planned work for this infrastructure.
   - tfsec for Terraform security checks
   - Checkov for policy-as-code validation
   - Integrate as pre-commit hook or CI step
+
+- [ ] **CI/CD Workflow DRY Refactoring**
+  - Extract Vault + AWS OIDC + Terraform setup into Composite Action (`.github/actions/terraform-setup/`)
+  - Centralizes Terraform version (currently hardcoded 6x across workflows)
+  - Single place to update Vault paths, AWS region, setup steps
+  - Remove unused `pull-requests: write` permission from `terraform-apply.yml`
 
 ## Future / Nice-to-have
 
