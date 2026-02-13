@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-12 -->
+<!-- LAST EDITED: 2026-02-13 -->
 
 # Terraform Workflows - Architecture
 
@@ -169,6 +169,20 @@ graph LR
 | `terraform-drift.yml` | `terraform-drift` | Queue | Prevents state locks |
 | `terraform-plan.yml` | `terraform-plan-${{ pr }}` | Cancel in progress | Saves resources on quick updates |
 | `terraform-apply.yml` | `terraform-apply` | Queue | Critical - no race conditions |
+
+## Shared Setup (Composite Action)
+
+All Terraform jobs use the shared Composite Action `.github/actions/terraform-setup/` which handles:
+
+1. **Checkout Code** — `actions/checkout@v4`
+2. **Import Secrets from Vault** — `hashicorp/vault-action@v3` (environment-specific secrets passed as input)
+3. **Configure AWS Credentials** — `aws-actions/configure-aws-credentials@v4` (OIDC federation)
+4. **Setup Terraform** — `hashicorp/setup-terraform@v3` (version centralized in action default)
+5. **Terraform fmt** — optional (`run-fmt` input, default: `true`)
+6. **Terraform init** — always runs
+7. **Terraform validate** — optional (`run-validate` input, default: `true`)
+
+Apply workflows set `run-fmt: 'false'`, `run-validate: 'false'`, and `terraform-wrapper: 'false'`.
 
 ## Security Model
 
@@ -396,7 +410,6 @@ permissions:
 # terraform-apply.yml
 permissions:
   contents: read      # Checkout code
-  pull-requests: write # Post results
   issues: write       # Create failure issues
   id-token: write     # AWS OIDC federation
 ```

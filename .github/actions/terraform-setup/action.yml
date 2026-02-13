@@ -1,0 +1,94 @@
+name: "Terraform Setup"
+description: "Composite action for Vault secrets, AWS OIDC, Terraform setup, and optional fmt/init/validate"
+
+inputs:
+  vault-addr:
+    description: "HashiCorp Vault server URL"
+    required: true
+  vault-role-id:
+    description: "Vault AppRole Role ID"
+    required: true
+  vault-secret-id:
+    description: "Vault AppRole Secret ID"
+    required: true
+  vault-secrets:
+    description: "Vault secrets to import (hashicorp/vault-action format, multiline)"
+    required: true
+  terraform-version:
+    description: "Terraform CLI version"
+    required: false
+    default: "1.14.3"
+  terraform-wrapper:
+    description: "Enable hashicorp/setup-terraform wrapper script"
+    required: false
+    default: "true"
+  working-directory:
+    description: "Working directory for Terraform commands"
+    required: true
+  run-fmt:
+    description: "Run terraform fmt -check -recursive"
+    required: false
+    default: "true"
+  run-validate:
+    description: "Run terraform validate -no-color"
+    required: false
+    default: "true"
+
+outputs:
+  fmt-outcome:
+    description: "Outcome of terraform fmt check"
+    value: ${{ steps.fmt.outcome }}
+  init-outcome:
+    description: "Outcome of terraform init"
+    value: ${{ steps.init.outcome }}
+  validate-outcome:
+    description: "Outcome of terraform validate"
+    value: ${{ steps.validate.outcome }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Import Secrets from Vault
+      uses: hashicorp/vault-action@v3
+      with:
+        url: ${{ inputs.vault-addr }}
+        method: approle
+        roleId: ${{ inputs.vault-role-id }}
+        secretId: ${{ inputs.vault-secret-id }}
+        secrets: ${{ inputs.vault-secrets }}
+
+    - name: Configure AWS Credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ env.AWS_ROLE_ARN }}
+        aws-region: eu-central-1
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform-version }}
+        terraform_wrapper: ${{ inputs.terraform-wrapper }}
+
+    - name: Terraform Format Check
+      id: fmt
+      if: ${{ inputs.run-fmt == 'true' }}
+      run: terraform fmt -check -recursive
+      continue-on-error: true
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: Terraform Init
+      id: init
+      run: terraform init -no-color
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: Terraform Validate
+      id: validate
+      if: ${{ inputs.run-validate == 'true' }}
+      run: terraform validate -no-color
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash

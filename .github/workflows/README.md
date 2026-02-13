@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-12 -->
+<!-- LAST EDITED: 2026-02-13 -->
 
 # GitHub Actions Workflows for Terraform
 
@@ -55,6 +55,15 @@ Applies Terraform changes after manual approval.
 - Creates GitHub Issues on apply failures
 - Uploads apply logs as artifacts (90 days retention)
 - GitHub Actions Summary with apply details
+
+## Shared Setup (Composite Action)
+
+All workflows use the shared Composite Action at `.github/actions/terraform-setup/` to avoid
+duplication. This action handles: Vault secrets import, AWS OIDC credentials, Terraform CLI setup,
+and optional `fmt`/`init`/`validate` steps. The Terraform version is centralized in the action's
+`terraform-version` input default.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md#shared-setup-composite-action) for details.
 
 ## Setup
 

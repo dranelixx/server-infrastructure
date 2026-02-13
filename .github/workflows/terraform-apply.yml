@@ -25,7 +25,6 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
   issues: write
   id-token: write
 
@@ -59,15 +58,15 @@ jobs:
             # Automatic trigger - check changed files
             CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
 
-            # current-state: environment files OR shared modules
-            if echo "$CHANGED_FILES" | grep -q "terraform/environments/current-state/\|terraform/modules/"; then
+            # current-state: environment files OR shared modules OR composite actions
+            if echo "$CHANGED_FILES" | grep -q "terraform/environments/current-state/\|terraform/modules/\|\.github/actions/"; then
               echo "current-state=true" >> $GITHUB_OUTPUT
             else
               echo "current-state=false" >> $GITHUB_OUTPUT
             fi
 
-            # hetzner: environment files only (no shared modules used)
-            if echo "$CHANGED_FILES" | grep -q "terraform/environments/hetzner/"; then
+            # hetzner: environment files OR composite actions
+            if echo "$CHANGED_FILES" | grep -q "terraform/environments/hetzner/\|\.github/actions/"; then
               echo "hetzner=true" >> $GITHUB_OUTPUT
             else
               echo "hetzner=false" >> $GITHUB_OUTPUT
@@ -88,37 +87,23 @@ jobs:
         working-directory: terraform/environments/current-state
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Import Secrets from Vault
-        uses: hashicorp/vault-action@v3
+      - name: Terraform Setup
+        id: setup
+        uses: ./.github/actions/terraform-setup
         with:
-          url: ${{ secrets.VAULT_ADDR }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: |
+          vault-addr: ${{ secrets.VAULT_ADDR }}
+          vault-role-id: ${{ secrets.VAULT_ROLE_ID }}
+          vault-secret-id: ${{ secrets.VAULT_SECRET_ID }}
+          vault-secrets: |
             secret/data/prod/infrastructure/proxmox api_endpoint | PROXMOX_API_ENDPOINT ;
             secret/data/prod/infrastructure/proxmox api_token_id | PROXMOX_API_TOKEN_ID ;
             secret/data/prod/infrastructure/proxmox api_token_secret | PROXMOX_API_TOKEN_SECRET ;
             secret/data/shared/ssh public_keys | SSH_PUBLIC_KEYS ;
             secret/data/shared/ci-cd/aws role_arn | AWS_ROLE_ARN
-
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: eu-central-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: '1.14.3'
-
-      - name: Terraform Init
-        id: init
-        run: terraform init
+          working-directory: terraform/environments/current-state
+          terraform-wrapper: 'false'
+          run-fmt: 'false'
+          run-validate: 'false'
 
       - name: Terraform Plan
         id: plan
@@ -249,35 +234,21 @@ jobs:
         working-directory: terraform/environments/hetzner
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Import Secrets from Vault
-        uses: hashicorp/vault-action@v3
+      - name: Terraform Setup
+        id: setup
+        uses: ./.github/actions/terraform-setup
         with:
-          url: ${{ secrets.VAULT_ADDR }}
-          method: approle
-          roleId: ${{ secrets.VAULT_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_SECRET_ID }}
-          secrets: |
+          vault-addr: ${{ secrets.VAULT_ADDR }}
+          vault-role-id: ${{ secrets.VAULT_ROLE_ID }}
+          vault-secret-id: ${{ secrets.VAULT_SECRET_ID }}
+          vault-secrets: |
             secret/data/prod/infrastructure/hetzner api_token | HCLOUD_TOKEN ;
             secret/data/shared/backup/hetzner-storagebox-main password | STORAGE_BOX_PASSWORD ;
             secret/data/shared/ci-cd/aws role_arn | AWS_ROLE_ARN
-
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ env.AWS_ROLE_ARN }}
-          aws-region: eu-central-1
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: '1.14.3'
-
-      - name: Terraform Init
-        id: init
-        run: terraform init
+          working-directory: terraform/environments/hetzner
+          terraform-wrapper: 'false'
+          run-fmt: 'false'
+          run-validate: 'false'
 
       - name: Terraform Plan
         id: plan
