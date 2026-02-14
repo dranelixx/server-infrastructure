@@ -239,9 +239,10 @@ Tracked improvements and planned work for this infrastructure.
   - [x] Docs updated for 1x P3500 layout (TrueNAS passthrough, Lexar → nvme-pool)
   - [ ] Execute upgrade once SM863a arrives (see `docs/private/plans/storage-upgrade/`)
 
-- [ ] **Evaluate terraform_docs in CI**
-  - Currently disabled in pre-commit (modifies files after staging)
-  - Consider running in CI instead of locally
+- [x] **Evaluate terraform_docs in CI** ✓ (2026-02-14)
+  - [x] Added `Docs Check` job in `terraform-plan.yml` using `terraform-docs/gh-actions@v2`
+  - [x] Module READMEs (`proxmox-vm`, `proxmox-lxc`) use `<!-- BEGIN_TF_DOCS -->` markers
+  - [x] CI fails if terraform-docs output is outdated (`fail-on-diff: true`)
 
 - [ ] **Add tfsec/Checkov Security Scanning**
   - tfsec for Terraform security checks

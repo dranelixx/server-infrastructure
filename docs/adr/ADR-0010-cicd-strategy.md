@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-01-27 -->
+<!-- LAST EDITED: 2026-02-14 -->
 
 # ADR-0010: CI/CD Strategy
 
@@ -64,8 +64,9 @@ Extensive local hooks catch issues before push:
 - Keeps Git history clean
 - Developers see issues immediately
 
-**Note**: `terraform_docs` is disabled because it modifies files after staging, causing confusion.
-TODO: Evaluate running in CI instead.
+**Note**: `terraform_docs` is disabled as a pre-commit hook because it modifies files after staging.
+Instead, a `Docs Check` CI job in `terraform-plan.yml` validates that module READMEs are up to date
+using `terraform-docs/gh-actions@v2` with `fail-on-diff: true`.
 
 ## Consequences
 
