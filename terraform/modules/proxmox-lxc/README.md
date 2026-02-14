@@ -69,7 +69,7 @@ module "example_container" {
 
 | Name | Version |
 |------|---------|
-| proxmox | 0.94.0 |
+| proxmox | >= 0.91.0 |
 
 ## Modules
 

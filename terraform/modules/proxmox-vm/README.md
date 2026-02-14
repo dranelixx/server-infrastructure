@@ -110,7 +110,7 @@ module "truenas" {
 
 | Name | Version |
 |------|---------|
-| proxmox | 0.95.0 |
+| proxmox | >= 0.91.0 |
 
 ## Modules
 
