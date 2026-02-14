@@ -46,7 +46,24 @@ jobs:
               - '.github/actions/terraform-setup/**'
 
   # ============================================
-  # JOB 2: Plan current-state (only when relevant files changed)
+  # JOB 2: Check terraform-docs are up to date
+  # ============================================
+  docs-check:
+    name: Docs Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Check terraform-docs
+        uses: terraform-docs/gh-actions@v1
+        with:
+          working-dir: terraform/modules/proxmox-vm,terraform/modules/proxmox-lxc
+          config-file: .terraform-docs.yml
+          fail-on-diff: true
+
+  # ============================================
+  # JOB 3: Plan current-state (only when relevant files changed)
   # ============================================
   plan-current-state:
     name: Plan - Current State
@@ -198,7 +215,7 @@ jobs:
         run: exit 1
 
   # ============================================
-  # JOB 3: Plan Hetzner (only when relevant files changed)
+  # JOB 4: Plan Hetzner (only when relevant files changed)
   # ============================================
   plan-hetzner:
     name: Plan - Hetzner
@@ -346,7 +363,7 @@ jobs:
         run: exit 1
 
   # ============================================
-  # JOB 4: Skip current-state (when NO relevant changes)
+  # JOB 5: Skip current-state (when NO relevant changes)
   # IMPORTANT: Has the SAME NAME as the real plan job!
   # ============================================
   plan-current-state-skip:
@@ -362,7 +379,7 @@ jobs:
           echo "Plan step is not required."
 
   # ============================================
-  # JOB 5: Skip Hetzner (when NO relevant changes)
+  # JOB 6: Skip Hetzner (when NO relevant changes)
   # IMPORTANT: Has the SAME NAME as the real plan job!
   # ============================================
   plan-hetzner-skip:

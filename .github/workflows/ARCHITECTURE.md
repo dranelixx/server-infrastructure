@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-13 -->
+<!-- LAST EDITED: 2026-02-14 -->
 
 # Terraform Workflows - Architecture
 
@@ -16,6 +16,7 @@ graph TB
 
     subgraph "Pull Request Workflow"
         F[Developer creates PR] --> G[terraform-plan.yml]
+        G --> G2[Docs Check: terraform-docs]
         G --> H[Terraform Init + Plan]
         H --> I[Plan as PR comment]
         I --> J{Review OK?}
@@ -89,6 +90,7 @@ sequenceDiagram
     GHA->>TF: terraform fmt -check
     GHA->>TF: terraform init
     GHA->>TF: terraform validate
+    GHA->>GHA: terraform-docs (Docs Check)
     GHA->>TF: terraform plan
     TF->>PVE: API: Query resources
     PVE-->>TF: Resource state
