@@ -55,21 +55,21 @@ module "example_container" {
 }
 ```
 
-<!-- markdownlint-disable MD033 -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable MD033 MD060 -->
 <!-- BEGIN_TF_DOCS -->
-
 ## Requirements
 
-| Name      | Version   |
-| --------- | --------- |
-| terraform | >= 1.7.0  |
-| proxmox   | >= 0.91.0 |
+| Name | Version |
+|------|---------|
+| terraform | >= 1.7.0 |
+| proxmox | >= 0.91.0 |
 
 ## Providers
 
-| Name    | Version |
-| ------- | ------- |
-| proxmox | 0.94.0  |
+| Name | Version |
+|------|---------|
+| proxmox | 0.94.0 |
 
 ## Modules
 
@@ -77,54 +77,54 @@ No modules.
 
 ## Resources
 
-| Name                                                                                                                                                       | Type     |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| Name | Type |
+|------|------|
 | [proxmox_virtual_environment_container.container](https://registry.terraform.io/providers/bpg/proxmox/latest/docs/resources/virtual_environment_container) | resource |
 
 ## Inputs
 
-| Name             | Description                                                                                                 | Type           | Default                                                      | Required |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- | -------------- | ------------------------------------------------------------ | :------: |
-| bridge           | Network bridge (e.g. 'vmbr0', 'vmbr1')                                                                      | `string`       | `"vmbr0"`                                                    |    no    |
-| cores            | Number of CPU cores                                                                                         | `number`       | `2`                                                          |    no    |
-| description      | Container description (optional, e.g. purpose or service name)                                              | `string`       | `""`                                                         |    no    |
-| disk_size        | Root filesystem size in GB                                                                                  | `number`       | `20`                                                         |    no    |
-| firewall_enabled | Enable Proxmox firewall for this container                                                                  | `bool`         | `false`                                                      |    no    |
-| memory           | RAM in MB (dedicated memory)                                                                                | `number`       | `2048`                                                       |    no    |
-| name             | Container hostname (must be unique in Proxmox cluster)                                                      | `string`       | n/a                                                          |   yes    |
-| os_type          | Operating system type (unmanaged, debian, ubuntu, centos, fedora, opensuse, archlinux, alpine, gentoo)      | `string`       | `"ubuntu"`                                                   |    no    |
-| protection       | Enable container protection (prevents accidental deletion)                                                  | `bool`         | `false`                                                      |    no    |
-| root_password    | Root password for container access (optional, use SSH keys instead)                                         | `string`       | `null`                                                       |    no    |
-| shutdown_timeout | Timeout in seconds for clean shutdown (0 = default)                                                         | `number`       | `0`                                                          |    no    |
-| ssh_public_keys  | List of SSH public keys for root user access (recommended)                                                  | `list(string)` | `[]`                                                         |    no    |
-| start_on_boot    | Start container automatically when Proxmox boots                                                            | `bool`         | `true`                                                       |    no    |
-| started          | Start container after creation                                                                              | `bool`         | `true`                                                       |    no    |
-| startup_delay    | Delay in seconds after container start (0 = default)                                                        | `number`       | `0`                                                          |    no    |
-| startup_order    | Boot order (lower numbers start first, null = any)                                                          | `number`       | `null`                                                       |    no    |
-| storage_pool     | Storage pool name (e.g. 'local-zfs', 'local-hdd01')                                                         | `string`       | `"local-zfs"`                                                |    no    |
-| swap             | Swap space in MB                                                                                            | `number`       | `512`                                                        |    no    |
-| tags             | Tags for organization and Ansible dynamic inventory (e.g. ['production', 'lxc', 'monitoring'])              | `list(string)` | `[]`                                                         |    no    |
-| target_node      | Proxmox node where the container should run (e.g. 'pve-prod-cz-loki')                                       | `string`       | n/a                                                          |   yes    |
-| template_file_id | OS template file ID from Proxmox storage (e.g., 'local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst') | `string`       | `"local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"` |    no    |
-| template_vmid    | Template container ID to clone from (null = create from scratch, number = clone from template)              | `number`       | `null`                                                       |    no    |
-| unprivileged     | Run container as unprivileged (recommended for security)                                                    | `bool`         | `true`                                                       |    no    |
-| vlan_tag         | VLAN ID (null = no VLAN tagging)                                                                            | `number`       | `null`                                                       |    no    |
-| vmid             | Proxmox Container ID (100-999999999)                                                                        | `number`       | n/a                                                          |   yes    |
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| bridge | Network bridge (e.g. 'vmbr0', 'vmbr1') | `string` | `"vmbr0"` | no |
+| cores | Number of CPU cores | `number` | `2` | no |
+| description | Container description (optional, e.g. purpose or service name) | `string` | `""` | no |
+| disk\_size | Root filesystem size in GB | `number` | `20` | no |
+| firewall\_enabled | Enable Proxmox firewall for this container | `bool` | `false` | no |
+| memory | RAM in MB (dedicated memory) | `number` | `2048` | no |
+| name | Container hostname (must be unique in Proxmox cluster) | `string` | n/a | yes |
+| os\_type | Operating system type (unmanaged, debian, ubuntu, centos, fedora, opensuse, archlinux, alpine, gentoo) | `string` | `"ubuntu"` | no |
+| protection | Enable container protection (prevents accidental deletion) | `bool` | `false` | no |
+| root\_password | Root password for container access (optional, use SSH keys instead) | `string` | `null` | no |
+| shutdown\_timeout | Timeout in seconds for clean shutdown (0 = default) | `number` | `0` | no |
+| ssh\_public\_keys | List of SSH public keys for root user access (recommended) | `list(string)` | `[]` | no |
+| start\_on\_boot | Start container automatically when Proxmox boots | `bool` | `true` | no |
+| started | Start container after creation | `bool` | `true` | no |
+| startup\_delay | Delay in seconds after container start (0 = default) | `number` | `0` | no |
+| startup\_order | Boot order (lower numbers start first, null = any) | `number` | `null` | no |
+| storage\_pool | Storage pool name (e.g. 'local-zfs', 'local-hdd01') | `string` | `"local-zfs"` | no |
+| swap | Swap space in MB | `number` | `512` | no |
+| tags | Tags for organization and Ansible dynamic inventory (e.g. ['production', 'lxc', 'monitoring']) | `list(string)` | `[]` | no |
+| target\_node | Proxmox node where the container should run (e.g. 'pve-prod-cz-loki') | `string` | n/a | yes |
+| template\_file\_id | OS template file ID from Proxmox storage (e.g., 'local:vztmpl/ubuntu-24.04-standard\_24.04-2\_amd64.tar.zst') | `string` | `"local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"` | no |
+| template\_vmid | Template container ID to clone from (null = create from scratch, number = clone from template) | `number` | `null` | no |
+| unprivileged | Run container as unprivileged (recommended for security) | `bool` | `true` | no |
+| vlan\_tag | VLAN ID (null = no VLAN tagging) | `number` | `null` | no |
+| vmid | Proxmox Container ID (100-999999999) | `number` | n/a | yes |
 
 ## Outputs
 
-| Name           | Description                             |
-| -------------- | --------------------------------------- |
-| id             | The full Proxmox resource ID            |
-| name           | The container hostname                  |
-| network_config | Container network configuration         |
-| resource_specs | Container resource specifications       |
-| tags           | Container tags (for Ansible inventory)  |
-| target_node    | Proxmox node where container is running |
-| vmid           | The Proxmox Container ID                |
-
+| Name | Description |
+|------|-------------|
+| id | The full Proxmox resource ID |
+| name | The container hostname |
+| network\_config | Container network configuration |
+| resource\_specs | Container resource specifications |
+| tags | Container tags (for Ansible inventory) |
+| target\_node | Proxmox node where container is running |
+| vmid | The Proxmox Container ID |
 <!-- END_TF_DOCS -->
-<!-- markdownlint-enable MD033 -->
+<!-- markdownlint-enable MD033 MD060 -->
+<!-- prettier-ignore-end -->
 
 ## Examples
 
