@@ -66,7 +66,7 @@ Extensive local hooks catch issues before push:
 
 **Note**: `terraform_docs` is disabled as a pre-commit hook because it modifies files after staging.
 Instead, a `Docs Check` CI job in `terraform-plan.yml` validates that module READMEs are up to date
-using `terraform-docs/gh-actions@v2` with `fail-on-diff: true`.
+using `terraform-docs/gh-actions@v1` with `fail-on-diff: true`.
 
 ## Consequences
 

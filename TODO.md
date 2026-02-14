@@ -240,7 +240,7 @@ Tracked improvements and planned work for this infrastructure.
   - [ ] Execute upgrade once SM863a arrives (see `docs/private/plans/storage-upgrade/`)
 
 - [x] **Evaluate terraform_docs in CI** ✓ (2026-02-14)
-  - [x] Added `Docs Check` job in `terraform-plan.yml` using `terraform-docs/gh-actions@v2`
+  - [x] Added `Docs Check` job in `terraform-plan.yml` using `terraform-docs/gh-actions@v1`
   - [x] Module READMEs (`proxmox-vm`, `proxmox-lxc`) use `<!-- BEGIN_TF_DOCS -->` markers
   - [x] CI fails if terraform-docs output is outdated (`fail-on-diff: true`)
 

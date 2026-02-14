@@ -1,4 +1,4 @@
-<!-- LAST EDITED: 2026-02-13 -->
+<!-- LAST EDITED: 2026-02-14 -->
 
 # GitHub Actions Workflows for Terraform
 
@@ -40,6 +40,7 @@ Runs `terraform plan` on pull requests and posts the result as a comment.
 - Updates existing comments instead of creating new ones
 - Uploads plans as artifacts (30 days retention)
 - Validates Terraform format, init, and validate
+- Checks that module READMEs are up to date via `terraform-docs` (`fail-on-diff`)
 
 ### 3. Terraform Apply (`terraform-apply.yml`)
 
